@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Rejoignez BRACONGO - Brasseries du Congo. Opportunités de stage dans l'industrie brassicole au Congo.">
+    <meta name="keywords" content="stage, bracongo, brasserie, congo, formation, opportunité, emploi">
+    
+    <title>{{ $title ?? 'BRACONGO Stages - Construisez votre avenir' }}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
+
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="font-sans antialiased" x-data="{ mobileMenuOpen: false }" x-cloak>
+    <!-- Header moderne -->
+    <header class="modern-header" x-data="{ scrolled: false }" 
+            @scroll.window="scrolled = window.pageYOffset > 10"
+            :class="{ 'bg-white/98 shadow-soft': scrolled, 'bg-white/95': !scrolled }">
+        <div class="navbar-container">
+            <div class="navbar-content">
+                <!-- Logo Section -->
+                <div class="logo-section">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-bracongo-red rounded-xl flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">B</span>
+                        </div>
+                        <div>
+                            <div class="logo-text">BRACONGO</div>
+                            <div class="text-sm text-bracongo-gray-600 font-medium">Stages & Formations</div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="nav-links">
+                    <a href="/" class="nav-link-modern">Accueil</a>
+                    <a href="/candidature" class="nav-link-modern">Postuler</a>
+                    <a href="/suivi" class="nav-link-modern">Suivi</a>
+                    <a href="#opportunites" class="nav-link-modern">Opportunités</a>
+                    <a href="#contact" class="nav-link-modern">Contact</a>
+                </nav>
+
+                <!-- CTA Section -->
+                <div class="cta-section">
+                    <a href="/candidature" class="btn-primary hidden sm:inline-flex">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Postuler maintenant
+                    </a>
+                    <a href="/admin" class="btn-outline hidden sm:inline-flex">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Administration
+                    </a>
+
+                    <!-- Mobile Menu Button -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                            class="md:hidden p-2 rounded-lg text-bracongo-gray-600 hover:text-bracongo-red hover:bg-bracongo-gray-100 transition-colors duration-300">
+                        <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        <svg x-show="mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform -translate-y-2"
+             class="md:hidden border-t border-bracongo-gray-200 bg-white">
+            <div class="px-4 py-6 space-y-4">
+                <a href="/" class="block text-bracongo-gray-600 hover:text-bracongo-red font-medium py-2 transition-colors duration-300">Accueil</a>
+                <a href="/candidature" class="block text-bracongo-gray-600 hover:text-bracongo-red font-medium py-2 transition-colors duration-300">Postuler</a>
+                <a href="/suivi" class="block text-bracongo-gray-600 hover:text-bracongo-red font-medium py-2 transition-colors duration-300">Suivi</a>
+                <a href="#opportunites" class="block text-bracongo-gray-600 hover:text-bracongo-red font-medium py-2 transition-colors duration-300">Opportunités</a>
+                <a href="#contact" class="block text-bracongo-gray-600 hover:text-bracongo-red font-medium py-2 transition-colors duration-300">Contact</a>
+                <div class="pt-4 space-y-3">
+                    <a href="/candidature" class="btn-primary w-full justify-center">Postuler maintenant</a>
+                    <a href="/admin" class="btn-outline w-full justify-center">Administration</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20">
+        @yield('content')
+    </main>
+
+    <!-- Footer moderne -->
+    <footer class="modern-footer">
+        <div class="footer-content">
+            <!-- Section BRACONGO -->
+            <div class="footer-section">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-10 h-10 bg-bracongo-red rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold">B</span>
+                    </div>
+                    <div>
+                        <div class="footer-title text-white">BRACONGO</div>
+                        <div class="text-sm text-bracongo-gray-300">Brasseries du Congo</div>
+                    </div>
+                </div>
+                <p class="text-bracongo-gray-300 text-sm leading-relaxed">
+                    Leader de l'industrie brassicole en République Démocratique du Congo, 
+                    nous formons la prochaine génération de talents.
+                </p>
+            </div>
+
+            <!-- Navigation rapide -->
+            <div class="footer-section">
+                <h3 class="footer-title">Navigation</h3>
+                <div class="space-y-3">
+                    <a href="/" class="footer-link block">Accueil</a>
+                    <a href="/candidature" class="footer-link block">Postuler</a>
+                    <a href="/suivi" class="footer-link block">Suivi de candidature</a>
+                    <a href="#opportunites" class="footer-link block">Opportunités</a>
+                </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="footer-section">
+                <h3 class="footer-title">Contact</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center space-x-2 text-bracongo-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span>Avenue Colonel Lukusa, Kinshasa</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-bracongo-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span>stages@bracongo.cd</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-bracongo-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <span>+243 81 000 0000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Réseaux sociaux -->
+            <div class="footer-section">
+                <h3 class="footer-title">Suivez-nous</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="footer-link">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="footer-link">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="footer-link">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="mt-4">
+                    <a href="/api/health" class="inline-flex items-center text-sm text-bracongo-gray-400 hover:text-white transition-colors duration-300">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                        Statut système
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="border-t border-bracongo-gray-800 mt-12 pt-8">
+            <div class="max-w-7xl mx-auto px-6 text-center">
+                <p class="text-bracongo-gray-400 text-sm">
+                    &copy; {{ date('Y') }} BRACONGO - Brasseries du Congo. Tous droits réservés.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    @livewireScripts
+
+    <!-- Scripts pour animations -->
+    <script>
+        // Intersection Observer pour animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                }
+            });
+        }, observerOptions);
+
+        // Observer tous les éléments avec la classe animate-on-scroll
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.animate-on-scroll').forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        // Smooth scroll pour les liens d'ancrage
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    @stack('scripts')
+</body>
+</html>

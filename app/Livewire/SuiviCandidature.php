@@ -146,6 +146,6 @@ class SuiviCandidature extends Component
     {
         return view('livewire.suivi-candidature', [
             'timelineSteps' => $this->getTimelineSteps(),
-        ])->layout('layouts.app');
+        ])->layout('layouts.modern');
     }
 } 

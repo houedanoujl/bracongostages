@@ -42,7 +42,11 @@ class FilamentServiceProvider extends PanelProvider
                     950 => '#431407',
                 ],
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->resources([
+                \App\Filament\Resources\CandidatureResource::class,
+                // \App\Filament\Resources\UserResource::class, // Temporairement désactivé
+                // \App\Filament\Resources\DocumentResource::class, // Temporairement désactivé
+            ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,

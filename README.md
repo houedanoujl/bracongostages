@@ -173,20 +173,37 @@ MAIL_FROM_ADDRESS="stages@bracongo.cd"
 MAIL_FROM_NAME="BRACONGO Stages"
 ```
 
-### Commandes Utiles
+### Commandes Utiles avec Makefile
 ```bash
-# Monitoring des queues
-docker-compose exec app php artisan queue:monitor
+# Démarrer l'application
+make up
 
-# Clear cache
-docker-compose exec app php artisan cache:clear
-docker-compose exec app php artisan config:clear
+# Installation complète avec base de données
+make fresh
 
-# Logs en temps réel
-docker-compose logs -f app
+# Voir les logs
+make logs
 
-# Backup base de données
-docker-compose exec mysql mysqldump -u bracongo_user -p bracongo_stages > backup.sql
+# Accéder au shell du container
+make shell
+
+# Migrer la base de données
+make migrate
+
+# Installer les dépendances
+make install
+
+# Backup de la base de données
+make backup
+
+# Accéder à MySQL CLI
+make mysql-cli
+
+# Accéder à Redis CLI
+make redis-cli
+
+# Nettoyer complètement Docker
+make clean-all
 ```
 
 ## 🚀 Déploiement Production

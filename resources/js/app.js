@@ -4,6 +4,92 @@ import Alpine from 'alpinejs';
 // Configuration Alpine.js
 window.Alpine = Alpine;
 
+// Utilitaires d'animations modernes
+class BracongoAnimations {
+    static observeElements() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                    
+                    // Animation de compteur pour les statistiques
+                    if (entry.target.hasAttribute('data-counter')) {
+                        this.animateCounter(entry.target);
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observer tous les éléments avec la classe animate-on-scroll
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    static animateCounter(element) {
+        const target = parseInt(element.getAttribute('data-counter'));
+        const duration = 2000; // 2 secondes
+        const steps = 60;
+        const increment = target / steps;
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, duration / steps);
+    }
+
+    static init() {
+        this.observeElements();
+        this.initSmoothScroll();
+        this.initParallax();
+    }
+
+    static initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerOffset = 80; // Hauteur du header fixe
+                    const elementPosition = target.offsetTop;
+                    const offsetPosition = elementPosition - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    }
+
+    static initParallax() {
+        const parallaxElements = document.querySelectorAll('[data-parallax]');
+        
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            
+            parallaxElements.forEach(element => {
+                const speed = element.dataset.parallax || 0.5;
+                const yPos = -(scrolled * speed);
+                element.style.transform = `translateY(${yPos}px)`;
+            });
+        });
+    }
+}
+
+// Composants Alpine.js modernes pour BRACONGO
+
 // Composants Alpine.js pour BRACONGO
 Alpine.data('fileUpload', () => ({
     files: [],
@@ -178,6 +264,60 @@ Alpine.data('multiStepForm', () => ({
         return titles[step] || '';
     }
 }));
+
+// Navigation moderne avec indicateur de scroll
+Alpine.data('modernNavigation', () => ({
+    scrolled: false,
+    
+    init() {
+        window.addEventListener('scroll', () => {
+            this.scrolled = window.pageYOffset > 50;
+        });
+    }
+}));
+
+// Hero section interactive
+Alpine.data('heroSection', () => ({
+    currentTextIndex: 0,
+    texts: [
+        'Construisez votre avenir avec BRACONGO',
+        'Développez vos compétences professionnelles',
+        'Rejoignez l\'industrie brassicole leader'
+    ],
+    
+    init() {
+        // Animation de texte rotatif
+        setInterval(() => {
+            this.currentTextIndex = (this.currentTextIndex + 1) % this.texts.length;
+        }, 4000);
+    },
+    
+    get currentText() {
+        return this.texts[this.currentTextIndex];
+    }
+}));
+
+// Cards avec effet hover avancé
+Alpine.data('hoverCard', () => ({
+    isHovered: false,
+    mouseX: 0,
+    mouseY: 0,
+    
+    handleMouseMove(event) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        this.mouseX = ((event.clientX - rect.left) / rect.width) * 100;
+        this.mouseY = ((event.clientY - rect.top) / rect.height) * 100;
+    },
+    
+    get gradientStyle() {
+        return `background: radial-gradient(circle at ${this.mouseX}% ${this.mouseY}%, rgba(227, 6, 19, 0.1) 0%, transparent 70%)`;
+    }
+}));
+
+// Initialiser les animations au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    BracongoAnimations.init();
+});
 
 // Démarrer Alpine
 Alpine.start(); 

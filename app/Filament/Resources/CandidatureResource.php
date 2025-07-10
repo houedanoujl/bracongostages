@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CandidatureResource\Pages;
-use App\Filament\Resources\CandidatureResource\RelationManagers;
 use App\Models\Candidature;
 use App\Enums\StatutCandidature;
 use Filament\Forms;
@@ -195,7 +194,7 @@ class CandidatureResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\DocumentsRelationManager::class,
+            // TODO: Créer DocumentsRelationManager
         ];
     }
 

@@ -184,6 +184,6 @@ class CandidatureForm extends Component
             'etablissements' => Candidature::getEtablissements(),
             'niveaux_etude' => Candidature::getNiveauxEtude(),
             'directions_disponibles' => Candidature::getDirectionsDisponibles(),
-        ])->layout('layouts.app');
+        ])->layout('layouts.modern');
     }
 } 

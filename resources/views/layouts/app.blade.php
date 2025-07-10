@@ -37,11 +37,11 @@
 
                     <!-- Navigation Links -->
                     <div class="hidden md:flex items-center space-x-8">
-                        <a href="{{ route('candidature.create') }}" 
+                        <a href="{{ route('candidature.form') }}" 
                            class="text-white hover:text-orange-100 transition-colors duration-200 font-medium">
                             Postuler
                         </a>
-                        <a href="{{ route('candidature.suivi', ['code' => '']) }}" 
+                        <a href="{{ route('candidature.suivi') }}" 
                            class="text-white hover:text-orange-100 transition-colors duration-200 font-medium">
                             Suivi de candidature
                         </a>
@@ -66,8 +66,8 @@
             <!-- Mobile menu -->
             <div class="hidden md:hidden" id="mobile-menu">
                 <div class="px-2 pt-2 pb-3 space-y-1 bg-orange-700">
-                    <a href="{{ route('candidature.create') }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Postuler</a>
-                    <a href="{{ route('candidature.suivi', ['code' => '']) }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Suivi</a>
+                    <a href="{{ route('candidature.form') }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Postuler</a>
+                    <a href="{{ route('candidature.suivi') }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Suivi</a>
                     <a href="/admin" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Administration</a>
                 </div>
             </div>
@@ -75,7 +75,7 @@
 
         <!-- Main Content -->
         <main class="flex-1">
-            {{ $slot }}
+            @yield('content')
         </main>
 
         <!-- Footer -->
