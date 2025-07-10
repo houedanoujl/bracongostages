@@ -22,6 +22,7 @@ class Candidature extends Model
         'niveau_etude',
         'faculte',
         'objectif_stage',
+        'poste_souhaite',
         'directions_souhaitees',
         'projets_souhaites',
         'competences_souhaitees',
@@ -254,6 +255,33 @@ class Candidature extends Model
             'Bac+5' => 'Master (Bac+5)',
             'Doctorat' => 'Doctorat/PhD',
             'École Secondaire' => 'École Secondaire',
+        ];
+    }
+
+    /**
+     * Obtenir les postes disponibles pour les stages
+     */
+    public static function getPostesDisponibles(): array
+    {
+        return [
+            'Stagiaire Assistant(e) Commercial(e)',
+            'Stagiaire Assistant(e) Marketing',
+            'Stagiaire Assistant(e) Communication',
+            'Stagiaire Assistant(e) Comptable',
+            'Stagiaire Assistant(e) Financier(ère)',
+            'Stagiaire Assistant(e) RH',
+            'Stagiaire Assistant(e) Production',
+            'Stagiaire Assistant(e) Qualité',
+            'Stagiaire Assistant(e) Logistique',
+            'Stagiaire Assistant(e) Technique',
+            'Stagiaire Assistant(e) Informatique',
+            'Stagiaire Assistant(e) Juridique',
+            'Stagiaire Assistant(e) Audit',
+            'Stagiaire Développeur(euse)',
+            'Stagiaire Analyste de Données',
+            'Stagiaire Chef de Projet Junior',
+            'Stagiaire Assistant(e) Direction',
+            'Autre poste (à préciser)',
         ];
     }
 } 

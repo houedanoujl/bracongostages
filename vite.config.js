@@ -8,23 +8,16 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
             ],
-            refresh: [
-                'resources/views/**',
-                'app/Livewire/**',
-                'routes/**',
-                'config/**',
-            ],
+            refresh: true, // Activer le hot reload pour le développement
         }),
     ],
     server: {
-        host: '0.0.0.0',
         port: 5173,
+        strictPort: true, // Empêche Vite de changer de port automatiquement
+        host: true, // Permet l'accès depuis n'importe quelle IP
         hmr: {
             host: 'localhost',
             port: 5173,
-        },
-        watch: {
-            usePolling: true,
         },
     },
     build: {

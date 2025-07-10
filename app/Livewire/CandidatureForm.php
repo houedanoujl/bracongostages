@@ -8,6 +8,7 @@ use Livewire\Component;
 use Livewire\Attributes\Validate;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CandidatureForm extends Component
 {
@@ -58,23 +59,62 @@ class CandidatureForm extends Component
     #[Validate('nullable|file|mimes:pdf,jpg,jpeg,png|max:2048')]
     public $releves_notes;
 
+    #[Validate('nullable|file|mimes:pdf,doc,docx|max:2048')]
+    public $lettres_recommandation;
+
+    #[Validate('nullable|file|mimes:pdf,jpg,jpeg,png|max:2048')]
+    public $certificats_competences;
+
+    #[Validate('required|string')]
+    public $poste_souhaite = '';
+
     public $currentStep = 1;
     public $totalSteps = 4;
     public $showSuccess = false;
     public $candidatureCode = '';
+    public $validationErrors = [];
+    public $showInfoModal = true;
+    
+    // Paramètres de l'opportunité
+    public $opportunite_id = '';
+    public $opportunite_titre = '';
+    
+    // Champ établissement personnalisé
+    public $etablissement_autre = '';
 
     public function mount()
     {
         $this->periode_debut_souhaitee = now()->addMonth()->format('Y-m-d');
         $this->periode_fin_souhaitee = now()->addMonths(4)->format('Y-m-d');
+        
+        // Récupérer les paramètres d'URL si on vient d'une opportunité
+        if (request()->has('domain')) {
+            $this->opportunite_id = request()->get('domain');
+            $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
+            
+            // Pré-remplir le poste souhaité basé sur l'opportunité
+            $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
+        }
     }
 
     public function nextStep()
     {
-        $this->validateCurrentStep();
-        
-        if ($this->currentStep < $this->totalSteps) {
-            $this->currentStep++;
+        try {
+            // Réinitialiser les erreurs
+            $this->validationErrors = [];
+            $this->resetErrorBag();
+            
+            // Valider l'étape actuelle
+            $this->validateCurrentStep();
+            
+            // Si la validation passe, passer à l'étape suivante
+            if ($this->currentStep < $this->totalSteps) {
+                $this->currentStep++;
+            }
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->validationErrors = $e->validator->errors()->all();
+            session()->flash('validation_error', 'Veuillez corriger les erreurs avant de continuer.');
         }
     }
 
@@ -82,6 +122,7 @@ class CandidatureForm extends Component
     {
         if ($this->currentStep > 1) {
             $this->currentStep--;
+            $this->validationErrors = [];
         }
     }
 
@@ -104,21 +145,124 @@ class CandidatureForm extends Component
                 ]);
                 break;
             case 3:
-                $this->validate([
+                // Validation des dates plus flexible
+                $rules = [
                     'objectif_stage' => 'required|string',
+                    'poste_souhaite' => 'required|string',
                     'directions_souhaitees' => 'required|array|min:1',
-                    'periode_debut_souhaitee' => 'required|date|after:today',
+                    'periode_debut_souhaitee' => 'required|date',
                     'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
+                ];
+                
+                // Vérifier si la date de début est dans le futur (avec tolérance)
+                if ($this->periode_debut_souhaitee && \Carbon\Carbon::parse($this->periode_debut_souhaitee)->isPast()) {
+                    $rules['periode_debut_souhaitee'] = 'required|date|after_or_equal:today';
+                }
+                
+                $this->validate($rules);
+                break;
+            case 4:
+                $this->validate([
+                    'cv' => 'required|file|mimes:pdf,doc,docx|max:2048',
+                    'lettre_motivation' => 'required|file|mimes:pdf,doc,docx|max:2048',
+                    'certificat_scolarite' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'releves_notes' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'lettres_recommandation' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+                    'certificats_competences' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
                 ]);
                 break;
         }
     }
 
+    public function testSubmit()
+    {
+        Log::info('Test button clicked!');
+        session()->flash('success', 'Le bouton fonctionne !');
+    }
+    
+    public function submitSimple()
+    {
+        try {
+            Log::info('submitSimple - Test sans validation');
+            
+            // Test de création simple sans validation
+            $candidature = Candidature::create([
+                'nom' => $this->nom ?: 'Test',
+                'prenom' => $this->prenom ?: 'Test',
+                'email' => $this->email ?: 'test@test.com',
+                'telephone' => $this->telephone ?: '123456789',
+                'etablissement' => $this->etablissement ?: 'Test Etablissement',
+                'niveau_etude' => $this->niveau_etude ?: 'L3',
+                'faculte' => $this->faculte ?: 'Test',
+                'objectif_stage' => $this->objectif_stage ?: 'Test objectif',
+                'poste_souhaite' => $this->poste_souhaite ?: 'Stagiaire Assistant(e) Commercial(e)',
+                'directions_souhaitees' => $this->directions_souhaitees ?: ['Direction de Production'],
+                'periode_debut_souhaitee' => $this->periode_debut_souhaitee ?: now()->addMonth()->format('Y-m-d'),
+                'periode_fin_souhaitee' => $this->periode_fin_souhaitee ?: now()->addMonths(4)->format('Y-m-d'),
+                'statut' => StatutCandidature::NON_TRAITE,
+            ]);
+
+            Log::info('Candidature simple créée avec ID: ' . $candidature->id);
+            
+            $this->candidatureCode = $candidature->code_suivi;
+            $this->showSuccess = true;
+            session()->flash('success', 'Candidature créée avec succès ! Code: ' . $this->candidatureCode);
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur submitSimple: ' . $e->getMessage());
+            session()->flash('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
     public function submitCandidature()
     {
-        $this->validate();
-
+        $this->validationErrors = [];
+        
         try {
+            Log::info('Début de submitCandidature - Étape: ' . $this->currentStep);
+            Log::info('Données:', [
+                'nom' => $this->nom,
+                'email' => $this->email,
+                'cv' => $this->cv ? 'Présent' : 'Absent'
+            ]);
+            
+            // Validation complète de tous les champs
+            $validationRules = [
+                'nom' => 'required|string|max:255',
+                'prenom' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'telephone' => 'required|string|max:20',
+                'etablissement' => 'required|string',
+                'niveau_etude' => 'required|string',
+                'objectif_stage' => 'required|string',
+                'poste_souhaite' => 'required|string',
+                'directions_souhaitees' => 'required|array|min:1',
+                'periode_debut_souhaitee' => 'required|date',
+                'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
+            ];
+            
+            // Validation des fichiers seulement s'ils sont présents
+            if ($this->cv) {
+                $validationRules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
+            } else {
+                $validationRules['cv'] = 'required';
+            }
+            
+            if ($this->lettre_motivation) {
+                $validationRules['lettre_motivation'] = 'file|mimes:pdf,doc,docx|max:2048';
+            } else {
+                $validationRules['lettre_motivation'] = 'required';
+            }
+            
+            if ($this->certificat_scolarite) {
+                $validationRules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:2048';
+            } else {
+                $validationRules['certificat_scolarite'] = 'required';
+            }
+            
+            $this->validate($validationRules);
+            Log::info('Validation réussie');
+
             // Créer la candidature
             $candidature = Candidature::create([
                 'nom' => $this->nom,
@@ -129,20 +273,32 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
+                'poste_souhaite' => $this->poste_souhaite,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
                 'periode_fin_souhaitee' => $this->periode_fin_souhaitee,
                 'statut' => StatutCandidature::NON_TRAITE,
             ]);
 
+            Log::info('Candidature créée avec ID: ' . $candidature->id);
+
             // Sauvegarder les documents
             $this->saveDocuments($candidature);
+            Log::info('Documents sauvegardés');
 
             $this->candidatureCode = $candidature->code_suivi;
             $this->showSuccess = true;
             $this->reset(['currentStep']);
+            
+            Log::info('Candidature finalisée avec code: ' . $this->candidatureCode);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Erreur de validation:', $e->validator->errors()->toArray());
+            $this->validationErrors = $e->validator->errors()->all();
+            session()->flash('validation_error', 'Veuillez corriger les erreurs ci-dessous avant de continuer.');
         } catch (\Exception $e) {
+            Log::error('Erreur générale soumission candidature: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             session()->flash('error', 'Une erreur est survenue lors de la soumission de votre candidature. Veuillez réessayer.');
         }
     }
@@ -154,6 +310,8 @@ class CandidatureForm extends Component
             'lettre_motivation' => $this->lettre_motivation,
             'certificat_scolarite' => $this->certificat_scolarite,
             'releves_notes' => $this->releves_notes,
+            'lettres_recommandation' => $this->lettres_recommandation,
+            'certificats_competences' => $this->certificats_competences,
         ];
 
         foreach ($documents as $type => $file) {
@@ -170,11 +328,23 @@ class CandidatureForm extends Component
         }
     }
 
+    public function closeInfoModal()
+    {
+        $this->showInfoModal = false;
+    }
+
+    public function openInfoModal()
+    {
+        $this->showInfoModal = true;
+    }
+
     public function resetForm()
     {
         $this->reset();
         $this->showSuccess = false;
         $this->currentStep = 1;
+        $this->validationErrors = [];
+        $this->showInfoModal = true;
         $this->mount();
     }
 
@@ -184,6 +354,41 @@ class CandidatureForm extends Component
             'etablissements' => Candidature::getEtablissements(),
             'niveaux_etude' => Candidature::getNiveauxEtude(),
             'directions_disponibles' => Candidature::getDirectionsDisponibles(),
+            'postes_disponibles' => Candidature::getPostesDisponibles(),
         ])->layout('layouts.modern');
+    }
+
+    /**
+     * Récupérer le titre de l'opportunité basé sur l'ID
+     */
+    private function getOpportuniteTitle($opportuniteId)
+    {
+        $opportunites = [
+            'production' => 'Production & Qualité',
+            'marketing' => 'Marketing & Commercial',
+            'technique' => 'Technique & Maintenance',
+            'rh' => 'Ressources Humaines',
+            'finance' => 'Finance & Comptabilité',
+            'it' => 'IT & Transformation Digitale',
+        ];
+
+        return $opportunites[$opportuniteId] ?? 'Opportunité générale';
+    }
+
+    /**
+     * Mapper l'opportunité vers un poste suggéré
+     */
+    private function mapOpportuniteToPoste($opportuniteId)
+    {
+        $mapping = [
+            'production' => 'Stagiaire Assistant(e) Production',
+            'marketing' => 'Stagiaire Assistant(e) Marketing',
+            'technique' => 'Stagiaire Assistant(e) Technique',
+            'rh' => 'Stagiaire Assistant(e) RH',
+            'finance' => 'Stagiaire Assistant(e) Financier(ère)',
+            'it' => 'Stagiaire Développeur(euse)',
+        ];
+
+        return $mapping[$opportuniteId] ?? '';
     }
 } 
