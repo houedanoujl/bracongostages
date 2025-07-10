@@ -37,33 +37,8 @@
     <div class="absolute bottom-40 left-20 w-20 h-20 bg-white/10 rounded-full animate-float" style="animation-delay: 2s;"></div>
 </section>
 
-<!-- Section Statistiques -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="text-center animate-on-scroll group">
-                <div class="text-3xl md:text-4xl font-bold text-bracongo-red mb-2 transition-transform duration-300 group-hover:scale-110" 
-                     data-counter="50">0</div>
-                <div class="text-sm md:text-base text-bracongo-gray-600">Stagiaires par an</div>
-            </div>
-            <div class="text-center animate-on-scroll group" style="animation-delay: 0.1s;">
-                <div class="text-3xl md:text-4xl font-bold text-bracongo-red mb-2 transition-transform duration-300 group-hover:scale-110" 
-                     data-counter="12">0</div>
-                <div class="text-sm md:text-base text-bracongo-gray-600">Directions métiers</div>
-            </div>
-            <div class="text-center animate-on-scroll group" style="animation-delay: 0.2s;">
-                <div class="text-3xl md:text-4xl font-bold text-bracongo-red mb-2 transition-transform duration-300 group-hover:scale-110" 
-                     data-counter="95">0</div>
-                <div class="text-sm md:text-base text-bracongo-gray-600">Taux de satisfaction</div>
-            </div>
-            <div class="text-center animate-on-scroll group" style="animation-delay: 0.3s;">
-                <div class="text-3xl md:text-4xl font-bold text-bracongo-red mb-2 transition-transform duration-300 group-hover:scale-110" 
-                     data-counter="30">0</div>
-                <div class="text-sm md:text-base text-bracongo-gray-600">Années d'expérience</div>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- Section Statistiques Dynamiques -->
+@livewire('home-statistics')
 
 <!-- Section Opportunités de Stage -->
 <section class="section-modern bg-bracongo-gray-50" id="opportunites">

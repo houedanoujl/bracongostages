@@ -203,36 +203,72 @@ class CandidatureForm extends Component
     public function submitSimple()
     {
         try {
-            Log::info('submitSimple - Test sans validation');
+            Log::info('submitSimple - Soumission de candidature');
             
-            // Test de création simple sans validation
+            // Validation minimale des champs requis
+            $validationRules = [
+                'nom' => 'required|string|max:255',
+                'prenom' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'telephone' => 'required|string|max:20',
+                'etablissement' => 'required|string',
+                'niveau_etude' => 'required|string',
+                'objectif_stage' => 'required|string',
+                'poste_souhaite' => 'required|string',
+                'directions_souhaitees' => 'required|array|min:1',
+                'periode_debut_souhaitee' => 'required|date',
+                'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
+            ];
+            
+            // Si "Autres" est sélectionné, valider le champ établissement_autre
+            if ($this->etablissement === 'Autres') {
+                $validationRules['etablissement_autre'] = 'required|string|max:255';
+            }
+            
+            $this->validate($validationRules);
+            Log::info('Validation réussie pour submitSimple');
+            
+            // Créer la candidature
             $candidature = Candidature::create([
-                'nom' => $this->nom ?: 'Test',
-                'prenom' => $this->prenom ?: 'Test',
-                'email' => $this->email ?: 'test@test.com',
-                'telephone' => $this->telephone ?: '123456789',
-                'etablissement' => $this->etablissement ?: 'Test Etablissement',
-                'etablissement_autre' => $this->etablissement === 'Autres' ? ($this->etablissement_autre ?: 'Test Autre') : null,
-                'niveau_etude' => $this->niveau_etude ?: 'L3',
-                'faculte' => $this->faculte ?: 'Test',
-                'objectif_stage' => $this->objectif_stage ?: 'Test objectif',
-                'poste_souhaite' => $this->poste_souhaite ?: 'Stagiaire Assistant(e) Commercial(e)',
+                'nom' => $this->nom,
+                'prenom' => $this->prenom,
+                'email' => $this->email,
+                'telephone' => $this->telephone,
+                'etablissement' => $this->etablissement,
+                'etablissement_autre' => $this->etablissement === 'Autres' ? $this->etablissement_autre : null,
+                'niveau_etude' => $this->niveau_etude,
+                'faculte' => $this->faculte,
+                'objectif_stage' => $this->objectif_stage,
+                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
-                'directions_souhaitees' => $this->directions_souhaitees ?: ['Direction de Production'],
-                'periode_debut_souhaitee' => $this->periode_debut_souhaitee ?: now()->addMonth()->format('Y-m-d'),
-                'periode_fin_souhaitee' => $this->periode_fin_souhaitee ?: now()->addMonths(4)->format('Y-m-d'),
+                'directions_souhaitees' => $this->directions_souhaitees,
+                'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
+                'periode_fin_souhaitee' => $this->periode_fin_souhaitee,
                 'statut' => StatutCandidature::NON_TRAITE,
             ]);
 
-            Log::info('Candidature simple créée avec ID: ' . $candidature->id);
+            Log::info('Candidature créée avec ID: ' . $candidature->id);
+            
+            // Sauvegarder les documents s'ils existent
+            if ($this->cv || $this->lettre_motivation || $this->certificat_scolarite) {
+                $this->saveDocuments($candidature);
+                Log::info('Documents sauvegardés');
+            }
             
             $this->candidatureCode = $candidature->code_suivi;
             $this->showSuccess = true;
-            session()->flash('success', 'Candidature créée avec succès ! Code: ' . $this->candidatureCode);
+            $this->reset(['currentStep']);
             
+            Log::info('Candidature finalisée avec code: ' . $this->candidatureCode);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Erreur de validation submitSimple:', $e->validator->errors()->toArray());
+            $this->validationErrors = $e->validator->errors()->all();
+            session()->flash('validation_error', 'Veuillez corriger les erreurs ci-dessous avant de continuer.');
         } catch (\Exception $e) {
             Log::error('Erreur submitSimple: ' . $e->getMessage());
-            session()->flash('error', 'Erreur: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            session()->flash('error', 'Une erreur est survenue lors de la soumission de votre candidature. Veuillez réessayer.');
         }
     }
 
@@ -345,14 +381,22 @@ class CandidatureForm extends Component
 
         foreach ($documents as $type => $file) {
             if ($file) {
-                $path = $file->store('documents', 'public');
-                
-                $candidature->documents()->create([
-                    'type_document' => $type,
-                    'nom_original' => $file->getClientOriginalName(),
-                    'chemin_fichier' => $path,
-                    'taille_fichier' => $file->getSize(),
-                ]);
+                try {
+                    $path = $file->store('documents', 'public');
+                    
+                    $candidature->documents()->create([
+                        'type_document' => $type,
+                        'nom_original' => $file->getClientOriginalName(),
+                        'chemin_fichier' => $path,
+                        'taille_fichier' => $file->getSize(),
+                        'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
+                    ]);
+                    
+                    Log::info("Document $type sauvegardé: " . $file->getClientOriginalName());
+                } catch (\Exception $e) {
+                    Log::error("Erreur sauvegarde document $type: " . $e->getMessage());
+                    // Continue avec les autres documents même si un échoue
+                }
             }
         }
     }
@@ -390,12 +434,12 @@ class CandidatureForm extends Component
     public function render()
     {
         return view('livewire.candidature-form', [
-            'etablissements' => Candidature::getEtablissements(),
-            'niveaux_etude' => Candidature::getNiveauxEtude(),
-            'directions_disponibles' => Candidature::getDirectionsDisponibles(),
-            'postes_disponibles' => Candidature::getPostesDisponibles(),
+            'etablissements' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_ETABLISSEMENT),
+            'niveaux_etude' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_NIVEAU_ETUDE),
+            'directions_disponibles' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_DIRECTION),
+            'postes_disponibles' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_POSTE),
             'opportunites_disponibles' => $this->getOpportunitesDisponibles(),
-        ])->layout('layouts.modern');
+        ])->layout('layouts.simple');
     }
 
     /**
@@ -437,13 +481,6 @@ class CandidatureForm extends Component
      */
     private function getOpportunitesDisponibles()
     {
-        return [
-            'production' => 'Production & Qualité',
-            'marketing' => 'Marketing & Commercial',
-            'technique' => 'Technique & Maintenance',
-            'rh' => 'Ressources Humaines',
-            'finance' => 'Finance & Comptabilité',
-            'it' => 'IT & Transformation Digitale',
-        ];
+        return \App\Models\Opportunite::getOpportuniteOptions();
     }
 } 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatutCandidature;
+use App\Models\ConfigurationListe;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -208,19 +209,27 @@ class Candidature extends Model
      */
     public static function getDirectionsDisponibles(): array
     {
+        // Utiliser les configurations si disponibles, sinon fallback
+        $configurationsDisponibles = ConfigurationListe::getOptions(ConfigurationListe::TYPE_DIRECTION);
+        
+        if (!empty($configurationsDisponibles)) {
+            return $configurationsDisponibles;
+        }
+
+        // Fallback vers les valeurs en dur
         return [
-            'Direction Générale',
-            'Direction Financière et Comptable',
-            'Direction des Ressources Humaines',
-            'Direction Marketing et Communication',
-            'Direction Commerciale',
-            'Direction de Production',
-            'Direction Technique',
-            'Direction Qualité',
-            'Direction Logistique',
-            'Direction Informatique',
-            'Direction Juridique',
-            'Direction Audit Interne',
+            'direction_generale' => 'Direction Générale',
+            'direction_financiere' => 'Direction Financière et Comptable',
+            'direction_rh' => 'Direction des Ressources Humaines',
+            'direction_marketing' => 'Direction Marketing et Communication',
+            'direction_commerciale' => 'Direction Commerciale',
+            'direction_production' => 'Direction de Production',
+            'direction_technique' => 'Direction Technique',
+            'direction_qualite' => 'Direction Qualité',
+            'direction_logistique' => 'Direction Logistique',
+            'direction_informatique' => 'Direction Informatique',
+            'direction_juridique' => 'Direction Juridique',
+            'direction_audit' => 'Direction Audit Interne',
         ];
     }
 
@@ -229,18 +238,26 @@ class Candidature extends Model
      */
     public static function getEtablissements(): array
     {
+        // Utiliser les configurations si disponibles, sinon fallback
+        $configurationsDisponibles = ConfigurationListe::getOptions(ConfigurationListe::TYPE_ETABLISSEMENT);
+        
+        if (!empty($configurationsDisponibles)) {
+            return $configurationsDisponibles;
+        }
+
+        // Fallback vers les valeurs en dur
         return [
-            'Université de Kinshasa (UNIKIN)',
-            'Université Libre de Kinshasa (ULK)',
-            'Université Protestante du Congo (UPC)',
-            'Institut Supérieur de Commerce (ISC)',
-            'Institut Supérieur de Techniques Appliquées (ISTA)',
-            'École Supérieure de Gestion (ESG)',
-            'Institut Supérieur Pédagogique (ISP)',
-            'Université Pédagogique Nationale (UPN)',
-            'Institut Facultaire des Sciences de l\'Information et de la Communication (IFASIC)',
-            'École Supérieure des Ingénieurs Industriels (ESII)',
-            'Autres',
+            'unikin' => 'Université de Kinshasa (UNIKIN)',
+            'ulk' => 'Université Libre de Kinshasa (ULK)',
+            'upc' => 'Université Protestante du Congo (UPC)',
+            'isc' => 'Institut Supérieur de Commerce (ISC)',
+            'ista' => 'Institut Supérieur de Techniques Appliquées (ISTA)',
+            'esg' => 'École Supérieure de Gestion (ESG)',
+            'isp' => 'Institut Supérieur Pédagogique (ISP)',
+            'upn' => 'Université Pédagogique Nationale (UPN)',
+            'ifasic' => 'Institut Facultaire des Sciences de l\'Information et de la Communication (IFASIC)',
+            'esii' => 'École Supérieure des Ingénieurs Industriels (ESII)',
+            'autres' => 'Autres',
         ];
     }
 
@@ -249,14 +266,22 @@ class Candidature extends Model
      */
     public static function getNiveauxEtude(): array
     {
+        // Utiliser les configurations si disponibles, sinon fallback
+        $configurationsDisponibles = ConfigurationListe::getOptions(ConfigurationListe::TYPE_NIVEAU_ETUDE);
+        
+        if (!empty($configurationsDisponibles)) {
+            return $configurationsDisponibles;
+        }
+
+        // Fallback vers les valeurs en dur
         return [
-            'Bac+1' => 'Première année (Bac+1)',
-            'Bac+2' => 'Deuxième année (Bac+2)', 
-            'Bac+3' => 'Licence/Graduat (Bac+3)',
-            'Bac+4' => 'Maîtrise (Bac+4)',
-            'Bac+5' => 'Master (Bac+5)',
-            'Doctorat' => 'Doctorat/PhD',
-            'École Secondaire' => 'École Secondaire',
+            'ecole_secondaire' => 'École Secondaire',
+            'bac_1' => 'Première année (Bac+1)',
+            'bac_2' => 'Deuxième année (Bac+2)',
+            'bac_3' => 'Licence/Graduat (Bac+3)',
+            'bac_4' => 'Maîtrise (Bac+4)',
+            'bac_5' => 'Master (Bac+5)',
+            'doctorat' => 'Doctorat/PhD',
         ];
     }
 
@@ -265,25 +290,33 @@ class Candidature extends Model
      */
     public static function getPostesDisponibles(): array
     {
+        // Utiliser les configurations si disponibles, sinon fallback
+        $configurationsDisponibles = ConfigurationListe::getOptions(ConfigurationListe::TYPE_POSTE);
+        
+        if (!empty($configurationsDisponibles)) {
+            return $configurationsDisponibles;
+        }
+
+        // Fallback vers les valeurs en dur
         return [
-            'Stagiaire Assistant(e) Commercial(e)',
-            'Stagiaire Assistant(e) Marketing',
-            'Stagiaire Assistant(e) Communication',
-            'Stagiaire Assistant(e) Comptable',
-            'Stagiaire Assistant(e) Financier(ère)',
-            'Stagiaire Assistant(e) RH',
-            'Stagiaire Assistant(e) Production',
-            'Stagiaire Assistant(e) Qualité',
-            'Stagiaire Assistant(e) Logistique',
-            'Stagiaire Assistant(e) Technique',
-            'Stagiaire Assistant(e) Informatique',
-            'Stagiaire Assistant(e) Juridique',
-            'Stagiaire Assistant(e) Audit',
-            'Stagiaire Développeur(euse)',
-            'Stagiaire Analyste de Données',
-            'Stagiaire Chef de Projet Junior',
-            'Stagiaire Assistant(e) Direction',
-            'Autre poste (à préciser)',
+            'assistant_commercial' => 'Stagiaire Assistant(e) Commercial(e)',
+            'assistant_marketing' => 'Stagiaire Assistant(e) Marketing',
+            'assistant_communication' => 'Stagiaire Assistant(e) Communication',
+            'assistant_comptable' => 'Stagiaire Assistant(e) Comptable',
+            'assistant_financier' => 'Stagiaire Assistant(e) Financier(ère)',
+            'assistant_rh' => 'Stagiaire Assistant(e) RH',
+            'assistant_production' => 'Stagiaire Assistant(e) Production',
+            'assistant_qualite' => 'Stagiaire Assistant(e) Qualité',
+            'assistant_logistique' => 'Stagiaire Assistant(e) Logistique',
+            'assistant_technique' => 'Stagiaire Assistant(e) Technique',
+            'assistant_informatique' => 'Stagiaire Assistant(e) Informatique',
+            'assistant_juridique' => 'Stagiaire Assistant(e) Juridique',
+            'assistant_audit' => 'Stagiaire Assistant(e) Audit',
+            'developpeur' => 'Stagiaire Développeur(euse)',
+            'analyste_donnees' => 'Stagiaire Analyste de Données',
+            'chef_projet_junior' => 'Stagiaire Chef de Projet Junior',
+            'assistant_direction' => 'Stagiaire Assistant(e) Direction',
+            'autre_poste' => 'Autre poste (à préciser)',
         ];
     }
 } 

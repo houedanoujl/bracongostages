@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-gradient-to-br from-yellow-50 via-red-50 to-green-50 py-12">
     <!-- Modal d'information -->
     @if($showInfoModal)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border-t-4 border-red-600">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" wire:click.self="closeInfoModal">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border-t-4 border-red-600" @click.stop>
                 <!-- Header du modal -->
                 <div class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 px-6 py-4 rounded-t-xl">
                     <div class="flex items-center justify-between">
@@ -115,9 +115,14 @@
                 <!-- Footer du modal -->
                 <div class="bg-gray-50 px-6 py-4 rounded-b-xl border-t">
                     <div class="flex justify-between items-center">
-                        <button wire:click="openInfoModal" class="text-sm text-red-600 hover:text-red-800 transition-colors">
-                            Revoir ces informations plus tard
-                        </button>
+                        <div class="space-x-2">
+                            <button wire:click="testSubmit" class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                                Test Livewire
+                            </button>
+                            <button wire:click="openInfoModal" class="text-sm text-red-600 hover:text-red-800 transition-colors">
+                                Revoir ces informations plus tard
+                            </button>
+                        </div>
                         <button wire:click="closeInfoModal" 
                                 class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-medium rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md">
                             Commencer ma candidature
@@ -195,7 +200,7 @@
                         
                         <div class="flex flex-col sm:flex-row gap-4 items-end">
                             <div class="flex-1">
-                                <select wire:model="opportunite_selectionnee" 
+                                <select wire:model.live="opportunite_selectionnee" 
                                         class="w-full rounded-lg border-yellow-400 border-2 px-4 py-3 focus:border-red-600 focus:ring-red-600 bg-white">
                                     <option value="">-- Choisissez une opportunité --</option>
                                     @foreach($opportunites_disponibles as $id => $titre)
@@ -204,7 +209,7 @@
                                 </select>
                             </div>
                             <button wire:click="selectionnerOpportunite" 
-                                    @if(!$opportunite_selectionnee) disabled @endif
+                                    {{ $opportunite_selectionnee ? '' : 'disabled' }}
                                     class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-lg hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md">
                                 Confirmer
                             </button>
@@ -495,24 +500,14 @@
                                     </svg>
                                 </button>
                             @else
-                                <div class="space-x-2">
-                                    <button type="button" wire:click="testSubmit"
-                                            class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all duration-200">
-                                        Test Livewire
-                                    </button>
-                                    <button type="button" wire:click="submitSimple"
-                                            class="inline-flex items-center px-4 py-2 border border-purple-500 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all duration-200">
-                                        Test Simple
-                                    </button>
-                                    <button type="submit" wire:loading.attr="disabled"
-                                            class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 transition-all duration-200 shadow-md">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                                        </svg>
-                                        <span wire:loading.remove wire:target="submitCandidature">Soumettre ma candidature</span>
-                                        <span wire:loading wire:target="submitCandidature">Envoi en cours...</span>
-                                    </button>
-                                </div>
+                                <button type="submit" wire:loading.attr="disabled"
+                                        class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 transition-all duration-200 shadow-md">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                    <span wire:loading.remove wire:target="submitCandidature">Soumettre ma candidature</span>
+                                    <span wire:loading wire:target="submitCandidature">Envoi en cours...</span>
+                                </button>
                             @endif
                         </div>
                     </div>
@@ -524,6 +519,19 @@
         @if (session()->has('error'))
             <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                 <p class="text-sm text-red-700">{{ session('error') }}</p>
+            </div>
+        @endif
+
+        <!-- Messages de debug -->
+        @if (session()->has('info'))
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-700">{{ session('info') }}</p>
+            </div>
+        @endif
+
+        @if (session()->has('success'))
+            <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-700">{{ session('success') }}</p>
             </div>
         @endif
     </div>
