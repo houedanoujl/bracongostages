@@ -367,12 +367,6 @@ class CandidatureForm extends Component
         $this->showInfoModal = true;
     }
     
-    public function testWireClick()
-    {
-        Log::info('Test wire:click fonctionne !');
-        session()->flash('success', 'Le wire:click fonctionne correctement !');
-    }
-
     public function selectionnerOpportunite()
     {
         if ($this->opportunite_selectionnee) {

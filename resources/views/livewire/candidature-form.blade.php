@@ -500,14 +500,6 @@
                                             class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all duration-200">
                                         Test Livewire
                                     </button>
-                                    <button type="button" wire:click="testWireClick"
-                                            class="inline-flex items-center px-4 py-2 border border-red-500 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200">
-                                        Test Wire Click
-                                    </button>
-                                    <button type="button" wire:click="closeInfoModal"
-                                            class="inline-flex items-center px-4 py-2 border border-green-500 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition-all duration-200">
-                                        Test Close Modal
-                                    </button>
                                     <button type="button" wire:click="submitSimple"
                                             class="inline-flex items-center px-4 py-2 border border-purple-500 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all duration-200">
                                         Test Simple
