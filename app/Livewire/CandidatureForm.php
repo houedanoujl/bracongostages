@@ -81,6 +81,10 @@ class CandidatureForm extends Component
     
     // Champ établissement personnalisé
     public $etablissement_autre = '';
+    
+    // Sélection d'opportunité si pas venue d'un lien
+    public $opportunite_selectionnee = '';
+    public $afficher_selection_opportunite = false;
 
     public function mount()
     {
@@ -94,6 +98,9 @@ class CandidatureForm extends Component
             
             // Pré-remplir le poste souhaité basé sur l'opportunité
             $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
+        } else {
+            // Si pas d'opportunité sélectionnée, afficher la sélection
+            $this->afficher_selection_opportunite = true;
         }
     }
 
@@ -103,6 +110,12 @@ class CandidatureForm extends Component
             // Réinitialiser les erreurs
             $this->validationErrors = [];
             $this->resetErrorBag();
+            
+            // Vérifier si une opportunité est sélectionnée
+            if ($this->afficher_selection_opportunite) {
+                session()->flash('validation_error', 'Veuillez sélectionner une opportunité avant de continuer.');
+                return;
+            }
             
             // Valider l'étape actuelle
             $this->validateCurrentStep();
@@ -138,11 +151,18 @@ class CandidatureForm extends Component
                 ]);
                 break;
             case 2:
-                $this->validate([
+                $rules = [
                     'etablissement' => 'required|string',
                     'niveau_etude' => 'required|string',
                     'faculte' => 'nullable|string|max:255',
-                ]);
+                ];
+                
+                // Si "Autres" est sélectionné, valider le champ établissement_autre
+                if ($this->etablissement === 'Autres') {
+                    $rules['etablissement_autre'] = 'required|string|max:255';
+                }
+                
+                $this->validate($rules);
                 break;
             case 3:
                 // Validation des dates plus flexible
@@ -192,10 +212,12 @@ class CandidatureForm extends Component
                 'email' => $this->email ?: 'test@test.com',
                 'telephone' => $this->telephone ?: '123456789',
                 'etablissement' => $this->etablissement ?: 'Test Etablissement',
+                'etablissement_autre' => $this->etablissement === 'Autres' ? ($this->etablissement_autre ?: 'Test Autre') : null,
                 'niveau_etude' => $this->niveau_etude ?: 'L3',
                 'faculte' => $this->faculte ?: 'Test',
                 'objectif_stage' => $this->objectif_stage ?: 'Test objectif',
                 'poste_souhaite' => $this->poste_souhaite ?: 'Stagiaire Assistant(e) Commercial(e)',
+                'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees ?: ['Direction de Production'],
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee ?: now()->addMonth()->format('Y-m-d'),
                 'periode_fin_souhaitee' => $this->periode_fin_souhaitee ?: now()->addMonths(4)->format('Y-m-d'),
@@ -241,6 +263,11 @@ class CandidatureForm extends Component
                 'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
             ];
             
+            // Si "Autres" est sélectionné, valider le champ établissement_autre
+            if ($this->etablissement === 'Autres') {
+                $validationRules['etablissement_autre'] = 'required|string|max:255';
+            }
+            
             // Validation des fichiers seulement s'ils sont présents
             if ($this->cv) {
                 $validationRules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
@@ -270,10 +297,12 @@ class CandidatureForm extends Component
                 'email' => $this->email,
                 'telephone' => $this->telephone,
                 'etablissement' => $this->etablissement,
+                'etablissement_autre' => $this->etablissement === 'Autres' ? $this->etablissement_autre : null,
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
                 'poste_souhaite' => $this->poste_souhaite,
+                'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
                 'periode_fin_souhaitee' => $this->periode_fin_souhaitee,
@@ -337,6 +366,22 @@ class CandidatureForm extends Component
     {
         $this->showInfoModal = true;
     }
+    
+    public function testWireClick()
+    {
+        Log::info('Test wire:click fonctionne !');
+        session()->flash('success', 'Le wire:click fonctionne correctement !');
+    }
+
+    public function selectionnerOpportunite()
+    {
+        if ($this->opportunite_selectionnee) {
+            $this->opportunite_id = $this->opportunite_selectionnee;
+            $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
+            $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
+            $this->afficher_selection_opportunite = false;
+        }
+    }
 
     public function resetForm()
     {
@@ -355,6 +400,7 @@ class CandidatureForm extends Component
             'niveaux_etude' => Candidature::getNiveauxEtude(),
             'directions_disponibles' => Candidature::getDirectionsDisponibles(),
             'postes_disponibles' => Candidature::getPostesDisponibles(),
+            'opportunites_disponibles' => $this->getOpportunitesDisponibles(),
         ])->layout('layouts.modern');
     }
 
@@ -390,5 +436,20 @@ class CandidatureForm extends Component
         ];
 
         return $mapping[$opportuniteId] ?? '';
+    }
+
+    /**
+     * Obtenir toutes les opportunités disponibles
+     */
+    private function getOpportunitesDisponibles()
+    {
+        return [
+            'production' => 'Production & Qualité',
+            'marketing' => 'Marketing & Commercial',
+            'technique' => 'Technique & Maintenance',
+            'rh' => 'Ressources Humaines',
+            'finance' => 'Finance & Comptabilité',
+            'it' => 'IT & Transformation Digitale',
+        ];
     }
 } 

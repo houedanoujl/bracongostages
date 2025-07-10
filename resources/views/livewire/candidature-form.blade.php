@@ -2,7 +2,7 @@
     <!-- Modal d'information -->
     @if($showInfoModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-t-4 border-red-600">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border-t-4 border-red-600">
                 <!-- Header du modal -->
                 <div class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 px-6 py-4 rounded-t-xl">
                     <div class="flex items-center justify-between">
@@ -169,7 +169,12 @@
                             <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center mr-3 shadow-md">
                                 <span class="text-red-800 font-bold text-lg">B</span>
                             </div>
-                            <h1 class="text-3xl font-bold text-white">Candidature de Stage</h1>
+                            <div>
+                                <h1 class="text-3xl font-bold text-white">Candidature de Stage</h1>
+                                @if($opportunite_titre)
+                                    <p class="text-yellow-200 text-sm">{{ $opportunite_titre }}</p>
+                                @endif
+                            </div>
                         </div>
                         <button wire:click="openInfoModal" 
                                 class="inline-flex items-center px-3 py-2 text-sm text-yellow-200 hover:text-white border border-yellow-300 hover:border-white rounded-lg transition-colors duration-200">
@@ -181,6 +186,35 @@
                     </div>
                     <p class="text-yellow-200 mt-2">Rejoignez l'équipe BRACONGO et développez vos compétences</p>
                 </div>
+
+                <!-- Sélection d'opportunité si pas venue d'un lien -->
+                @if($afficher_selection_opportunite)
+                    <div class="mx-8 mt-4 bg-gradient-to-r from-yellow-50 to-green-50 border-2 border-yellow-400 rounded-lg p-6 shadow-md">
+                        <h3 class="text-lg font-semibold text-red-800 mb-3">📋 Sélectionnez l'opportunité qui vous intéresse</h3>
+                        <p class="text-sm text-red-700 mb-4">Choisissez le domaine dans lequel vous souhaitez effectuer votre stage :</p>
+                        
+                        <div class="flex flex-col sm:flex-row gap-4 items-end">
+                            <div class="flex-1">
+                                <select wire:model="opportunite_selectionnee" 
+                                        class="w-full rounded-lg border-yellow-400 border-2 px-4 py-3 focus:border-red-600 focus:ring-red-600 bg-white">
+                                    <option value="">-- Choisissez une opportunité --</option>
+                                    @foreach($opportunites_disponibles as $id => $titre)
+                                        <option value="{{ $id }}">{{ $titre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button wire:click="selectionnerOpportunite" 
+                                    @if(!$opportunite_selectionnee) disabled @endif
+                                    class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-lg hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md">
+                                Confirmer
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3 text-xs text-red-600">
+                            💡 <strong>Conseil :</strong> Cette sélection nous aide à personnaliser votre expérience et à mieux traiter votre candidature.
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Affichage des erreurs -->
                 @if(session()->has('validation_error') || count($validationErrors) > 0)
@@ -267,7 +301,7 @@
                             
                             <div>
                                 <label for="etablissement" class="block text-sm font-medium text-gray-700 mb-2">Établissement *</label>
-                                <select wire:model="etablissement" id="etablissement" 
+                                <select wire:model.live="etablissement" id="etablissement" 
                                         class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('etablissement') border-red-500 @enderror">
                                     <option value="">Sélectionnez votre établissement</option>
                                     @foreach($etablissements as $etablissement_option)
@@ -275,6 +309,16 @@
                                     @endforeach
                                 </select>
                                 @error('etablissement') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                
+                                @if($etablissement === 'Autres')
+                                    <div class="mt-4">
+                                        <label for="etablissement_autre" class="block text-sm font-medium text-gray-700 mb-2">Nom de votre établissement *</label>
+                                        <input wire:model="etablissement_autre" type="text" id="etablissement_autre" 
+                                               placeholder="Saisissez le nom de votre établissement"
+                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('etablissement_autre') border-red-500 @enderror">
+                                        @error('etablissement_autre') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,6 +499,14 @@
                                     <button type="button" wire:click="testSubmit"
                                             class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all duration-200">
                                         Test Livewire
+                                    </button>
+                                    <button type="button" wire:click="testWireClick"
+                                            class="inline-flex items-center px-4 py-2 border border-red-500 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200">
+                                        Test Wire Click
+                                    </button>
+                                    <button type="button" wire:click="closeInfoModal"
+                                            class="inline-flex items-center px-4 py-2 border border-green-500 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition-all duration-200">
+                                        Test Close Modal
                                     </button>
                                     <button type="button" wire:click="submitSimple"
                                             class="inline-flex items-center px-4 py-2 border border-purple-500 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all duration-200">
