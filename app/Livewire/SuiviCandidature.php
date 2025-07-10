@@ -19,7 +19,15 @@ class SuiviCandidature extends Component
     {
         if ($code) {
             $this->searchCode = $code;
-            $this->searchCandidature();
+            // Charger directement la candidature sans redirection
+            $this->candidature = Candidature::where('code_suivi', $code)
+                ->with(['documents', 'evaluation'])
+                ->first();
+            
+            if ($this->candidature) {
+                $this->showDetails = true;
+                $this->code = $this->candidature->code_suivi;
+            }
         }
     }
 
@@ -29,13 +37,13 @@ class SuiviCandidature extends Component
             'searchCode' => 'required|string|min:3'
         ]);
 
-        $this->candidature = Candidature::where('code_suivi', $this->searchCode)
+        $candidature = Candidature::where('code_suivi', $this->searchCode)
             ->with(['documents', 'evaluation'])
             ->first();
 
-        if ($this->candidature) {
-            $this->showDetails = true;
-            $this->code = $this->candidature->code_suivi;
+        if ($candidature) {
+            // Redirection vers l'URL avec le code de suivi
+            return $this->redirect('/suivi/' . $candidature->code_suivi);
         } else {
             session()->flash('error', 'Aucune candidature trouvée avec ce code de suivi.');
             $this->showDetails = false;
