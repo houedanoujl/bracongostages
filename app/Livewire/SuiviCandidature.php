@@ -165,6 +165,13 @@ class SuiviCandidature extends Component
         return $steps;
     }
 
+    public function testLivewire()
+    {
+        \Log::info('Test Livewire appelé !');
+        $this->searchCode = 'TEST-LIVEWIRE';
+        session()->flash('message', 'Livewire fonctionne !');
+    }
+
     public function render()
     {
         return view('livewire.suivi-candidature', [

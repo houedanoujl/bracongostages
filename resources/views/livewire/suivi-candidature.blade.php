@@ -1,5 +1,14 @@
 <div class="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Debug info -->
+        <div class="mb-4 p-4 bg-yellow-100 text-black text-sm rounded">
+            <strong>Debug:</strong> 
+            searchCode: "{{ $searchCode }}" | 
+            showDetails: {{ $showDetails ? 'true' : 'false' }} | 
+            candidature: {{ $candidature ? 'existe' : 'null' }}
+        </div>
+        
         @if(!$showDetails)
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <div class="text-center mb-8">
@@ -17,7 +26,7 @@
                             Code de suivi
                         </label>
                         <input 
-                            wire:model.defer="searchCode"
+                            wire:model.live="searchCode"
                             type="text" 
                             id="searchCode"
                             placeholder="Ex: BRC-ABCD1234" 
@@ -46,13 +55,57 @@
                 <!-- Bouton de test rapide -->
                 <div class="mt-4 text-center">
                     <p class="text-sm text-gray-500 mb-2">Vous n'avez pas de code ? Testez avec :</p>
+                    
+                    <!-- Bouton simple pour remplir le champ -->
                     <button 
-                        wire:click="$set('searchCode', 'BRC-TEST123')"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors"
+                        type="button"
+                        onclick="fillTestCode()"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors mr-2"
                     >
                         📋 BRC-TEST123 (Test)
                     </button>
+                    
+                    <!-- Bouton test Livewire -->
+                    <button 
+                        type="button"
+                        onclick="testLivewireConnection()"
+                        class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg text-sm transition-colors"
+                    >
+                        🔧 Test Livewire
+                    </button>
                 </div>
+                
+                <script>
+                function fillTestCode() {
+                    const input = document.getElementById('searchCode');
+                    input.value = 'BRC-TEST123';
+                    // Déclencher l'événement input pour que Livewire détecte le changement
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                
+                function testLivewireConnection() {
+                    // Pour Livewire v3
+                    const component = Livewire.find('{{ $this->getId() }}');
+                    if (component) {
+                        component.call('testLivewire');
+                    } else {
+                        console.log('Composant Livewire introuvable');
+                        alert('Problème de connexion Livewire');
+                    }
+                }
+                </script>
+                
+                <!-- Messages -->
+                @if (session()->has('message'))
+                    <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex">
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">{{ session('message') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 
                 <div class="mt-8 text-center">
                     <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium">
