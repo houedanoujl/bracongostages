@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('statistique_accueils', function (Blueprint $table) {
             $table->id();
+            $table->string('cle')->unique(); // ex: total_candidatures
+            $table->string('valeur'); // ex: 150
+            $table->string('label'); // ex: Stagiaires par an
+            $table->string('icone')->nullable(); // emoji ou classe css
+            $table->integer('ordre')->default(0);
+            $table->boolean('actif')->default(true);
             $table->timestamps();
         });
     }

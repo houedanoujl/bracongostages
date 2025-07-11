@@ -37,8 +37,45 @@
     <div class="absolute bottom-40 left-20 w-20 h-20 bg-white/10 rounded-full animate-float" style="animation-delay: 2s;"></div>
 </section>
 
-<!-- Section Statistiques Dynamiques -->
-@livewire('home-statistics')
+<!-- Section Statistiques dynamiques et Établissements partenaires -->
+@php
+    $stats = \App\Models\StatistiqueAccueil::where('actif', true)->orderBy('ordre')->get();
+    $etablissements = \App\Models\EtablissementPartenaire::where('actif', true)->orderBy('ordre')->get();
+@endphp
+
+@if($stats->count())
+<section class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            @foreach($stats as $stat)
+                <div class="rounded-xl bg-bracongo-gray-50 shadow p-6 flex flex-col items-center">
+                    <div class="text-3xl mb-2">{!! $stat->icone !!}</div>
+                    <div class="text-3xl font-bold text-bracongo-red">{{ $stat->valeur }}</div>
+                    <div class="text-sm text-bracongo-gray-600 mt-1">{{ $stat->label }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+@if($etablissements->count())
+<section class="py-8 bg-bracongo-gray-50">
+    <div class="max-w-5xl mx-auto px-4">
+        <h2 class="text-xl font-semibold text-bracongo-gray-800 mb-6 text-center">Top Établissements Partenaires</h2>
+        <div class="flex flex-wrap justify-center items-center gap-8">
+            @foreach($etablissements as $etab)
+                <div class="flex flex-col items-center">
+                    @if($etab->logo)
+                        <img src="{{ asset('storage/'.$etab->logo) }}" alt="{{ $etab->nom }}" class="h-16 w-auto object-contain mb-2" loading="lazy">
+                    @endif
+                    <div class="text-sm text-bracongo-gray-700 font-medium">{{ $etab->nom }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- Section Opportunités de Stage -->
 <section class="section-modern bg-bracongo-gray-50" id="opportunites">

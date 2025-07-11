@@ -8,4 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class StatistiqueAccueil extends Model
 {
     use HasFactory;
+
+    protected $table = 'statistique_accueils';
+
+    protected $fillable = [
+        'cle',
+        'valeur',
+        'label',
+        'icone',
+        'ordre',
+        'actif',
+    ];
 }
