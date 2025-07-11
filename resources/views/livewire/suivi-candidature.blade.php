@@ -47,10 +47,10 @@
                 <div class="mt-4 text-center">
                     <p class="text-sm text-gray-500 mb-2">Vous n'avez pas de code ? Testez avec :</p>
                     <button 
-                        wire:click="$set('searchCode', 'BRC-CXQL5TMV')"
+                        wire:click="$set('searchCode', 'BRC-TEST123')"
                         class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors"
                     >
-                        📋 BRC-CXQL5TMV (Test)
+                        📋 BRC-TEST123 (Test)
                     </button>
                 </div>
                 

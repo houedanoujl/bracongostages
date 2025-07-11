@@ -33,6 +33,8 @@ class SuiviCandidature extends Component
 
     public function searchCandidature()
     {
+        \Log::info('searchCandidature appelée avec code: ' . $this->searchCode);
+        
         // Nettoyer et valider le code
         $this->searchCode = strtoupper(trim($this->searchCode));
         
@@ -44,6 +46,8 @@ class SuiviCandidature extends Component
             ->with(['documents', 'evaluation'])
             ->first();
 
+        \Log::info('Candidature trouvée: ' . ($candidature ? 'OUI' : 'NON'));
+
         if ($candidature) {
             // Afficher directement les détails
             $this->candidature = $candidature;
@@ -52,10 +56,12 @@ class SuiviCandidature extends Component
             
             // Effacer les messages d'erreur
             session()->forget('error');
+            \Log::info('Details affichés, showDetails: ' . ($this->showDetails ? 'true' : 'false'));
         } else {
             session()->flash('error', 'Aucune candidature trouvée avec ce code de suivi : ' . $this->searchCode);
             $this->showDetails = false;
             $this->candidature = null;
+            \Log::info('Aucune candidature trouvée');
         }
     }
 
