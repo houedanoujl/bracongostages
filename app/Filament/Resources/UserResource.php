@@ -27,6 +27,9 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 10;
+    
+    // Temporairement désactivé - pages manquantes
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {
@@ -142,6 +145,8 @@ class UserResource extends Resource
         ];
     }
 
+    // Temporairement commenté - pages manquantes
+    /*
     public static function getPages(): array
     {
         return [
@@ -151,4 +156,5 @@ class UserResource extends Resource
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
+    */
 } 

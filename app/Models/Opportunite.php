@@ -46,13 +46,13 @@ class Opportunite extends Model
         parent::boot();
 
         static::creating(function ($opportunite) {
-            if (empty($opportunite->slug)) {
+            if (empty($opportunite->slug) && !empty($opportunite->titre)) {
                 $opportunite->slug = Str::slug($opportunite->titre);
             }
         });
 
         static::updating(function ($opportunite) {
-            if ($opportunite->isDirty('titre') && empty($opportunite->slug)) {
+            if ($opportunite->isDirty('titre') && (empty($opportunite->slug) || $opportunite->getOriginal('slug') === Str::slug($opportunite->getOriginal('titre')))) {
                 $opportunite->slug = Str::slug($opportunite->titre);
             }
         });

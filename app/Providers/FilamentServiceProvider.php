@@ -47,12 +47,14 @@ class FilamentServiceProvider extends PanelProvider
                 // \App\Filament\Resources\UserResource::class, // Temporairement désactivé
                 // \App\Filament\Resources\DocumentResource::class, // Temporairement désactivé
             ])
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                \App\Filament\Widgets\StatsOverview::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([
@@ -68,6 +70,8 @@ class FilamentServiceProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->brandName('BRACONGO Admin')
+            ->favicon(asset('favicon.ico'));
     }
 } 

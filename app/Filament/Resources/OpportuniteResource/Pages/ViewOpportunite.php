@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\OpportuniteResource\Pages\OpportuniteResource\Pages;
+namespace App\Filament\Resources\OpportuniteResource\Pages;
 
 use App\Filament\Resources\OpportuniteResource;
 use Filament\Actions;

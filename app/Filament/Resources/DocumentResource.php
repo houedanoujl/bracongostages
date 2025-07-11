@@ -27,6 +27,9 @@ class DocumentResource extends Resource
     protected static ?string $navigationGroup = 'Gestion des Stages';
 
     protected static ?int $navigationSort = 3;
+    
+    // Temporairement désactivé - pages manquantes
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {
@@ -139,6 +142,8 @@ class DocumentResource extends Resource
         ];
     }
 
+    // Temporairement commenté - pages manquantes
+    /*
     public static function getPages(): array
     {
         return [
@@ -148,4 +153,5 @@ class DocumentResource extends Resource
             'edit' => Pages\EditDocument::route('/{record}/edit'),
         ];
     }
+    */
 } 

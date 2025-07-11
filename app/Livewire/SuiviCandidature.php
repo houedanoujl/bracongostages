@@ -33,6 +33,9 @@ class SuiviCandidature extends Component
 
     public function searchCandidature()
     {
+        // Nettoyer et valider le code
+        $this->searchCode = strtoupper(trim($this->searchCode));
+        
         $this->validate([
             'searchCode' => 'required|string|min:3'
         ]);
@@ -42,11 +45,17 @@ class SuiviCandidature extends Component
             ->first();
 
         if ($candidature) {
-            // Redirection vers l'URL avec le code de suivi
-            return $this->redirect('/suivi/' . $candidature->code_suivi);
+            // Afficher directement les détails
+            $this->candidature = $candidature;
+            $this->showDetails = true;
+            $this->code = $candidature->code_suivi;
+            
+            // Effacer les messages d'erreur
+            session()->forget('error');
         } else {
-            session()->flash('error', 'Aucune candidature trouvée avec ce code de suivi.');
+            session()->flash('error', 'Aucune candidature trouvée avec ce code de suivi : ' . $this->searchCode);
             $this->showDetails = false;
+            $this->candidature = null;
         }
     }
 

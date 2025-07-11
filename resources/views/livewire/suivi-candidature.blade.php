@@ -17,22 +17,42 @@
                             Code de suivi
                         </label>
                         <input 
-                            wire:model="searchCode"
+                            wire:model.defer="searchCode"
                             type="text" 
                             id="searchCode"
                             placeholder="Ex: BRC-ABCD1234" 
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            autocomplete="off"
                         >
                         @error('searchCode') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
                     
                     <button 
                         type="submit"
-                        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition duration-300 shadow-lg"
+                        wire:loading.attr="disabled"
+                        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition duration-300 shadow-lg disabled:opacity-50"
                     >
-                        Rechercher ma candidature
+                        <span wire:loading.remove wire:target="searchCandidature">Rechercher ma candidature</span>
+                        <span wire:loading wire:target="searchCandidature" class="flex items-center justify-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Recherche en cours...
+                        </span>
                     </button>
                 </form>
+                
+                <!-- Bouton de test rapide -->
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-500 mb-2">Vous n'avez pas de code ? Testez avec :</p>
+                    <button 
+                        wire:click="$set('searchCode', 'BRC-CXQL5TMV')"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors"
+                    >
+                        📋 BRC-CXQL5TMV (Test)
+                    </button>
+                </div>
                 
                 <div class="mt-8 text-center">
                     <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium">
