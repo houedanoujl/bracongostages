@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\CandidatureForm;
-use App\Livewire\SuiviCandidature;
 
 /*
 |--------------------------------------------------------------------------

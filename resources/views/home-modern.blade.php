@@ -50,26 +50,41 @@
         </p>
     </div>
     
+    @php
+        $opportunites = \App\Models\Opportunite::publiee()->ordonne()->get();
+    @endphp
     <div class="opportunities-grid">
-        <!-- Production & Qualité -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.1s;">
-            <div class="card-icon">🏭</div>
-            <h3 class="card-title">Production & Qualité</h3>
-            <p class="card-description">
-                Participez aux processus de production et de contrôle qualité. 
-                Apprenez les standards internationaux et les technologies modernes de brassage.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        @forelse($opportunites as $index => $opportunite)
+            <div class="opportunity-card animate-on-scroll" style="animation-delay: {{ $index * 0.1 }}s;">
+                <div class="card-icon">{{ $opportunite->icone }}</div>
+                <h3 class="card-title">{{ $opportunite->titre }}</h3>
+                <p class="card-description">{{ $opportunite->description }}</p>
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-bracongo-gray-500">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        3-6 mois
+                            {{ $opportunite->duree }}
                     </span>
+                        <span class="badge-modern badge-info">{{ \App\Models\Opportunite::getNiveauxRequis()[$opportunite->niveau_requis] ?? $opportunite->niveau_requis }}</span>
+        </div>
+                <div class="text-sm text-bracongo-gray-500">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        {{ $opportunite->places_restantes }} place(s) disponible(s)
                 </div>
-                <a href="/candidature" class="card-cta">
+                    <div class="flex flex-wrap gap-1">
+                        @foreach(array_slice($opportunite->competences_requises ?? [], 0, 3) as $skill)
+                            <span class="px-2 py-1 bg-bracongo-gray-100 text-bracongo-gray-600 text-xs rounded-full">
+                                {{ $skill }}
+                    </span>
+                        @endforeach
+        </div>
+                </div>
+            <div class="flex items-center justify-between">
+                    <a href="/candidature?domain={{ $opportunite->slug }}" class="card-cta">
                     Postuler
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -77,141 +92,11 @@
                 </a>
             </div>
         </div>
-
-        <!-- Marketing & Commercial -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.2s;">
-            <div class="card-icon">📊</div>
-            <h3 class="card-title">Marketing & Commercial</h3>
-            <p class="card-description">
-                Développez vos compétences en marketing digital, stratégie commerciale et 
-                gestion de marque dans un environnement dynamique.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        3-6 mois
-                    </span>
-                </div>
-                <a href="/candidature" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
+        @empty
+            <div class="col-span-3 text-center text-bracongo-gray-500 py-12">
+                Aucune opportunité de stage n'est disponible pour le moment.
             </div>
-        </div>
-
-        <!-- Technique & Maintenance -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.3s;">
-            <div class="card-icon">⚙️</div>
-            <h3 class="card-title">Technique & Maintenance</h3>
-            <p class="card-description">
-                Maîtrisez la maintenance industrielle, l'automatisation et la gestion 
-                des équipements de pointe dans l'industrie brassicole.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        4-6 mois
-                    </span>
-                </div>
-                <a href="/candidature" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Ressources Humaines -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.4s;">
-            <div class="card-icon">👥</div>
-            <h3 class="card-title">Ressources Humaines</h3>
-            <p class="card-description">
-                Découvrez la gestion des talents, le recrutement et le développement 
-                organisationnel dans une entreprise de référence.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        3-4 mois
-                    </span>
-                </div>
-                <a href="/candidature" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Finance & Comptabilité -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.5s;">
-            <div class="card-icon">💼</div>
-            <h3 class="card-title">Finance & Comptabilité</h3>
-            <p class="card-description">
-                Approfondissez vos connaissances en gestion financière, contrôle de gestion 
-                et analyse des performances dans un contexte international.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        3-6 mois
-                    </span>
-                </div>
-                <a href="/candidature" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- IT & Digital -->
-        <div class="opportunity-card animate-on-scroll" style="animation-delay: 0.6s;">
-            <div class="card-icon">💻</div>
-            <h3 class="card-title">IT & Transformation Digitale</h3>
-            <p class="card-description">
-                Participez à la digitalisation des processus et au développement 
-                des solutions technologiques innovantes.
-            </p>
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-bracongo-gray-500">
-                    <span class="inline-flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        4-6 mois
-                    </span>
-                </div>
-                <a href="/candidature" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
+        @endforelse
     </div>
 </section>
 

@@ -42,8 +42,7 @@ Application Laravel complète pour la gestion des candidatures de stage chez BRA
 │   │   ├── User.php                     # Utilisateurs admin
 │   │   └── Document.php                 # Documents attachés
 │   ├── Livewire/                        # Composants interface candidat
-│   │   ├── CandidatureForm.php          # Formulaire multi-étapes
-│   │   └── SuiviCandidature.php         # Suivi avec timeline
+│   │   └── CandidatureForm.php          # Formulaire multi-étapes
 │   ├── Filament/                        # Administration
 │   │   └── Resources/                   # Resources CRUD
 │   ├── Jobs/                            # Jobs asynchrones
