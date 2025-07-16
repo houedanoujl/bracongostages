@@ -1,37 +1,59 @@
-# 🍺 BRACONGO Stages - Plateforme de Gestion des Stages
+# 🍺 BRACONGO Stages - Plateforme Complète de Gestion des Stages
 
-Application Laravel complète pour la gestion des candidatures de stage chez BRACONGO (Brasseries du Congo).
+Application Laravel complète pour la gestion des candidatures et évaluations de stage chez BRACONGO (Brasseries du Congo).
 
-## 🚀 Fonctionnalités
+## 🚀 Fonctionnalités Complètes
 
 ### Interface Candidat (Livewire)
-- ✅ Formulaire de candidature multi-étapes avec design BRACONGO
-- ✅ Upload de documents (CV, lettre de motivation, certificats)
-- ✅ Suivi en temps réel du statut de candidature avec timeline
-- ✅ Notifications automatiques par email
+- ✅ **Formulaire de candidature multi-étapes** avec design BRACONGO
+- ✅ **Upload de documents** (CV, lettre de motivation, certificats, etc.)
+- ✅ **Suivi en temps réel** du statut de candidature avec timeline visuelle
+- ✅ **Notifications automatiques** par email à chaque changement de statut
+- ✅ **Évaluation post-stage** avec formulaire complet et détaillé
+- ✅ **Interface responsive** optimisée mobile/desktop
 
 ### Administration (Filament)
-- ✅ Panel d'administration moderne avec couleurs BRACONGO
-- ✅ Gestion complète des candidatures avec filtres avancés
-- ✅ Actions rapides : validation/rejet direct depuis la liste
-- ✅ Gestion des utilisateurs et documents
-- ✅ Dashboard avec statistiques et widgets
+- ✅ **Panel d'administration moderne** avec couleurs BRACONGO
+- ✅ **Gestion complète des candidatures** avec filtres avancés
+- ✅ **Actions rapides** : validation/rejet direct depuis la liste
+- ✅ **Gestion des évaluations** avec analyse des retours stagiaires
+- ✅ **Dashboard avec statistiques** et widgets de performance
+- ✅ **Gestion des utilisateurs** et documents
+- ✅ **Export de données** et rapports
 
-### Système de Notifications
-- ✅ Queues Redis pour notifications asynchrones
-- ✅ Emails automatiques à chaque changement de statut
-- ✅ Logging complet des actions
-- ✅ Interface Mailpit pour développement
+### Système de Notifications Automatiques
+- ✅ **Queues Redis** pour notifications asynchrones
+- ✅ **Emails automatiques** à chaque changement de statut
+- ✅ **Notification de fin de stage** avec invitation à évaluer
+- ✅ **Templates d'emails** personnalisés BRACONGO
+- ✅ **Logging complet** des actions et erreurs
+- ✅ **Interface Mailpit** pour développement
+
+### Système d'Évaluation
+- ✅ **Formulaire d'évaluation complet** post-stage
+- ✅ **Métriques de satisfaction** (1-5 étoiles)
+- ✅ **Évaluation environnement de travail** (accueil, encadrement, conditions, ambiance)
+- ✅ **Analyse des apprentissages** et compétences développées
+- ✅ **Suggestions d'amélioration** pour futurs stagiaires
+- ✅ **Statistiques d'évaluation** dans l'administration
+- ✅ **Widgets de performance** sur le dashboard
+
+### Automatisation
+- ✅ **Commandes Artisan** pour notifications automatiques
+- ✅ **Planification des tâches** (cron jobs)
+- ✅ **Notifications de fin de stage** automatiques
+- ✅ **Nettoyage automatique** des fichiers temporaires
 
 ## 🛠 Architecture Technique
 
-### Stack
+### Stack Technologique
 - **Backend** : Laravel 10 avec Livewire 3 et Filament 3
 - **Frontend** : Tailwind CSS avec design système BRACONGO
-- **Base de données** : MySQL 8
-- **Cache & Queues** : Redis 7
+- **Base de données** : MySQL 8 avec migrations optimisées
+- **Cache & Queues** : Redis 7 pour performance
 - **Mail** : Mailpit (dev) / SMTP (prod)
 - **Containerisation** : Docker & Docker Compose
+- **Monitoring** : Logs structurés et métriques
 
 ### Structure du Projet
 ```
@@ -39,261 +61,258 @@ Application Laravel complète pour la gestion des candidatures de stage chez BRA
 │   ├── Enums/StatutCandidature.php      # États des candidatures
 │   ├── Models/                          # Modèles Eloquent
 │   │   ├── Candidature.php              # Modèle principal
+│   │   ├── Evaluation.php               # Évaluations post-stage
 │   │   ├── User.php                     # Utilisateurs admin
 │   │   └── Document.php                 # Documents attachés
 │   ├── Livewire/                        # Composants interface candidat
 │   │   └── CandidatureForm.php          # Formulaire multi-étapes
 │   ├── Filament/                        # Administration
-│   │   └── Resources/                   # Resources CRUD
-│   ├── Jobs/                            # Jobs asynchrones
-│   │   └── SendCandidatureNotification.php
-│   └── Notifications/                   # Notifications email
-│       └── CandidatureStatusChanged.php
-├── resources/views/                     # Vues Blade
-│   ├── layouts/app.blade.php            # Layout principal BRACONGO
-│   └── livewire/                        # Vues Livewire
-└── docker/                              # Configuration Docker
+│   │   ├── Resources/                   # Ressources CRUD
+│   │   └── Widgets/                     # Widgets dashboard
+│   ├── Notifications/                   # Notifications email
+│   ├── Jobs/                            # Tâches asynchrones
+│   └── Console/Commands/                # Commandes Artisan
+├── resources/views/
+│   ├── home-modern.blade.php            # Page d'accueil
+│   ├── suivi-simple.blade.php           # Suivi candidature
+│   ├── evaluation.blade.php             # Évaluation post-stage
+│   └── emails/                          # Templates emails
+└── database/
+    ├── migrations/                      # Structure BDD
+    └── seeders/                         # Données de test
 ```
 
-## 🐳 Installation & Déploiement
+## 🚀 Installation et Démarrage
 
 ### Prérequis
-```bash
-# Installer Docker et Docker Compose
-sudo apt update
-sudo apt install docker.io docker-compose
-sudo usermod -aG docker $USER
-sudo systemctl enable docker
-sudo systemctl start docker
-```
+- Docker et Docker Compose
+- PHP 8.1+
+- Composer
+- Node.js 16+
 
-### 1. Cloner et configurer
+### Installation Rapide
 ```bash
+# Cloner le projet
 git clone <repository>
 cd bracongostages
 
-# Copier et configurer l'environnement
-cp .env.example .env
-# Éditer .env si nécessaire
-```
-
-### 2. Lancer avec Docker
-```bash
-# Construire et démarrer tous les services
+# Démarrer les services
 docker-compose up -d
 
-# Installer les dépendances PHP
-docker-compose exec app composer install
+# Installer les dépendances
+composer install
+npm install
 
-# Générer la clé d'application
-docker-compose exec app php artisan key:generate
+# Configuration
+cp .env.example .env
+# Configurer les variables d'environnement
 
-# Migrer la base de données
-docker-compose exec app php artisan migrate
+# Migrations et seeders
+php artisan migrate --seed
 
-# Créer un utilisateur admin
-docker-compose exec app php artisan make:filament-user
+# Compiler les assets
+npm run build
 
-# Installer les dépendances NPM et compiler les assets
-docker-compose exec app npm install
-docker-compose exec app npm run build
+# Démarrer les queues
+php artisan queue:work
+
+# Accès
+# Frontend: http://localhost
+# Admin: http://localhost/admin
+# Mailpit: http://localhost:8025
 ```
 
-### 3. Démarrer les workers de queue
-```bash
-# Worker pour les notifications
-docker-compose exec app php artisan queue:work redis --queue=notifications
-
-# Worker général
-docker-compose exec app php artisan queue:work redis
-```
-
-## 🌐 Accès aux Services
-
-- **Application** : http://localhost:8000
-- **Administration** : http://localhost:8000/admin
-- **Mailpit** : http://localhost:8025 (emails de développement)
-- **Base de données** : localhost:3306
-
-## 📊 Utilisation
-
-### Interface Candidat
-1. **Candidature** : `/candidature` - Formulaire en 4 étapes
-2. **Suivi** : `/candidature/suivi/{code}` - Timeline du processus
-
-### Administration
-1. **Connexion** : `/admin` avec utilisateur créé
-2. **Candidatures** : Gestion complète avec actions rapides
-3. **Dashboard** : Statistiques et vue d'ensemble
-
-### Processus de Candidature
-1. **Non traité** → Candidature reçue
-2. **Analyse dossier** → Dossier en cours d'analyse
-3. **Attente test** → Convocation au test technique
-4. **Attente résultats** → Analyse des résultats
-5. **Attente affectation** → Attribution de la direction
-6. **Validé** → Stage confirmé avec dates
-7. **Rejeté** → Candidature non retenue
-
-## 🎨 Design System BRACONGO
-
-### Couleurs Principales
-- **Orange BRACONGO** : `#f97316` (Tailwind orange-500)
-- **Dégradés** : orange-600 à orange-500
-- **Secondaires** : Gris neutres et couleurs d'état
-
-### Composants
-- Navigation avec logo et branding BRACONGO
-- Formulaires avec validation temps réel
-- Timeline interactive pour le suivi
-- Badges de statut colorés
-- Notifications toast et emails
-
-## 🔧 Configuration Avancée
-
-### Variables d'Environnement Importantes
+### Variables d'Environnement
 ```env
-# Application
-APP_NAME="BRACONGO Stages"
-APP_URL=http://localhost:8000
-
 # Base de données
+DB_CONNECTION=mysql
 DB_HOST=mysql
+DB_PORT=3306
 DB_DATABASE=bracongo_stages
-DB_USERNAME=bracongo_user
-DB_PASSWORD=bracongo_pass_2024
+DB_USERNAME=bracongo
+DB_PASSWORD=password
 
-# Redis pour cache et queues
+# Redis
 REDIS_HOST=redis
-QUEUE_CONNECTION=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
 
 # Mail
-MAIL_FROM_ADDRESS="stages@bracongo.cd"
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="stages@bracongo.cg"
 MAIL_FROM_NAME="BRACONGO Stages"
+
+# Queue
+QUEUE_CONNECTION=redis
 ```
 
-### Commandes Utiles avec Makefile
+## 📊 Fonctionnalités d'Évaluation
+
+### Métriques Collectées
+- **Satisfaction générale** (1-5 étoiles)
+- **Recommandation** (Oui/Peut-être/Non)
+- **Environnement de travail** :
+  - Accueil et intégration
+  - Encadrement et suivi
+  - Conditions de travail
+  - Ambiance de travail
+- **Apprentissages** :
+  - Compétences développées
+  - Réponse aux attentes
+  - Aspects enrichissants
+- **Suggestions d'amélioration**
+- **Contact futur**
+
+### Statistiques Disponibles
+- Note moyenne globale
+- Taux de satisfaction (≥4/5)
+- Taux de recommandation
+- Distribution par critères
+- Évolution temporelle
+- Comparaisons par établissement
+
+## 🔧 Commandes Utiles
+
+### Gestion des Stages
 ```bash
-# Démarrer l'application
-make up
+# Envoyer notifications de fin de stage
+php artisan stages:notifier-fin-stage
 
-# Installation complète avec base de données
-make fresh
+# Envoyer notifications avec délai personnalisé
+php artisan stages:notifier-fin-stage --jours=3
 
-# Voir les logs
-make logs
-
-# Accéder au shell du container
-make shell
-
-# Migrer la base de données
-make migrate
-
-# Installer les dépendances
-make install
-
-# Backup de la base de données
-make backup
-
-# Accéder à MySQL CLI
-make mysql-cli
-
-# Accéder à Redis CLI
-make redis-cli
-
-# Nettoyer complètement Docker
-make clean-all
+# Voir les logs des notifications
+tail -f storage/logs/stages-notifications.log
 ```
 
-## 🚀 Déploiement Production
-
-### 1. Optimisations Laravel
+### Maintenance
 ```bash
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
+# Optimiser l'application
+php artisan optimize
+
+# Nettoyer le cache
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+
+# Redémarrer les queues
+php artisan queue:restart
 ```
 
-### 2. Variables d'environnement
+### Données de Test
+```bash
+# Créer des données de test complètes
+php artisan db:seed
+
+# Créer seulement des évaluations
+php artisan db:seed --class=EvaluationSeeder
+```
+
+## 📈 Monitoring et Logs
+
+### Logs Disponibles
+- `storage/logs/laravel.log` - Logs généraux
+- `storage/logs/stages-notifications.log` - Notifications
+- `storage/logs/queue.log` - Queues Redis
+
+### Métriques à Surveiller
+- Taux de conversion candidatures → validations
+- Temps moyen de traitement
+- Taux de satisfaction des évaluations
+- Performance des queues
+- Erreurs d'envoi d'emails
+
+## 🎨 Personnalisation
+
+### Couleurs BRACONGO
+```css
+/* Orange principal */
+--color-orange: #f97316;
+--color-orange-dark: #ea580c;
+
+/* Rouge secondaire */
+--color-red: #dc2626;
+--color-red-dark: #b91c1c;
+
+/* Gradients */
+--gradient-primary: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+```
+
+### Templates d'Emails
+- Templates personnalisés dans `resources/views/emails/`
+- Variables disponibles : `$candidature`, `$evaluation`
+- Design responsive avec couleurs BRACONGO
+
+## 🔒 Sécurité
+
+### Mesures Implémentées
+- Validation stricte des données
+- Protection CSRF
+- Sanitisation des uploads
+- Logs de sécurité
+- Rate limiting
+- Authentification Filament
+
+### Permissions
+- Admin : Accès complet
+- Candidats : Lecture seule de leurs données
+- API : Authentification requise
+
+## 🚀 Déploiement
+
+### Production
+```bash
+# Optimiser pour la production
+composer install --optimize-autoloader --no-dev
+npm run build
+
+# Migrations
+php artisan migrate --force
+
+# Démarrer les services
+php artisan queue:work --daemon
+php artisan schedule:work
+```
+
+### Variables de Production
 ```env
 APP_ENV=production
 APP_DEBUG=false
-QUEUE_CONNECTION=redis
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-```
+APP_URL=https://stages.bracongo.cg
 
-### 3. Monitoring
-- Configurez Laravel Horizon pour Redis
-- Supervisord pour les workers de queue
-- Logs centralisés
-- Monitoring des performances
-
-## 📧 Configuration Email Production
-
-### SMTP
-```env
+# Mail SMTP
 MAIL_MAILER=smtp
-MAIL_HOST=your-smtp-server
+MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
-MAIL_USERNAME=your-username
+MAIL_USERNAME=stages@bracongo.cg
 MAIL_PASSWORD=your-password
 MAIL_ENCRYPTION=tls
+
+# Cache Redis
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
 ```
 
-### Services recommandés
-- **Mailgun** : Simple et fiable
-- **SendGrid** : Excellent deliverability
-- **Amazon SES** : Économique pour gros volumes
+## 📞 Support
 
-## 🔐 Sécurité
+### Contact
+- **Email** : stages@bracongo.cg
+- **Téléphone** : +242 01 234 5678
+- **Site web** : https://www.bracongo.cg
 
-### Authentification
-- Filament avec protection CSRF
-- Middleware d'authentification
-- Validation côté serveur complète
-
-### Uploads
-- Validation des types de fichiers
-- Limitation de taille (2MB max)
-- Stockage sécurisé
-
-### Base de données
-- Migrations avec contraintes
-- Relations définies
-- Indexation pour performance
-
-## 📝 Développement
-
-### Tests
-```bash
-# Tests unitaires
-php artisan test
-
-# Tests de navigation
-php artisan test --filter CandidatureTest
-```
-
-### Debugging
-```bash
-# Laravel Telescope (optionnel)
-composer require laravel/telescope
-php artisan telescope:install
-```
-
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créer une branche feature
-3. Commiter les changements
-4. Pusher vers la branche
-5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est la propriété de BRACONGO (Brasseries du Congo).
+### Documentation
+- Documentation complète disponible dans `/docs`
+- Guide utilisateur admin
+- Guide développeur
+- API documentation
 
 ---
 
-**Développé avec ❤️ pour BRACONGO** 🍺
+**BRACONGO - Brasseries du Congo**  
+*Votre partenaire pour des stages enrichissants* 🍺

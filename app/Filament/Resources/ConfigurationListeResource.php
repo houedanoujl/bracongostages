@@ -25,6 +25,11 @@ class ConfigurationListeResource extends Resource
 
     protected static ?int $navigationSort = 10;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false; // Masqué car remplacé par les ressources dédiées
+    }
+
     protected static ?string $modelLabel = 'Configuration de Liste';
 
     protected static ?string $pluralModelLabel = 'Configurations des Listes';

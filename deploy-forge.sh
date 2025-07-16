@@ -35,6 +35,14 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# 5.1 Test de la configuration mail
+echo "📧 Test de la configuration mail..."
+if php artisan tinker --execute="try { Mail::raw('Test de configuration SMTP', function(\$message) { \$message->to('test@bracongo.cd')->subject('Test SMTP - ' . date('Y-m-d H:i:s')); }); echo '✅ Configuration mail OK'; } catch (Exception \$e) { echo '❌ Erreur mail: ' . \$e->getMessage(); }" 2>/dev/null; then
+    echo "✅ Configuration mail validée"
+else
+    echo "⚠️ Configuration mail à vérifier"
+fi
+
 # 6. Exécution des migrations de base de données
 echo "🗄️ Mise à jour de la base de données..."
 php artisan migrate --force --no-interaction

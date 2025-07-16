@@ -51,7 +51,7 @@ class EtablissementPartenaireResource extends Resource
         return $table->columns([
             ImageColumn::make('logo')->label('Logo')->circular(),
             TextColumn::make('nom')->searchable()->sortable(),
-            TextColumn::make('url')->label('Lien')->url()->toggleable(),
+            TextColumn::make('url')->label('Lien')->url(fn ($record) => $record->url)->openUrlInNewTab()->toggleable(),
             TextColumn::make('ordre')->sortable(),
             ToggleColumn::make('actif')->label('Actif'),
         ])->defaultSort('ordre');

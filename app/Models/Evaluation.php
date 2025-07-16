@@ -12,16 +12,24 @@ class Evaluation extends Model
 
     protected $fillable = [
         'candidature_id',
-        'note_plateforme',
-        'note_processus',
-        'commentaires',
+        'satisfaction_generale',
         'recommandation',
+        'accueil_integration',
+        'encadrement_suivi',
+        'conditions_travail',
+        'ambiance_travail',
+        'competences_developpees',
+        'reponse_attentes',
+        'aspects_enrichissants',
         'suggestions_amelioration',
+        'contact_futur',
+        'commentaire_libre',
+        'note_moyenne',
     ];
 
     protected $casts = [
-        'note_plateforme' => 'integer',
-        'note_processus' => 'integer',
+        'satisfaction_generale' => 'integer',
+        'note_moyenne' => 'decimal:1',
     ];
 
     /**
@@ -33,47 +41,120 @@ class Evaluation extends Model
     }
 
     /**
-     * Accessor pour la note moyenne
+     * Calculer la note moyenne automatiquement
      */
-    public function getNoteMoyenneAttribute(): float
+    protected static function boot()
     {
-        if ($this->note_plateforme && $this->note_processus) {
-            return ($this->note_plateforme + $this->note_processus) / 2;
-        }
-        
-        return $this->note_plateforme ?: $this->note_processus ?: 0;
+        parent::boot();
+
+        static::saving(function ($evaluation) {
+            $notes = [];
+            
+            if ($evaluation->satisfaction_generale) {
+                $notes[] = $evaluation->satisfaction_generale;
+            }
+            
+            if ($evaluation->accueil_integration) {
+                $notes[] = $evaluation->convertirNote($evaluation->accueil_integration);
+            }
+            
+            if ($evaluation->encadrement_suivi) {
+                $notes[] = $evaluation->convertirNote($evaluation->encadrement_suivi);
+            }
+            
+            if ($evaluation->conditions_travail) {
+                $notes[] = $evaluation->convertirNote($evaluation->conditions_travail);
+            }
+            
+            if ($evaluation->ambiance_travail) {
+                $notes[] = $evaluation->convertirNote($evaluation->ambiance_travail);
+            }
+            
+            if (!empty($notes)) {
+                $evaluation->note_moyenne = round(array_sum($notes) / count($notes), 1);
+            }
+        });
     }
 
     /**
-     * Accessor pour le niveau de satisfaction
+     * Convertir les notes textuelles en valeurs numériques
      */
-    public function getNiveauSatisfactionAttribute(): string
+    private function convertirNote(string $note): int
     {
-        $moyenne = $this->note_moyenne;
-        
-        return match (true) {
-            $moyenne >= 4.5 => 'Très satisfait',
-            $moyenne >= 3.5 => 'Satisfait',
-            $moyenne >= 2.5 => 'Neutre',
-            $moyenne >= 1.5 => 'Insatisfait',
-            default => 'Très insatisfait',
+        return match ($note) {
+            'excellent' => 5,
+            'bon' => 4,
+            'moyen' => 3,
+            'insuffisant' => 2,
+            default => 0,
         };
     }
 
     /**
-     * Accessor pour la couleur du niveau de satisfaction
+     * Obtenir le label de satisfaction générale
      */
-    public function getCouleurSatisfactionAttribute(): string
+    public function getSatisfactionGeneraleLabelAttribute(): string
     {
-        $moyenne = $this->note_moyenne;
-        
-        return match (true) {
-            $moyenne >= 4.5 => 'green',
-            $moyenne >= 3.5 => 'blue',
-            $moyenne >= 2.5 => 'yellow',
-            $moyenne >= 1.5 => 'orange',
-            default => 'red',
+        return match ($this->satisfaction_generale) {
+            1 => 'Très décevant',
+            2 => 'Décevant',
+            3 => 'Moyen',
+            4 => 'Satisfaisant',
+            5 => 'Excellent',
+            default => 'Non évalué',
         };
+    }
+
+    /**
+     * Obtenir le label de recommandation
+     */
+    public function getRecommandationLabelAttribute(): string
+    {
+        return match ($this->recommandation) {
+            'oui' => 'Oui, absolument',
+            'peut_etre' => 'Peut-être',
+            'non' => 'Non',
+            default => 'Non spécifié',
+        };
+    }
+
+    /**
+     * Obtenir le label de contact futur
+     */
+    public function getContactFuturLabelAttribute(): string
+    {
+        return match ($this->contact_futur) {
+            'oui' => 'Oui, pour des opportunités futures',
+            'non' => 'Non',
+            default => 'Non spécifié',
+        };
+    }
+
+    /**
+     * Vérifier si l'évaluation est positive (note moyenne >= 4)
+     */
+    public function getEstPositiveAttribute(): bool
+    {
+        return $this->note_moyenne >= 4.0;
+    }
+
+    /**
+     * Obtenir la couleur de la note moyenne
+     */
+    public function getNoteCouleurAttribute(): string
+    {
+        if ($this->note_moyenne >= 4.5) return 'green';
+        if ($this->note_moyenne >= 3.5) return 'yellow';
+        if ($this->note_moyenne >= 2.5) return 'orange';
+        return 'red';
+    }
+
+    /**
+     * Scope pour les évaluations positives
+     */
+    public function scopePositives($query)
+    {
+        return $query->where('note_moyenne', '>=', 4.0);
     }
 
     /**
@@ -85,87 +166,10 @@ class Evaluation extends Model
     }
 
     /**
-     * Scope pour filtrer par note minimale
+     * Scope pour filtrer par niveau de satisfaction
      */
-    public function scopeNoteMinimale($query, float $note)
+    public function scopeParSatisfaction($query, int $niveau)
     {
-        return $query->where(function ($q) use ($note) {
-            $q->where('note_plateforme', '>=', $note)
-              ->orWhere('note_processus', '>=', $note);
-        });
-    }
-
-    /**
-     * Scope pour les évaluations positives (>= 3.5)
-     */
-    public function scopePositives($query)
-    {
-        return $query->where(function ($q) {
-            $q->where('note_plateforme', '>=', 3.5)
-              ->orWhere('note_processus', '>=', 3.5);
-        });
-    }
-
-    /**
-     * Scope pour les évaluations négatives (< 2.5)
-     */
-    public function scopeNegatives($query)
-    {
-        return $query->where(function ($q) {
-            $q->where('note_plateforme', '<', 2.5)
-              ->orWhere('note_processus', '<', 2.5);
-        });
-    }
-
-    /**
-     * Obtenir les statistiques d'évaluation
-     */
-    public static function getStatistiques(): array
-    {
-        $evaluations = self::all();
-        
-        if ($evaluations->isEmpty()) {
-            return [
-                'total' => 0,
-                'note_plateforme_moyenne' => 0,
-                'note_processus_moyenne' => 0,
-                'note_generale_moyenne' => 0,
-                'satisfaction_positive' => 0,
-                'taux_satisfaction' => 0,
-            ];
-        }
-
-        $notePlateforme = $evaluations->avg('note_plateforme') ?: 0;
-        $noteProcessus = $evaluations->avg('note_processus') ?: 0;
-        $noteGenerale = ($notePlateforme + $noteProcessus) / 2;
-        
-        $satisfactionPositive = $evaluations->filter(function ($evaluation) {
-            return $evaluation->note_moyenne >= 3.5;
-        })->count();
-
-        return [
-            'total' => $evaluations->count(),
-            'note_plateforme_moyenne' => round($notePlateforme, 2),
-            'note_processus_moyenne' => round($noteProcessus, 2),
-            'note_generale_moyenne' => round($noteGenerale, 2),
-            'satisfaction_positive' => $satisfactionPositive,
-            'taux_satisfaction' => $evaluations->count() > 0 
-                ? round(($satisfactionPositive / $evaluations->count()) * 100, 1) 
-                : 0,
-        ];
-    }
-
-    /**
-     * Validation des règles
-     */
-    public static function rules(): array
-    {
-        return [
-            'note_plateforme' => 'nullable|integer|min:1|max:5',
-            'note_processus' => 'nullable|integer|min:1|max:5',
-            'commentaires' => 'nullable|string|max:1000',
-            'recommandation' => 'nullable|boolean',
-            'suggestions_amelioration' => 'nullable|string|max:1000',
-        ];
+        return $query->where('satisfaction_generale', $niveau);
     }
 } 

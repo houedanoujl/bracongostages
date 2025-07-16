@@ -157,6 +157,12 @@ class Candidature extends Model
         if ($saved && $ancienStatut !== $nouveauStatut) {
             // Envoyer une notification asynchrone
             \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, $nouveauStatut);
+            
+            // Envoyer une notification email si le candidat a un compte
+            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
+            if ($candidat) {
+                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, $nouveauStatut));
+            }
         }
 
         return $saved;
@@ -178,6 +184,12 @@ class Candidature extends Model
         if ($saved && $ancienStatut !== StatutCandidature::VALIDE) {
             // Envoyer une notification asynchrone
             \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::VALIDE);
+            
+            // Envoyer une notification email si le candidat a un compte
+            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
+            if ($candidat) {
+                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::VALIDE));
+            }
         }
 
         return $saved;
@@ -199,6 +211,12 @@ class Candidature extends Model
         if ($saved && $ancienStatut !== StatutCandidature::REJETE) {
             // Envoyer une notification asynchrone
             \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::REJETE);
+            
+            // Envoyer une notification email si le candidat a un compte
+            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
+            if ($candidat) {
+                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::REJETE));
+            }
         }
 
         return $saved;

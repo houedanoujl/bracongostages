@@ -220,6 +220,32 @@
                     </div>
                 @endif
 
+                <!-- Évaluation (si stage terminé) -->
+                @if($candidature->statut->value === 'valide' && $candidature->date_fin_stage && $candidature->date_fin_stage->isPast())
+                    @if(!$candidature->evaluation)
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-blue-800 mb-4">📝 Évaluez votre stage</h3>
+                            <p class="text-blue-700 mb-4">
+                                Votre stage est terminé. Partagez votre expérience avec nous pour nous aider à améliorer l'accueil des futurs stagiaires.
+                            </p>
+                            <a href="{{ route('candidature.evaluation', $candidature) }}" 
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Évaluer mon stage
+                            </a>
+                        </div>
+                    @else
+                        <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-green-800 mb-4">✅ Évaluation soumise</h3>
+                            <p class="text-green-700">
+                                Merci d'avoir partagé votre expérience ! Votre évaluation nous aide à améliorer l'accueil des futurs stagiaires.
+                            </p>
+                        </div>
+                    @endif
+                @endif
+
                 <!-- Actions -->
                 <div class="flex justify-between items-center">
                     <a href="/suivi" class="text-orange-600 hover:text-orange-700 font-medium">

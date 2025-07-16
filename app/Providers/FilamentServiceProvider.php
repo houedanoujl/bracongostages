@@ -44,6 +44,11 @@ class FilamentServiceProvider extends PanelProvider
             ])
             ->resources([
                 \App\Filament\Resources\CandidatureResource::class,
+                \App\Filament\Resources\EtablissementResource::class,
+                \App\Filament\Resources\NiveauEtudeResource::class,
+                \App\Filament\Resources\DirectionResource::class,
+                \App\Filament\Resources\PosteResource::class,
+
                 // \App\Filament\Resources\UserResource::class, // Temporairement désactivé
                 // \App\Filament\Resources\DocumentResource::class, // Temporairement désactivé
             ])
@@ -55,6 +60,7 @@ class FilamentServiceProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\StatsOverview::class,
+                \App\Filament\Widgets\ConfigurationOverviewWidget::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([

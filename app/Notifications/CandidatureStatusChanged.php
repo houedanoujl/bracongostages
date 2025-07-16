@@ -17,9 +17,7 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
         public Candidature $candidature,
         public StatutCandidature $ancienStatut,
         public StatutCandidature $nouveauStatut
-    ) {
-        $this->onQueue('notifications');
-    }
+    ) {}
 
     public function via($notifiable): array
     {
@@ -28,62 +26,66 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
+        $candidature = $this->candidature;
+        $nouveauStatut = $this->nouveauStatut;
+        
         $message = (new MailMessage)
-            ->subject('Mise à jour de votre candidature de stage BRACONGO')
-            ->greeting('Bonjour ' . $this->candidature->prenom . ' ' . $this->candidature->nom . ',')
-            ->line('Nous vous informons que le statut de votre candidature de stage a été mis à jour.')
-            ->line('**Code de suivi :** ' . $this->candidature->code_suivi)
-            ->line('**Nouveau statut :** ' . $this->nouveauStatut->getLabel());
+            ->subject("Mise à jour de votre candidature - {$nouveauStatut->getLabel()}")
+            ->greeting("Bonjour {$candidature->prenom},")
+            ->line("Nous vous informons que le statut de votre candidature a été mis à jour.");
 
-        switch ($this->nouveauStatut) {
+        // Contenu spécifique selon le statut
+        switch ($nouveauStatut) {
             case StatutCandidature::ANALYSE_DOSSIER:
-                $message->line('Votre dossier est actuellement en cours d\'analyse par nos équipes. Nous vous tiendrons informé de la suite du processus.');
+                $message->line("Votre dossier est actuellement en cours d'analyse par nos équipes.")
+                    ->line("Nous vous tiendrons informé des prochaines étapes.");
                 break;
 
             case StatutCandidature::ATTENTE_TEST:
-                $message->line('Félicitations ! Votre dossier a été retenu pour la suite du processus. Vous serez prochainement convoqué(e) pour un test technique.');
+                $message->line("Votre candidature a été retenue pour la phase de test.")
+                    ->line("Vous recevrez prochainement les détails concernant les tests à effectuer.");
                 break;
 
             case StatutCandidature::ATTENTE_RESULTATS:
-                $message->line('Vous avez passé le test technique. Nous analysons actuellement vos résultats et vous informerons très prochainement de la suite.');
+                $message->line("Vos tests ont été reçus et sont en cours d'évaluation.")
+                    ->line("Nous vous communiquerons les résultats dans les plus brefs délais.");
                 break;
 
             case StatutCandidature::ATTENTE_AFFECTATION:
-                $message->line('Excellent ! Vos résultats sont satisfaisants. Nous procédons actuellement à votre affectation dans la direction la plus appropriée.');
+                $message->line("Félicitations ! Votre candidature a été validée.")
+                    ->line("Nous recherchons actuellement le poste le plus adapté à votre profil.");
                 break;
 
             case StatutCandidature::VALIDE:
-                $message->line('🎉 **Félicitations !** Votre candidature a été validée.')
-                    ->line('Votre stage se déroulera du **' . $this->candidature->date_debut_stage?->format('d/m/Y') . '** au **' . $this->candidature->date_fin_stage?->format('d/m/Y') . '**.')
-                    ->line('Vous recevrez prochainement toutes les informations pratiques concernant votre intégration.')
-                    ->action('Voir ma candidature', route('candidature.suivi', ['code' => $this->candidature->code_suivi]));
+                $message->line("🎉 Félicitations ! Votre candidature a été acceptée !")
+                    ->line("Détails de votre stage :")
+                    ->line("• Début : " . $candidature->date_debut_stage->format('d/m/Y'))
+                    ->line("• Fin : " . $candidature->date_fin_stage->format('d/m/Y'))
+                    ->line("• Poste : " . $candidature->poste_souhaite)
+                    ->action('Voir les détails', url("/suivi/{$candidature->code_suivi}"));
                 break;
 
             case StatutCandidature::REJETE:
-                $message->line('Malheureusement, nous ne pouvons pas donner suite favorable à votre candidature.')
-                    ->line('**Motif :** ' . ($this->candidature->motif_rejet ?? 'Non spécifié'))
-                    ->line('Nous vous encourageons à postuler à nouveau pour de futures opportunités de stage.');
+                $message->line("Nous regrettons de vous informer que votre candidature n'a pas pu être retenue.")
+                    ->line("Motif : " . ($candidature->motif_rejet ?? 'Non spécifié'))
+                    ->line("Nous vous encourageons à postuler à d'autres opportunités futures.");
                 break;
         }
 
-        if ($this->nouveauStatut !== StatutCandidature::VALIDE) {
-            $message->action('Suivre ma candidature', route('candidature.suivi', ['code' => $this->candidature->code_suivi]));
-        }
-
-        $message->line('Merci de votre intérêt pour BRACONGO.')
-            ->salutation('L\'équipe Ressources Humaines BRACONGO');
-
-        return $message;
+        return $message
+            ->line("Code de suivi : {$candidature->code_suivi}")
+            ->action('Suivre ma candidature', url("/suivi/{$candidature->code_suivi}"))
+            ->line("Merci de votre intérêt pour BRACONGO Stages !")
+            ->salutation("Cordialement,\nL'équipe BRACONGO Stages");
     }
 
     public function toArray($notifiable): array
     {
         return [
             'candidature_id' => $this->candidature->id,
-            'code_suivi' => $this->candidature->code_suivi,
             'ancien_statut' => $this->ancienStatut->value,
             'nouveau_statut' => $this->nouveauStatut->value,
-            'candidat_nom' => $this->candidature->nom_complet,
+            'code_suivi' => $this->candidature->code_suivi,
         ];
     }
 } 

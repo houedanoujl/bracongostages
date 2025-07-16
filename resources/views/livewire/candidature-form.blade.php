@@ -116,9 +116,6 @@
                 <div class="bg-gray-50 px-6 py-4 rounded-b-xl border-t">
                     <div class="flex justify-between items-center">
                         <div class="space-x-2">
-                            <button wire:click="testSubmit" class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                                Test Livewire
-                            </button>
                             <button wire:click="openInfoModal" class="text-sm text-red-600 hover:text-red-800 transition-colors">
                                 Revoir ces informations plus tard
                             </button>

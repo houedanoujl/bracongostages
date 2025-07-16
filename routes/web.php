@@ -51,11 +51,25 @@ Route::post('/suivi/search', function (\Illuminate\Http\Request $request) {
     return redirect('/suivi/' . $candidature->code_suivi);
 })->name('candidature.suivi.search');
 
-// Route pour l'évaluation (après stage terminé)
-Route::get('/evaluation/{candidature}', function ($candidature) {
-    // TODO: Implémenter le composant d'évaluation
-    return view('evaluation', compact('candidature'));
-})->name('candidature.evaluation');
+// Routes pour les évaluations
+Route::get('/evaluation/{candidature}', [App\Http\Controllers\EvaluationController::class, 'show'])
+    ->name('candidature.evaluation');
+Route::post('/evaluation/{candidature}', [App\Http\Controllers\EvaluationController::class, 'store'])
+    ->name('evaluation.store');
+
+// API pour les statistiques d'évaluation
+Route::get('/api/evaluations/statistiques', [App\Http\Controllers\EvaluationController::class, 'statistiques'])
+    ->name('evaluation.statistiques');
+
+// Routes pour les pages dédiées
+Route::get('/opportunites', function () {
+    return view('opportunites');
+})->name('opportunites');
+
+Route::get('/contact', [App\Http\Controllers\ContactController::class, 'show'])
+    ->name('contact');
+Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])
+    ->name('contact.store');
 
 // API pour tests et monitoring
 Route::get('/api/health', function () {
@@ -83,4 +97,45 @@ Route::get('/test', function () {
         'php_version' => PHP_VERSION,
         'laravel_version' => app()->version()
     ]);
-}); 
+});
+
+// Route de login pour les administrateurs (Filament gère l'authentification)
+Route::get('/login', function () {
+    return redirect('/admin');
+})->name('login');
+
+// Routes pour les candidats
+Route::prefix('candidat')->name('candidat.')->group(function () {
+    // Routes publiques (pour les candidats non connectés)
+    Route::middleware('guest.candidat')->group(function () {
+        Route::get('/register', [App\Http\Controllers\CandidatController::class, 'create'])->name('create');
+        Route::post('/register', [App\Http\Controllers\CandidatController::class, 'store'])->name('store');
+        Route::get('/login', [App\Http\Controllers\CandidatController::class, 'login'])->name('login');
+        Route::post('/login', [App\Http\Controllers\CandidatController::class, 'authenticate'])->name('authenticate');
+    });
+    
+    // Routes protégées (pour les candidats connectés)
+    Route::middleware('auth:candidat')->group(function () {
+        Route::post('/logout', [App\Http\Controllers\CandidatController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', [App\Http\Controllers\CandidatController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profile', [App\Http\Controllers\CandidatController::class, 'profile'])->name('profile');
+        Route::post('/profile', [App\Http\Controllers\CandidatController::class, 'updateProfile'])->name('update-profile');
+        Route::post('/password', [App\Http\Controllers\CandidatController::class, 'changePassword'])->name('change-password');
+        Route::get('/candidatures', [App\Http\Controllers\CandidatController::class, 'candidatures'])->name('candidatures');
+        Route::get('/candidatures/{id}', [App\Http\Controllers\CandidatController::class, 'candidature'])->name('candidature');
+        Route::get('/cv/download', [App\Http\Controllers\CandidatController::class, 'downloadCv'])->name('download-cv');
+    });
+});
+
+// Route de suivi simplifiée
+Route::get('/suivi/{code}', function ($code) {
+    $candidature = \App\Models\Candidature::where('code_suivi', $code)
+        ->with(['documents', 'evaluation'])
+        ->first();
+    
+    if (!$candidature) {
+        return redirect('/suivi')->with('error', 'Aucune candidature trouvée avec ce code : ' . $code);
+    }
+    
+    return view('suivi-simple', compact('candidature'));
+})->name('suivi'); 

@@ -13,24 +13,41 @@ return new class extends Migration
     {
         Schema::create('evaluations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('candidature_id')->constrained()->onDelete('cascade');
             
-            // Relation avec la candidature (1-1)
-            $table->foreignId('candidature_id')->unique()->constrained()->onDelete('cascade');
+            // Satisfaction générale (1-5)
+            $table->integer('satisfaction_generale')->nullable();
             
-            // Notes de satisfaction (1-5)
-            $table->tinyInteger('note_plateforme')->nullable()->comment('Note de 1 à 5 pour la plateforme');
-            $table->tinyInteger('note_processus')->nullable()->comment('Note de 1 à 5 pour le processus');
+            // Recommandation
+            $table->enum('recommandation', ['oui', 'peut_etre', 'non'])->nullable();
             
-            // Commentaires et suggestions
-            $table->text('commentaires')->nullable();
-            $table->boolean('recommandation')->nullable()->comment('Recommanderait-il BRACONGO ?');
+            // Environnement de travail
+            $table->enum('accueil_integration', ['excellent', 'bon', 'moyen', 'insuffisant'])->nullable();
+            $table->enum('encadrement_suivi', ['excellent', 'bon', 'moyen', 'insuffisant'])->nullable();
+            $table->enum('conditions_travail', ['excellent', 'bon', 'moyen', 'insuffisant'])->nullable();
+            $table->enum('ambiance_travail', ['excellent', 'bon', 'moyen', 'insuffisant'])->nullable();
+            
+            // Apprentissages
+            $table->text('competences_developpees')->nullable();
+            $table->text('reponse_attentes')->nullable();
+            $table->text('aspects_enrichissants')->nullable();
+            
+            // Améliorations
             $table->text('suggestions_amelioration')->nullable();
+            $table->enum('contact_futur', ['oui', 'non'])->nullable();
+            
+            // Commentaire libre
+            $table->text('commentaire_libre')->nullable();
+            
+            // Note moyenne calculée automatiquement
+            $table->decimal('note_moyenne', 3, 1)->nullable();
             
             $table->timestamps();
             
-            // Index pour les statistiques
-            $table->index(['note_plateforme', 'note_processus']);
-            $table->index('created_at');
+            // Index pour optimiser les requêtes
+            $table->index(['candidature_id', 'created_at']);
+            $table->index('note_moyenne');
+            $table->index('satisfaction_generale');
         });
     }
 

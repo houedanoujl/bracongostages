@@ -302,9 +302,7 @@ class CandidatureSeeder extends Seeder
     {
         $commentaires = [
             "Excellente expérience de stage chez BRACONGO. L'équipe de la {$candidature->directions_souhaitees[0]} était très accueillante et les missions dans l'industrie brassicole étaient variées et enrichissantes. J'ai beaucoup appris sur les processus de production de la bière.",
-            
             "Stage très formateur dans l'univers BRACONGO. Les responsables m'ont bien encadré et j'ai pu participer à des projets concrets dans la production de bières. L'ambiance de travail était excellente et j'ai développé mes compétences techniques.",
-            
             "Très satisfait de mon passage chez BRACONGO. L'entreprise offre un environnement d'apprentissage exceptionnel dans le secteur brassicole. Les équipes sont professionnelles et bienveillantes. Je recommande vivement BRACONGO pour les stages.",
         ];
         
@@ -315,13 +313,14 @@ class CandidatureSeeder extends Seeder
             "Organiser des rencontres avec des anciens stagiaires devenus employés BRACONGO pourrait être motivant.",
         ];
 
-        Evaluation::create([
+        $recommandations = ['oui', 'peut_etre', 'non'];
+
+        \App\Models\Evaluation::create([
             'candidature_id' => $candidature->id,
-            'note_plateforme' => rand(4, 5),
-            'note_processus' => rand(4, 5),
-            'commentaires' => $commentaires[array_rand($commentaires)],
-            'recommandation' => rand(1, 10) > 2, // 80% de recommandations positives
+            'satisfaction_generale' => rand(3, 5),
+            'recommandation' => $recommandations[array_rand($recommandations)],
             'suggestions_amelioration' => $suggestions[array_rand($suggestions)],
+            'commentaire_libre' => $commentaires[array_rand($commentaires)],
         ]);
     }
 } 
