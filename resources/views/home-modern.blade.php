@@ -215,7 +215,7 @@
                 dans l'industrie brassicole congolaise.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/candidature" class="btn-primary-large bg-white text-bracongo-red hover:bg-bracongo-gray-100">
+                <a href="/candidature" class="btn-primary-large bg-white text-red-600 hover:bg-bracongo-gray-100">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

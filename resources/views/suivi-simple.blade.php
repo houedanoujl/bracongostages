@@ -173,22 +173,24 @@
                 @if($candidature->statut->value === 'valide' && $candidature->date_debut_stage)
                     <div class="bg-green-50 border border-green-200 rounded-xl p-6">
                         <h3 class="text-lg font-semibold text-green-800 mb-4">🎉 Détails de votre stage</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-green-700 font-medium">Date de début</p>
-                                <p class="text-green-800">{{ $candidature->date_debut_stage->format('d/m/Y') }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-green-700 font-medium">Date de fin</p>
-                                <p class="text-green-800">{{ $candidature->date_fin_stage->format('d/m/Y') }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-green-700 font-medium">Durée</p>
-                                <p class="text-green-800">{{ $candidature->duree_souhaitee }} jours</p>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-green-700 font-medium">Date de début</p>
+                                    <p class="text-green-800">{{ $candidature->date_debut_stage->format('d/m/Y') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-green-700 font-medium">Date de fin</p>
+                                    <p class="text-green-800">{{ $candidature->date_fin_stage->format('d/m/Y') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-green-700 font-medium">Durée</p>
+                                    <p class="text-green-800">{{ $candidature->duree_souhaitee }} jours</p>
+                                </div>
                             </div>
                             <div>
                                 <p class="text-sm text-green-700 font-medium">Directions</p>
-                                <p class="text-green-800">{{ implode(', ', $candidature->directions_souhaitees) }}</p>
+                                <p class="text-green-800 break-words">{{ implode(', ', $candidature->directions_souhaitees) }}</p>
                             </div>
                         </div>
                     </div>
@@ -206,12 +208,14 @@
                 @if($candidature->documents->count() > 0)
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Documents soumis</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
                             @foreach($candidature->documents as $document)
-                                <div class="flex items-center p-3 border border-gray-200 rounded-lg">
-                                    <div class="text-2xl mr-3">{{ $document->icone }}</div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900">{{ $document->nom_original }}</p>
+                                <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="text-2xl mr-3 flex-shrink-0">{{ $document->icone }}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate" title="{{ $document->nom_original }}">
+                                            {{ $document->nom_original }}
+                                        </p>
                                         <p class="text-xs text-gray-500">{{ $document->taille_formatee }}</p>
                                     </div>
                                 </div>
@@ -247,11 +251,11 @@
                 @endif
 
                 <!-- Actions -->
-                <div class="flex justify-between items-center">
-                    <a href="/suivi" class="text-orange-600 hover:text-orange-700 font-medium">
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                    <a href="/suivi" class="text-orange-600 hover:text-orange-700 font-medium text-center sm:text-left">
                         ← Rechercher une autre candidature
                     </a>
-                    <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium">
+                    <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium text-center sm:text-right">
                         Nouvelle candidature →
                     </a>
                 </div>
