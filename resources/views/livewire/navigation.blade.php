@@ -8,9 +8,7 @@
             <!-- Logo Section -->
             <div class="flex items-center space-x-3">
                 <a href="/" class="flex items-center space-x-3" wire:click="closeMobileMenu">
-                    <div class="w-12 h-12 bg-bracongo-red rounded-xl flex items-center justify-center transition-transform duration-300 hover:scale-105">
-                        <span class="text-white font-bold text-xl">B</span>
-                    </div>
+                <img class="h-12 w-auto" src="{{ asset('images/logo.png') }}" alt="BRACONGO">
                     <div>
                         <div class="text-2xl font-bold text-bracongo-red">BRACONGO</div>
                         <div class="text-sm text-bracongo-gray-600 font-medium">Stages & Formations</div>

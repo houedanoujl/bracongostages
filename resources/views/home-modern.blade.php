@@ -5,6 +5,11 @@
 @section('content')
 <!-- Hero Section Moderne -->
 <section class="hero-modern" id="hero">
+    <!-- Vidéo en arrière-plan -->
+    <video class="hero-video" autoplay muted loop playsinline id="hero-video">
+        <source src="{{ asset('images/01.mp4') }}" type="video/mp4">
+    </video>
+    
     <div class="hero-content">
         <h1 class="hero-title">
             Construisez votre avenir avec 
@@ -222,7 +227,7 @@
                     </svg>
                     Postuler maintenant
                 </a>
-                <a href="/suivi" class="btn-secondary-large border-white text-white hover:bg-white hover:text-bracongo-red">
+                <a href="/suivi" class="btn-secondary-large border-white hover:bg-white hover:text-bracongo-red">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -233,4 +238,14 @@
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const heroVideo = document.getElementById('hero-video');
+    if (heroVideo) {
+        // Réduire la vitesse de lecture à 50% (0.5)
+        heroVideo.playbackRate = 0.7;
+    }
+});
+</script>
 @endsection
