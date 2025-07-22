@@ -20,7 +20,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                <img class="h-12 w-auto rounded-full" src="{{ asset('images/logo.png') }}" alt="BRACONGO"/>
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-md">
+                        <span class="text-red-800 font-bold text-xl">B</span>
+                    </div>
                     <div class="ml-3">
                         <h1 class="text-2xl font-bold text-white">BRACONGO</h1>
                         <p class="text-yellow-200 text-sm font-medium">Stages & Formations</p>

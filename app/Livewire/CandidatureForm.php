@@ -104,27 +104,16 @@ class CandidatureForm extends Component
         }
     }
 
-    public $erreur_opportunite = false;
-    public $showToast = false;
-    public $toastMessage = '';
-    public $toastType = 'error';
-
     public function nextStep()
     {
         try {
             // Réinitialiser les erreurs
             $this->validationErrors = [];
             $this->resetErrorBag();
-            $this->erreur_opportunite = false;
             
             // Vérifier si une opportunité est sélectionnée
             if ($this->afficher_selection_opportunite) {
-                $this->erreur_opportunite = true;
-                $this->validationErrors[] = 'Vous devez sélectionner une opportunité avant de continuer.';
-                session()->flash('validation_error', 'Veuillez sélectionner une opportunité dans la liste déroulante avant de pouvoir continuer votre candidature.');
-                
-                // Afficher le toast
-                $this->displayToast('Veuillez sélectionner une opportunité dans la liste avant de continuer !', 'error');
+                session()->flash('validation_error', 'Veuillez sélectionner une opportunité avant de continuer.');
                 return;
             }
             
@@ -139,7 +128,6 @@ class CandidatureForm extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->validationErrors = $e->validator->errors()->all();
             session()->flash('validation_error', 'Veuillez corriger les erreurs avant de continuer.');
-            $this->displayToast('Veuillez corriger les erreurs dans le formulaire avant de continuer.', 'error');
         }
     }
 
@@ -430,29 +418,7 @@ class CandidatureForm extends Component
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
             $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
             $this->afficher_selection_opportunite = false;
-            $this->erreur_opportunite = false;
-            $this->validationErrors = [];
-            session()->forget('validation_error');
-            
-            // Toast de succès
-            $this->displayToast('Opportunité sélectionnée avec succès ! Vous pouvez maintenant continuer.', 'success');
         }
-    }
-
-    public function displayToast($message, $type = 'error')
-    {
-        $this->toastMessage = $message;
-        $this->toastType = $type;
-        $this->showToast = true;
-        
-        // Auto-hide après 5 secondes
-        $this->dispatch('auto-hide-toast');
-    }
-
-    public function hideToast()
-    {
-        $this->showToast = false;
-        $this->toastMessage = '';
     }
 
     public function resetForm()

@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
             ConfigurationListeSeeder::class,
             OpportuniteSeeder::class,
             TemoignageSeeder::class,
-            EtablissementPartenaireSeeder::class,
             CandidatureSeeder::class,
             EvaluationSeeder::class,
         ]);
