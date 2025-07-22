@@ -20,7 +20,9 @@ Route::get('/classic', function () {
 })->name('home.classic');
 
 // Routes principales de l'application
-Route::get('/candidature', CandidatureForm::class)->name('candidature.form');
+Route::get('/candidature', CandidatureForm::class)
+    ->middleware('auth.candidat')
+    ->name('candidature.form');
 Route::get('/suivi', function () {
     return view('suivi-simple');
 })->name('candidature.suivi');
@@ -104,6 +106,42 @@ Route::get('/login', function () {
     return redirect('/admin');
 })->name('login');
 
+// Route pour télécharger les documents depuis l'admin
+Route::get('/admin/documents/{document}/download', function ($documentId) {
+    try {
+        \Log::info('Tentative de téléchargement document ID: ' . $documentId);
+        
+        $document = \App\Models\Document::findOrFail($documentId);
+        \Log::info('Document trouvé: ' . $document->nom_original . ', Chemin: ' . $document->chemin_fichier);
+        
+        // Vérifier si le fichier existe au chemin exact
+        if ($document->fichierExiste()) {
+            \Log::info('Téléchargement en cours...');
+            return \Illuminate\Support\Facades\Storage::download(
+                $document->chemin_fichier, 
+                $document->nom_original
+            );
+        }
+        
+        // Si le fichier n'existe pas au chemin exact, chercher dans documents/
+        $cheminAlternatif = 'documents/' . basename($document->chemin_fichier);
+        if (\Illuminate\Support\Facades\Storage::exists($cheminAlternatif)) {
+            \Log::info('Fichier trouvé au chemin alternatif: ' . $cheminAlternatif);
+            return \Illuminate\Support\Facades\Storage::download(
+                $cheminAlternatif, 
+                $document->nom_original
+            );
+        }
+        
+        \Log::error('Fichier non trouvé: ' . $document->chemin_fichier . ' ni ' . $cheminAlternatif);
+        abort(404, 'Fichier non trouvé sur le serveur. Chemin recherché: ' . $document->chemin_fichier);
+        
+    } catch (\Exception $e) {
+        \Log::error('Erreur téléchargement document: ' . $e->getMessage());
+        abort(500, 'Erreur lors du téléchargement: ' . $e->getMessage());
+    }
+})->name('admin.document.download');
+
 // Routes pour les candidats
 Route::prefix('candidat')->name('candidat.')->group(function () {
     // Routes publiques (pour les candidats non connectés)
@@ -127,15 +165,4 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
     });
 });
 
-// Route de suivi simplifiée
-Route::get('/suivi/{code}', function ($code) {
-    $candidature = \App\Models\Candidature::where('code_suivi', $code)
-        ->with(['documents', 'evaluation'])
-        ->first();
-    
-    if (!$candidature) {
-        return redirect('/suivi')->with('error', 'Aucune candidature trouvée avec ce code : ' . $code);
-    }
-    
-    return view('suivi-simple', compact('candidature'));
-})->name('suivi'); 
+ 

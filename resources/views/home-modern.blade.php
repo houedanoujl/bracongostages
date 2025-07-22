@@ -19,13 +19,32 @@
             Rejoignez l'équipe BRACONGO et développez vos compétences dans l'industrie brassicole leader en République Démocratique du Congo
         </p>
         <div class="hero-cta">
-            <a href="/candidature" class="btn-primary-large">
-                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Postuler maintenant
-            </a>
+            @auth('candidat')
+                <a href="/candidature" class="btn-primary-large">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Postuler maintenant
+                </a>
+            @else
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="{{ route('candidat.create') }}" class="btn-primary-large">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Créer un compte
+                    </a>
+                    <a href="{{ route('candidat.login') }}" class="btn-secondary-large">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        Se connecter
+                    </a>
+                </div>
+            @endauth
             <a href="#opportunites" class="btn-secondary-large">
                 <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -126,12 +145,21 @@
         </div>
                 </div>
             <div class="flex items-center justify-between">
+                    @auth('candidat')
                     <a href="/candidature?domain={{ $opportunite->slug }}" class="card-cta">
-                    Postuler
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
+                        Postuler
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                @else
+                    <a href="{{ route('candidat.create') }}" class="card-cta">
+                        Créer un compte
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                @endauth
             </div>
         </div>
         @empty
@@ -220,13 +248,23 @@
                 dans l'industrie brassicole congolaise.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/candidature" class="btn-primary-large bg-white text-red-600 hover:bg-bracongo-gray-100">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Postuler maintenant
-                </a>
+                @auth('candidat')
+                    <a href="/candidature" class="btn-primary-large bg-white text-red-600 hover:bg-bracongo-gray-100">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Postuler maintenant
+                    </a>
+                @else
+                    <a href="{{ route('candidat.create') }}" class="btn-primary-large bg-white text-red-600 hover:bg-bracongo-gray-100">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Créer un compte
+                    </a>
+                @endauth
                 <a href="/suivi" class="btn-secondary-large border-white hover:bg-white hover:text-bracongo-red">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

@@ -320,3 +320,19 @@
         backface-visibility: hidden;
     }
 } 
+
+
+#heropportunites{
+  background:url(/public/images/01.jpg)no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+#herocontacts{
+    background:url(/public/images/02.jpg)no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+  }

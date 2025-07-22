@@ -50,12 +50,20 @@ class Candidat extends Authenticatable
     }
 
     /**
-     * Relation avec le CV
+     * Relation avec les documents du candidat
      */
-    public function cv(): HasOne
+    public function documentsCandidat(): HasMany
     {
-        return $this->hasOne(Document::class, 'candidature_id')
-            ->where('type', 'cv')
+        return $this->hasMany(DocumentCandidat::class);
+    }
+
+    /**
+     * Relation avec le CV du profil
+     */
+    public function cvCandidat(): HasOne
+    {
+        return $this->hasOne(DocumentCandidat::class)
+            ->where('type_document', 'cv')
             ->latest();
     }
 
@@ -80,7 +88,15 @@ class Candidat extends Authenticatable
      */
     public function hasCv(): bool
     {
-        return !empty($this->cv_path);
+        return !empty($this->cv_path) || $this->cvCandidat()->exists();
+    }
+
+    /**
+     * Obtenir un document par type
+     */
+    public function getDocumentByType(string $type): ?DocumentCandidat
+    {
+        return $this->documentsCandidat()->where('type_document', $type)->first();
     }
 
     /**

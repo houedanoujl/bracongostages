@@ -1,4 +1,54 @@
 <div class="min-h-screen bg-gradient-to-br from-yellow-50 via-red-50 to-green-50 py-12">
+    <!-- Toast Notifications -->
+    @if($showToast)
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ease-in-out" 
+             x-data="{ show: true }" 
+             x-show="show"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-2">
+            <div class="rounded-lg shadow-lg p-4 border-l-4 @if($toastType === 'error') bg-red-50 border-red-500 @elseif($toastType === 'success') bg-green-50 border-green-500 @else bg-blue-50 border-blue-500 @endif">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        @if($toastType === 'error')
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        @elseif($toastType === 'success')
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        @endif
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium @if($toastType === 'error') text-red-800 @elseif($toastType === 'success') text-green-800 @else text-blue-800 @endif">
+                            {{ $toastMessage }}
+                        </p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <button wire:click="hideToast" class="@if($toastType === 'error') text-red-400 hover:text-red-600 @elseif($toastType === 'success') text-green-400 hover:text-green-600 @else text-blue-400 hover:text-blue-600 @endif">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('auto-hide-toast', () => {
+                    setTimeout(() => {
+                        @this.call('hideToast');
+                    }, 5000);
+                });
+            });
+        </script>
+    @endif
     <!-- Modal d'information -->
     @if($showInfoModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" wire:click.self="closeInfoModal">
@@ -7,9 +57,7 @@
                 <div class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 px-6 py-4 rounded-t-xl">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center mr-3 shadow-md">
-                                <span class="text-red-800 font-bold">B</span>
-                            </div>
+                        <img class="h-12 w-auto rounded-full" src="{{ asset('images/logo.png') }}" alt="BRACONGO"/>&nbsp;
                             <h2 class="text-xl font-bold text-white">Informations importantes</h2>
                         </div>
                         <button wire:click="closeInfoModal" class="text-yellow-200 hover:text-white transition-colors">
@@ -152,7 +200,7 @@
                     Conservez précieusement ce code pour suivre l'évolution de votre candidature.
                 </p>
                 <div class="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
-                    <a href="{{ route('candidature.suivi', ['code' => $candidatureCode]) }}" 
+                    <a href="{{ route('candidature.suivi.code', $candidatureCode) }}" 
                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md">
                         Suivre ma candidature
                     </a>
@@ -168,9 +216,7 @@
                 <div class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 px-8 py-6">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center mr-3 shadow-md">
-                                <span class="text-red-800 font-bold text-lg">B</span>
-                            </div>
+                        <img class="h-12 w-auto rounded-full" src="{{ asset('images/logo.png') }}" alt="BRACONGO"/>
                             <div>
                                 <h1 class="text-3xl font-bold text-white">Candidature de Stage</h1>
                                 @if($opportunite_titre)
@@ -198,12 +244,20 @@
                         <div class="flex flex-col sm:flex-row gap-4 items-end">
                             <div class="flex-1">
                                 <select wire:model.live="opportunite_selectionnee" 
-                                        class="w-full rounded-lg border-yellow-400 border-2 px-4 py-3 focus:border-red-600 focus:ring-red-600 bg-white">
+                                        class="w-full rounded-lg px-4 py-3 focus:ring-red-600 bg-white transition-all duration-200 @if($erreur_opportunite) border-2 border-red-500 focus:border-red-500 animate-pulse @else border-2 border-yellow-400 focus:border-red-600 @endif">
                                     <option value="">-- Choisissez une opportunité --</option>
                                     @foreach($opportunites_disponibles as $id => $titre)
                                         <option value="{{ $id }}">{{ $titre }}</option>
                                     @endforeach
                                 </select>
+                                @if($erreur_opportunite)
+                                    <div class="mt-2 flex items-center text-red-600 text-sm">
+                                        <svg class="w-4 h-4 mr-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                        <span class="font-medium">Vous devez sélectionner une opportunité avant de continuer</span>
+                                    </div>
+                                @endif
                             </div>
                             <button wire:click="selectionnerOpportunite" 
                                     {{ $opportunite_selectionnee ? '' : 'disabled' }}
@@ -220,15 +274,27 @@
 
                 <!-- Affichage des erreurs -->
                 @if(session()->has('validation_error') || count($validationErrors) > 0)
-                    <div class="mx-8 mt-4 bg-red-50 border-2 border-red-300 rounded-lg p-4 shadow-md">
-                        <h3 class="text-sm font-medium text-red-800 mb-2">Erreurs de validation</h3>
-                        @if(count($validationErrors) > 0)
-                            <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
-                                @foreach($validationErrors as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        @endif
+                    <div class="mx-8 mt-4 bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-md animate-shake">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-red-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800 mb-2">⚠️ Action requise</h3>
+                                @if(session()->has('validation_error'))
+                                    <p class="text-sm text-red-700 font-medium">{{ session('validation_error') }}</p>
+                                @endif
+                                @if(count($validationErrors) > 0)
+                                    <ul class="mt-2 list-disc list-inside space-y-1 text-sm text-red-700">
+                                        @foreach($validationErrors as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 @endif
 

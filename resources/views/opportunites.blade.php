@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section pour Opportunités -->
-<section class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
+<section id="heropportunites" class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
     <div class="hero-content">
         <h1 class="hero-title">
             Opportunités de 

@@ -140,17 +140,53 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label for="cv" class="block text-sm font-medium text-gray-700 mb-1">CV</label>
-                            <input type="file" id="cv" name="cv" accept=".pdf,.doc,.docx"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <p class="text-xs text-gray-500 mt-1">Formats acceptés : PDF, DOC, DOCX (max 2MB)</p>
-                            @if($candidat->hasCv())
-                                <p class="text-sm text-green-600 mt-1">✓ CV actuel : <a href="{{ route('candidat.download-cv') }}" class="underline">Télécharger</a></p>
-                            @endif
-                            @error('cv')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
+                    </form>
+                </div>
+
+                <!-- Section Documents de candidature -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Documents de candidature</h2>
+                    <p class="text-sm text-gray-600 mb-4">Gérez vos documents pour les candidatures futures. Ces documents seront automatiquement utilisés lors de vos candidatures.</p>
+                    
+                    <form method="POST" action="{{ route('candidat.update-documents') }}" enctype="multipart/form-data" class="space-y-6">
+                        @csrf
+                        
+                        @foreach(\App\Models\DocumentCandidat::getTypesDocument() as $type => $label)
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="text-sm font-medium text-gray-700">{{ $label }}</label>
+                                    @php $document = $candidat->getDocumentByType($type); @endphp
+                                    @if($document)
+                                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">✓ Disponible</span>
+                                    @endif
+                                </div>
+                                
+                                <input type="file" name="documents[{{ $type }}]" accept=".pdf,.doc,.docx"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                
+                                @if($document)
+                                    <div class="mt-2 text-sm">
+                                        <span class="text-gray-600">Fichier actuel :</span>
+                                        <span class="text-gray-800">{{ $document->nom_original }}</span>
+                                        <span class="text-gray-500">({{ $document->taille_formatee }})</span>
+                                    </div>
+                                @endif
+                                
+                                @error('documents.'.$type)
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endforeach
+
+                        <div class="text-xs text-gray-500">
+                            Formats acceptés : PDF, DOC, DOCX (max 2MB par fichier)
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" 
+                                class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 font-medium">
+                                Mettre à jour les documents
+                            </button>
                         </div>
 
                         <div>

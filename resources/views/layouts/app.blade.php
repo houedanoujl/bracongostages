@@ -27,7 +27,7 @@
                     <div class="flex items-center">
                         <!-- Logo -->
                         <div class="flex-shrink-0 flex items-center">
-                            <img class="h-12 w-auto" src="{{ asset('images/logo.png') }}" alt="BRACONGO">
+                            <img class="h-12 w-auto rounded-full" src="{{ asset('images/logo.png') }}" alt="BRACONGO"/>
                             <div class="ml-4">
                                 <h1 class="text-2xl font-bold text-white">BRACONGO</h1>
                                 <p class="text-orange-100 text-sm">Stages & Formations</p>

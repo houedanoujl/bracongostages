@@ -14,58 +14,23 @@ class CandidatureForm extends Component
 {
     use WithFileUploads;
 
-    #[Validate('required|string|max:255')]
     public $nom = '';
-
-    #[Validate('required|string|max:255')]
     public $prenom = '';
-
-    #[Validate('required|email|max:255')]
     public $email = '';
-
-    #[Validate('required|string|max:20')]
     public $telephone = '';
-
-    #[Validate('required|string')]
     public $etablissement = '';
-
-    #[Validate('required|string')]
     public $niveau_etude = '';
-
-    #[Validate('nullable|string|max:255')]
     public $faculte = '';
-
-    #[Validate('required|string')]
     public $objectif_stage = '';
-
-    #[Validate('required|array|min:1')]
     public $directions_souhaitees = [];
-
-    #[Validate('required|date|after:today')]
     public $periode_debut_souhaitee = '';
-
-    #[Validate('required|date|after:periode_debut_souhaitee')]
     public $periode_fin_souhaitee = '';
-
-    #[Validate('required|file|mimes:pdf,doc,docx|max:2048')]
     public $cv;
-
-    #[Validate('required|file|mimes:pdf,doc,docx|max:2048')]
     public $lettre_motivation;
-
-    #[Validate('required|file|mimes:pdf,jpg,jpeg,png|max:2048')]
     public $certificat_scolarite;
-
-    #[Validate('nullable|file|mimes:pdf,jpg,jpeg,png|max:2048')]
     public $releves_notes;
-
-    #[Validate('nullable|file|mimes:pdf,doc,docx|max:2048')]
     public $lettres_recommandation;
-
-    #[Validate('nullable|file|mimes:pdf,jpg,jpeg,png|max:2048')]
     public $certificats_competences;
-
-    #[Validate('required|string')]
     public $poste_souhaite = '';
 
     public $currentStep = 1;
@@ -104,16 +69,27 @@ class CandidatureForm extends Component
         }
     }
 
+    public $erreur_opportunite = false;
+    public $showToast = false;
+    public $toastMessage = '';
+    public $toastType = 'error';
+
     public function nextStep()
     {
         try {
             // Réinitialiser les erreurs
             $this->validationErrors = [];
             $this->resetErrorBag();
+            $this->erreur_opportunite = false;
             
             // Vérifier si une opportunité est sélectionnée
             if ($this->afficher_selection_opportunite) {
-                session()->flash('validation_error', 'Veuillez sélectionner une opportunité avant de continuer.');
+                $this->erreur_opportunite = true;
+                $this->validationErrors[] = 'Vous devez sélectionner une opportunité avant de continuer.';
+                session()->flash('validation_error', 'Veuillez sélectionner une opportunité dans la liste déroulante avant de pouvoir continuer votre candidature.');
+                
+                // Afficher le toast
+                $this->displayToast('Veuillez sélectionner une opportunité dans la liste avant de continuer !', 'error');
                 return;
             }
             
@@ -128,6 +104,7 @@ class CandidatureForm extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->validationErrors = $e->validator->errors()->all();
             session()->flash('validation_error', 'Veuillez corriger les erreurs avant de continuer.');
+            $this->displayToast('Veuillez corriger les erreurs dans le formulaire avant de continuer.', 'error');
         }
     }
 
@@ -418,7 +395,29 @@ class CandidatureForm extends Component
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
             $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
             $this->afficher_selection_opportunite = false;
+            $this->erreur_opportunite = false;
+            $this->validationErrors = [];
+            session()->forget('validation_error');
+            
+            // Toast de succès
+            $this->displayToast('Opportunité sélectionnée avec succès ! Vous pouvez maintenant continuer.', 'success');
         }
+    }
+
+    public function displayToast($message, $type = 'error')
+    {
+        $this->toastMessage = $message;
+        $this->toastType = $type;
+        $this->showToast = true;
+        
+        // Auto-hide après 5 secondes
+        $this->dispatch('auto-hide-toast');
+    }
+
+    public function hideToast()
+    {
+        $this->showToast = false;
+        $this->toastMessage = '';
     }
 
     public function resetForm()

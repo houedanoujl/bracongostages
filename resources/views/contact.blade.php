@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section pour Contact -->
-<section class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
+<section id="herocontacts" class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
     <div class="hero-content">
         <h1 class="hero-title">
             Contactez 

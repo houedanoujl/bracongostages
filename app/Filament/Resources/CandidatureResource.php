@@ -107,6 +107,70 @@ class CandidatureResource extends Resource
                             ->required(),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Documents')
+                    ->schema([
+                        Forms\Components\Repeater::make('documents')
+                            ->relationship('documents')
+                            ->schema([
+                                Forms\Components\Grid::make(4)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('type_document')
+                                            ->label('Type')
+                                            ->disabled()
+                                            ->formatStateUsing(function ($state) {
+                                                $types = [
+                                                    'cv' => 'CV',
+                                                    'lettre_motivation' => 'Lettre de motivation',
+                                                    'certificat_scolarite' => 'Certificat de scolarité',
+                                                    'releves_notes' => 'Relevés de notes',
+                                                    'lettres_recommandation' => 'Lettres de recommandation',
+                                                    'certificats_competences' => 'Certificats de compétences',
+                                                ];
+                                                return $types[$state] ?? $state;
+                                            }),
+                                        Forms\Components\TextInput::make('nom_original')
+                                            ->label('Nom du fichier')
+                                            ->disabled(),
+                                        Forms\Components\TextInput::make('taille_fichier')
+                                            ->label('Taille')
+                                            ->disabled()
+                                            ->formatStateUsing(function ($state, $record) {
+                                                if (!$state) return '';
+                                                $bytes = $state;
+                                                if ($bytes === 0) return '0 Bytes';
+                                                $k = 1024;
+                                                $sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                                                $i = floor(log($bytes) / log($k));
+                                                return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
+                                            }),
+                                        Forms\Components\ViewField::make('download_link')
+                                            ->label('Action')
+                                            ->view('filament.forms.download-button')
+                                            ->viewData(function ($record) {
+                                                return [
+                                                    'document' => $record,
+                                                    'url' => $record ? route('admin.document.download', $record->id) : null,
+                                                ];
+                                            }),
+                                    ])
+                            ])
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->collapsible()
+                            ->itemLabel(function (array $state): ?string {
+                                $types = [
+                                    'cv' => '📄 CV',
+                                    'lettre_motivation' => '📝 Lettre de motivation',
+                                    'certificat_scolarite' => '🎓 Certificat de scolarité',
+                                    'releves_notes' => '📊 Relevés de notes',
+                                    'lettres_recommandation' => '📋 Lettres de recommandation',
+                                    'certificats_competences' => '🏆 Certificats de compétences',
+                                ];
+                                return $types[$state['type_document'] ?? ''] ?? 'Document';
+                            }),
+                    ]),
+
                 Forms\Components\Section::make('Gestion de la candidature')
                     ->schema([
                         Select::make('statut')
@@ -195,6 +259,12 @@ class CandidatureResource extends Resource
                     ->label('Fin stage')
                     ->date('d/m/Y')
                     ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('documents_count')
+                    ->label('Documents')
+                    ->counts('documents')
+                    ->badge()
+                    ->color('success')
                     ->toggleable(),
             ])
             ->filters([

@@ -60,6 +60,7 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'guest.candidat' => \App\Http\Middleware\RedirectIfCandidat::class,
+        'auth.candidat' => \App\Http\Middleware\RedirectIfNotCandidat::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,
