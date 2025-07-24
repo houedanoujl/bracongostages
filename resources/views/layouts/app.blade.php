@@ -21,7 +21,7 @@
 <body class="h-full font-sans antialiased">
     <div class="min-h-full">
         <!-- Navigation -->
-        <nav class="bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg">
+        <nav class="bg-gradient-to-r from-bracongo-red-600 to-bracongo-red-500 shadow-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-20">
                     <div class="flex items-center">
@@ -30,7 +30,7 @@
                             <img class="h-12 w-auto rounded-full" src="{{ asset('images/logo.png') }}" alt="BRACONGO"/>
                             <div class="ml-4">
                                 <h1 class="text-2xl font-bold text-white">BRACONGO</h1>
-                                <p class="text-orange-100 text-sm">Stages & Formations</p>
+                                <p class="text-bracongo-red-100 text-sm">Stages & Formations</p>
                             </div>
                         </div>
                     </div>
@@ -38,22 +38,22 @@
                     <!-- Navigation Links -->
                     <div class="hidden md:flex items-center space-x-8">
                         <a href="{{ route('candidature.form') }}" 
-                           class="text-white hover:text-orange-100 transition-colors duration-200 font-medium">
+                           class="text-white hover:text-bracongo-red-100 transition-colors duration-200 font-medium">
                             Postuler
                         </a>
                         <a href="{{ route('candidature.suivi') }}" 
-                           class="text-white hover:text-orange-100 transition-colors duration-200 font-medium">
+                           class="text-white hover:text-bracongo-red-100 transition-colors duration-200 font-medium">
                             Suivi de candidature
                         </a>
                         <a href="/admin" 
-                           class="bg-white text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                           class="bg-white text-bracongo-red-600 hover:bg-bracongo-red-50 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
                             Administration
                         </a>
                     </div>
 
                     <!-- Mobile menu button -->
                     <div class="md:hidden flex items-center">
-                        <button type="button" class="mobile-menu-button text-white hover:text-orange-100 focus:outline-none focus:text-orange-100" aria-controls="mobile-menu" aria-expanded="false">
+                        <button type="button" class="mobile-menu-button text-white hover:text-bracongo-red-100 focus:outline-none focus:text-bracongo-red-100" aria-controls="mobile-menu" aria-expanded="false">
                             <span class="sr-only">Ouvrir le menu principal</span>
                             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -65,10 +65,10 @@
 
             <!-- Mobile menu -->
             <div class="hidden md:hidden" id="mobile-menu">
-                <div class="px-2 pt-2 pb-3 space-y-1 bg-orange-700">
-                    <a href="{{ route('candidature.form') }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Postuler</a>
-                    <a href="{{ route('candidature.suivi') }}" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Suivi</a>
-                    <a href="/admin" class="text-white hover:text-orange-100 block px-3 py-2 rounded-md text-base font-medium">Administration</a>
+                <div class="px-2 pt-2 pb-3 space-y-1 bg-bracongo-red-700">
+                    <a href="{{ route('candidature.form') }}" class="text-white hover:text-bracongo-red-100 block px-3 py-2 rounded-md text-base font-medium">Postuler</a>
+                    <a href="{{ route('candidature.suivi') }}" class="text-white hover:text-bracongo-red-100 block px-3 py-2 rounded-md text-base font-medium">Suivi</a>
+                    <a href="/admin" class="text-white hover:text-bracongo-red-100 block px-3 py-2 rounded-md text-base font-medium">Administration</a>
                 </div>
             </div>
         </nav>

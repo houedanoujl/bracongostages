@@ -258,4 +258,60 @@ class CandidatController extends Controller
 
         return Storage::disk('public')->download($candidat->cv_path);
     }
+
+    /**
+     * Mettre à jour les documents du candidat
+     */
+    public function updateDocuments(Request $request)
+    {
+        $candidat = Auth::guard('candidat')->user();
+
+        // Validation des documents uploadés
+        $rules = [];
+        foreach (array_keys(\App\Models\DocumentCandidat::getTypesDocument()) as $type) {
+            $rules["documents.{$type}"] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $documentsUploades = 0;
+
+        // Traitement des documents uploadés
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $type => $file) {
+                if ($file && $file->isValid()) {
+                    // Supprimer l'ancien document s'il existe
+                    $ancienDocument = $candidat->getDocumentByType($type);
+                    if ($ancienDocument) {
+                        $ancienDocument->delete(); // Le hook supprimera automatiquement le fichier
+                    }
+
+                    // Stocker le nouveau document
+                    $path = $file->store('documents_candidat', 'public');
+
+                    // Créer l'enregistrement en base
+                    \App\Models\DocumentCandidat::create([
+                        'candidat_id' => $candidat->id,
+                        'type_document' => $type,
+                        'nom_original' => $file->getClientOriginalName(),
+                        'chemin_fichier' => $path,
+                        'taille_fichier' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                    ]);
+
+                    $documentsUploades++;
+                }
+            }
+        }
+
+        if ($documentsUploades > 0) {
+            return back()->with('success', "Documents mis à jour avec succès ! {$documentsUploades} document(s) uploadé(s).");
+        }
+
+        return back()->with('error', 'Aucun document à mettre à jour.');
+    }
 }

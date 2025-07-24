@@ -1,13 +1,13 @@
 @extends('layouts.modern')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 py-12">
+<div class="min-h-screen bg-gradient-to-br from-bracongo-red-50 to-bracongo-red-100 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         @if(!isset($candidature))
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-orange-600 mb-4">
+                    <h1 class="text-3xl font-bold text-bracongo-red-600 mb-4">
                         🔍 Suivi de Candidature
                     </h1>
                     <p class="text-gray-600">
@@ -26,7 +26,7 @@
                             name="searchCode"
                             id="searchCode"
                             placeholder="Ex: BRC-ABCD1234" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                             autocomplete="off"
                             required
                         >
@@ -34,7 +34,7 @@
                     
                     <button 
                         type="submit"
-                        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition duration-300 shadow-lg"
+                        class="w-full bg-gradient-to-r from-bracongo-red-500 to-bracongo-red-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-bracongo-red-600 hover:to-bracongo-red-700 transition duration-300 shadow-lg"
                     >
                         Rechercher ma candidature
                     </button>
@@ -53,7 +53,7 @@
                 </div>
                 
                 <div class="mt-8 text-center">
-                    <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium">
+                    <a href="/candidature" class="text-bracongo-red-600 hover:text-bracongo-red-700 font-medium">
                         ← Retour au formulaire de candidature
                     </a>
                 </div>
@@ -252,10 +252,10 @@
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                    <a href="/suivi" class="text-orange-600 hover:text-orange-700 font-medium text-center sm:text-left">
+                    <a href="/suivi" class="text-bracongo-red-600 hover:text-bracongo-red-700 font-medium text-center sm:text-left">
                         ← Rechercher une autre candidature
                     </a>
-                    <a href="/candidature" class="text-orange-600 hover:text-orange-700 font-medium text-center sm:text-right">
+                    <a href="/candidature" class="text-bracongo-red-600 hover:text-bracongo-red-700 font-medium text-center sm:text-right">
                         Nouvelle candidature →
                     </a>
                 </div>

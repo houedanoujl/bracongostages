@@ -6,6 +6,7 @@ use App\Enums\StatutCandidature;
 use App\Models\ConfigurationListe;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
@@ -59,6 +60,14 @@ class Candidature extends Model
                 $candidature->statut = StatutCandidature::NON_TRAITE;
             }
         });
+    }
+
+    /**
+     * Relation avec l'opportunité de stage
+     */
+    public function opportunite(): BelongsTo
+    {
+        return $this->belongsTo(Opportunite::class);
     }
 
     /**

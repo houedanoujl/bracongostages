@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section pour Opportunités -->
-<section id="heropportunites" class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
+<section id="heropportunites" class="hero-modern bg-gradient-to-br from-bracongo-red-50 to-red-50">
     <div class="hero-content">
         <h1 class="hero-title">
             Opportunités de 
@@ -113,9 +113,11 @@
                     <div class="p-6 border-b border-bracongo-gray-100">
                         <div class="flex items-center justify-between mb-4">
                             <div class="text-4xl">{{ $opportunite->icone }}</div>
-                            <span class="badge-modern badge-{{ $opportunite->statut === 'active' ? 'success' : 'warning' }}">
-                                {{ $opportunite->statut === 'active' ? 'Disponible' : 'Bientôt disponible' }}
-                            </span>
+                            @if($opportunite->places_disponibles && $opportunite->places_disponibles <= 3)
+                                <span class="badge-modern badge-warning">
+                                    {{ $opportunite->places_disponibles }} place(s) restante(s)
+                                </span>
+                            @endif
                         </div>
                         
                         <h3 class="text-xl font-bold text-bracongo-gray-900 mb-2">{{ $opportunite->titre }}</h3>
@@ -194,10 +196,10 @@
                                 </svg>
                                 Postuler
                             </a>
-                            <button class="text-bracongo-orange hover:text-bracongo-red font-medium text-sm transition-colors" 
-                                    onclick="afficherDetails('{{ $opportunite->id }}')">
+                            <a href="{{ route('opportunite.detail', $opportunite->slug) }}" 
+                               class="text-bracongo-orange hover:text-bracongo-red font-medium text-sm transition-colors">
                                 Voir détails
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -288,7 +290,7 @@
 <section class="py-16 bg-gradient-to-r from-bracongo-orange to-bracongo-red">
     <div class="max-w-4xl mx-auto px-4 text-center">
         <h2 class="text-3xl font-bold text-white mb-4">Prêt à rejoindre l'équipe BRACONGO ?</h2>
-        <p class="text-xl text-orange-100 mb-8">
+        <p class="text-xl text-bracongo-red-100 mb-8">
             Commencez votre aventure professionnelle dès aujourd'hui
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">

@@ -18,4 +18,16 @@ class EtablissementPartenaire extends Model
         'ordre',
         'actif',
     ];
+    
+    /**
+     * Get the logo URL attribute
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+        
+        return url('/uploads/' . $this->logo);
+    }
 }

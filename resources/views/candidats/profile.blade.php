@@ -188,23 +188,6 @@
                                 Mettre à jour les documents
                             </button>
                         </div>
-
-                        <div>
-                            <label for="photo" class="block text-sm font-medium text-gray-700 mb-1">Photo de profil</label>
-                            <input type="file" id="photo" name="photo" accept="image/*"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <p class="text-xs text-gray-500 mt-1">Formats acceptés : JPG, PNG (max 1MB)</p>
-                            @error('photo')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="pt-4">
-                            <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium">
-                                Mettre à jour mon profil
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>

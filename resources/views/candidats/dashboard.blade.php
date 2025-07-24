@@ -95,7 +95,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Mes candidatures -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow">
+                <div class="bg-white rounded-lg shadow mb-10">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="text-lg font-medium text-gray-900">Mes candidatures récentes</h2>
                     </div>
@@ -124,7 +124,7 @@
                                         <div class="mt-3 flex space-x-2">
                                             <a href="{{ route('candidat.candidature', $candidature->id) }}" 
                                                 class="text-sm text-blue-600 hover:text-blue-500">Voir les détails</a>
-                                            <a href="{{ route('suivi', $candidature->code_suivi) }}" 
+                                            <a href="{{ route('candidature.suivi.code', $candidature->code_suivi) }}" 
                                                 class="text-sm text-gray-600 hover:text-gray-500">Suivre en ligne</a>
                                         </div>
                                     </div>
@@ -152,6 +152,30 @@
                                     </a>
                                 </div>
                             </div>
+                        @endif
+                    </div>
+                </div>
+                   <!-- Opportunités récentes -->
+                   <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Opportunités récentes</h2>
+                    </div>
+                    <div class="p-6">
+                        @if($opportunites->count() > 0)
+                            <div class="space-y-3">
+                                @foreach($opportunites as $opportunite)
+                                    <div class="border border-gray-200 rounded-lg p-3">
+                                        <h3 class="font-medium text-gray-900 text-sm">{{ $opportunite->titre }}</h3>
+                                        <p class="text-xs text-gray-600 mt-1">{{ Str::limit($opportunite->description, 80) }}</p>
+                                        <div class="mt-2">
+                                            <a href="{{ route('opportunite.detail', $opportunite->slug) }}" 
+                                                class="text-xs text-blue-600 hover:text-blue-500">Voir l'opportunité</a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500">Aucune opportunité disponible pour le moment.</p>
                         @endif
                     </div>
                 </div>
@@ -193,30 +217,7 @@
                     </div>
                 </div>
 
-                <!-- Opportunités récentes -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-medium text-gray-900">Opportunités récentes</h2>
-                    </div>
-                    <div class="p-6">
-                        @if($opportunites->count() > 0)
-                            <div class="space-y-3">
-                                @foreach($opportunites as $opportunite)
-                                    <div class="border border-gray-200 rounded-lg p-3">
-                                        <h3 class="font-medium text-gray-900 text-sm">{{ $opportunite->titre }}</h3>
-                                        <p class="text-xs text-gray-600 mt-1">{{ Str::limit($opportunite->description, 80) }}</p>
-                                        <div class="mt-2">
-                                            <a href="{{ route('opportunites') }}" 
-                                                class="text-xs text-blue-600 hover:text-blue-500">Voir l'opportunité</a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-sm text-gray-500">Aucune opportunité disponible pour le moment.</p>
-                        @endif
-                    </div>
-                </div>
+             
             </div>
         </div>
     </div>

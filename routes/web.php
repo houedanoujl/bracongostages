@@ -68,6 +68,18 @@ Route::get('/opportunites', function () {
     return view('opportunites');
 })->name('opportunites');
 
+Route::get('/opportunites/{slug}', function ($slug) {
+    $opportunite = \App\Models\Opportunite::where('slug', $slug)
+        ->where('actif', true)
+        ->first();
+    
+    if (!$opportunite) {
+        return redirect('/opportunites')->with('error', 'Opportunité non trouvée.');
+    }
+    
+    return view('opportunite-detail', compact('opportunite'));
+})->name('opportunite.detail');
+
 Route::get('/contact', [App\Http\Controllers\ContactController::class, 'show'])
     ->name('contact');
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])
@@ -105,6 +117,33 @@ Route::get('/test', function () {
 Route::get('/login', function () {
     return redirect('/admin');
 })->name('login');
+
+// Route pour servir les images uploadées (workaround Nginx)
+Route::get('/uploads/{path}', function ($path) {
+    try {
+        $file = storage_path('app/public/' . $path);
+        
+        \Log::info('Trying to serve file: ' . $file);
+        
+        if (!file_exists($file)) {
+            \Log::error('File not found: ' . $file);
+            abort(404);
+        }
+        
+        $mimeType = mime_content_type($file);
+        \Log::info('Serving file with mime type: ' . $mimeType);
+        
+        return response()->file($file, ['Content-Type' => $mimeType]);
+    } catch (\Exception $e) {
+        \Log::error('Error serving file: ' . $e->getMessage());
+        abort(500);
+    }
+})->where('path', '.*')->name('uploads.serve');
+
+// Test route
+Route::get('/test-uploads', function () {
+    return 'Uploads route is working!';
+});
 
 // Route pour télécharger les documents depuis l'admin
 Route::get('/admin/documents/{document}/download', function ($documentId) {
@@ -158,6 +197,7 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\CandidatController::class, 'dashboard'])->name('dashboard');
         Route::get('/profile', [App\Http\Controllers\CandidatController::class, 'profile'])->name('profile');
         Route::post('/profile', [App\Http\Controllers\CandidatController::class, 'updateProfile'])->name('update-profile');
+        Route::post('/documents', [App\Http\Controllers\CandidatController::class, 'updateDocuments'])->name('update-documents');
         Route::post('/password', [App\Http\Controllers\CandidatController::class, 'changePassword'])->name('change-password');
         Route::get('/candidatures', [App\Http\Controllers\CandidatController::class, 'candidatures'])->name('candidatures');
         Route::get('/candidatures/{id}', [App\Http\Controllers\CandidatController::class, 'candidature'])->name('candidature');

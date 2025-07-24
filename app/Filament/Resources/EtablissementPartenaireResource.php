@@ -35,11 +35,23 @@ class EtablissementPartenaireResource extends Resource
         return $form->schema([
             TextInput::make('nom')->required()->maxLength(255),
             FileUpload::make('logo')
-                ->label('Logo')
+                ->label('Logo de l\'établissement')
                 ->image()
+                ->disk('public')
                 ->directory('etablissements')
-                ->maxSize(1024)
-                ->helperText('PNG/JPG, max 1Mo'),
+                ->visibility('public')
+                ->maxSize(2048)
+                ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/jpg'])
+                ->imagePreviewHeight('250')
+                ->loadingIndicatorPosition('left')
+                ->panelAspectRatio('2:1')
+                ->panelLayout('integrated')
+                ->removeUploadedFileButtonPosition('right')
+                ->uploadButtonPosition('left')
+                ->uploadProgressIndicatorPosition('left')
+                ->helperText('Formats acceptés: PNG, JPG. Taille max: 2Mo.')
+                ->columnSpanFull()
+                ->required(false),
             TextInput::make('url')->label('Lien (facultatif)')->url()->maxLength(255),
             Input::make('ordre')->numeric()->default(0)->label('Ordre d\'affichage'),
             Toggle::make('actif')->default(true)->label('Actif'),
@@ -49,7 +61,12 @@ class EtablissementPartenaireResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            ImageColumn::make('logo')->label('Logo')->circular(),
+            ImageColumn::make('logo')
+                ->label('Logo')
+                ->circular()
+                ->getStateUsing(function ($record) {
+                    return $record->logo ? url('/uploads/' . $record->logo) : null;
+                }),
             TextColumn::make('nom')->searchable()->sortable(),
             TextColumn::make('url')->label('Lien')->url(fn ($record) => $record->url)->openUrlInNewTab()->toggleable(),
             TextColumn::make('ordre')->sortable(),

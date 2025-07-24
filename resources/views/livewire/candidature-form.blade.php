@@ -475,15 +475,53 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="cv" class="block text-sm font-medium text-gray-700 mb-2">CV *</label>
+                                    @auth('candidat')
+                                        @php $cvCandidat = auth('candidat')->user()->getDocumentByType('cv'); @endphp
+                                        @if($cvCandidat)
+                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <p class="text-sm text-green-800">📄 CV du profil disponible</p>
+                                                        <p class="text-xs text-green-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
+                                                    </div>
+                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endauth
                                     <input wire:model="cv" type="file" id="cv" accept=".pdf,.doc,.docx" 
                                            class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('cv') border-red-500 @enderror">
+                                    @auth('candidat')
+                                        @if(auth('candidat')->user()->getDocumentByType('cv'))
+                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre CV du profil, ou uploadez un nouveau fichier pour le remplacer</p>
+                                        @endif
+                                    @endauth
                                     @error('cv') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 
                                 <div>
                                     <label for="lettre_motivation" class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation *</label>
+                                    @auth('candidat')
+                                        @php $lettreCandidat = auth('candidat')->user()->getDocumentByType('lettre_motivation'); @endphp
+                                        @if($lettreCandidat)
+                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <p class="text-sm text-green-800">📝 Lettre du profil disponible</p>
+                                                        <p class="text-xs text-green-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
+                                                    </div>
+                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisée automatiquement</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endauth
                                     <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
                                            class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                    @auth('candidat')
+                                        @if(auth('candidat')->user()->getDocumentByType('lettre_motivation'))
+                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre lettre du profil, ou uploadez un nouveau fichier</p>
+                                        @endif
+                                    @endauth
                                     @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -491,8 +529,27 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="certificat_scolarite" class="block text-sm font-medium text-gray-700 mb-2">Certificat de scolarité *</label>
+                                    @auth('candidat')
+                                        @php $certificatCandidat = auth('candidat')->user()->getDocumentByType('certificat_scolarite'); @endphp
+                                        @if($certificatCandidat)
+                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <p class="text-sm text-green-800">🎓 Certificat du profil disponible</p>
+                                                        <p class="text-xs text-green-600">{{ $certificatCandidat->nom_original }} ({{ $certificatCandidat->taille_formatee }})</p>
+                                                    </div>
+                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endauth
                                     <input wire:model="certificat_scolarite" type="file" id="certificat_scolarite" accept=".pdf,.jpg,.jpeg,.png" 
                                            class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('certificat_scolarite') border-red-500 @enderror">
+                                    @auth('candidat')
+                                        @if(auth('candidat')->user()->getDocumentByType('certificat_scolarite'))
+                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre certificat du profil, ou uploadez un nouveau fichier</p>
+                                        @endif
+                                    @endauth
                                     @error('certificat_scolarite') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 

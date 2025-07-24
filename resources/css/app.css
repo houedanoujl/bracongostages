@@ -102,8 +102,10 @@
 
     .hero-modern::before {
         content: '';
-        @apply absolute inset-0 z-10;
-        background: linear-gradient(135deg, rgba(227, 6, 19, 0.6) 0%, rgba(185, 28, 28, 0.6) 100%);
+        position: absolute;
+        inset: 0px;
+        z-index: 10;
+        background: linear-gradient(206deg, #11182791 0%, #000000 100%);
         pointer-events: none;
     }
 
@@ -301,6 +303,8 @@
     .glass-effect {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -335,4 +339,25 @@
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
+  }
+
+  #herosectonopp{
+    background:url(/public/images/01.jpg)no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+  }
+  .hero-modern{
+    background:url(/public/images/01.jpg)no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+  }
+
+  .bg-bracongo-red-600 {
+    background:#E30613;
+    border: 1px solid #b91c1c;
+    color: white;
   }

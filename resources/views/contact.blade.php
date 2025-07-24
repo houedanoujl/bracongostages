@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section pour Contact -->
-<section id="herocontacts" class="hero-modern bg-gradient-to-br from-orange-50 to-red-50">
+<section id="herocontacts" class="hero-modern bg-gradient-to-br from-bracongo-red-50 to-red-50">
     <div class="hero-content">
         <h1 class="hero-title">
             Contactez 
@@ -329,7 +329,7 @@
 <section class="py-16 bg-gradient-to-r from-bracongo-orange to-bracongo-red">
     <div class="max-w-4xl mx-auto px-4 text-center">
         <h2 class="text-3xl font-bold text-white mb-4">Prêt à rejoindre l'équipe BRACONGO ?</h2>
-        <p class="text-xl text-orange-100 mb-8">
+        <p class="text-xl text-bracongo-red-100 mb-8">
             Commencez votre aventure professionnelle dès aujourd'hui
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">

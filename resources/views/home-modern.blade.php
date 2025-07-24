@@ -145,21 +145,26 @@
         </div>
                 </div>
             <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-2">
                     @auth('candidat')
-                    <a href="/candidature?domain={{ $opportunite->slug }}" class="card-cta">
-                        Postuler
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
+                        <a href="/candidature?domain={{ $opportunite->slug }}" class="card-cta">
+                            Postuler
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @else
+                        <a href="{{ route('candidat.create') }}" class="card-cta">
+                            Créer un compte
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @endauth
+                    <a href="{{ route('opportunite.detail', $opportunite->slug) }}" class="text-sm text-bracongo-orange hover:text-bracongo-red font-medium transition-colors duration-200">
+                        Voir détails
                     </a>
-                @else
-                    <a href="{{ route('candidat.create') }}" class="card-cta">
-                        Créer un compte
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </a>
-                @endauth
+                </div>
             </div>
         </div>
         @empty

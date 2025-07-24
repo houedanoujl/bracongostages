@@ -3,9 +3,9 @@
 @section('title', 'Évaluation de Stage - BRACONGO')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+<div class="min-h-screen bg-gradient-to-br from-bracongo-red-50 to-red-50">
     <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-orange-100">
+    <div class="bg-white shadow-sm border-b border-bracongo-red-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center">
@@ -27,9 +27,9 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <!-- En-tête de l'évaluation -->
-            <div class="bg-gradient-to-r from-orange-500 to-red-600 px-8 py-6">
+            <div class="bg-gradient-to-r from-bracongo-red-500 to-red-600 px-8 py-6">
                 <h2 class="text-2xl font-bold text-white mb-2">Votre Évaluation de Stage</h2>
-                <p class="text-orange-100">
+                <p class="text-bracongo-red-100">
                     Stage du {{ $candidature->date_debut_stage?->format('d/m/Y') }} 
                     au {{ $candidature->date_fin_stage?->format('d/m/Y') }}
                 </p>
@@ -70,7 +70,7 @@
                                     @foreach(['1' => 'Très décevant', '2' => 'Décevant', '3' => 'Moyen', '4' => 'Satisfaisant', '5' => 'Excellent'] as $value => $label)
                                         <label class="flex items-center">
                                             <input type="radio" name="satisfaction_generale" value="{{ $value }}" 
-                                                   class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500" required>
+                                                   class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500" required>
                                             <span class="ml-2 text-sm text-gray-700">{{ $label }}</span>
                                         </label>
                                     @endforeach
@@ -84,17 +84,17 @@
                                 <div class="flex space-x-4">
                                     <label class="flex items-center">
                                         <input type="radio" name="recommandation" value="oui" 
-                                               class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500" required>
+                                               class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500" required>
                                         <span class="ml-2 text-sm text-gray-700">Oui, absolument</span>
                                     </label>
                                     <label class="flex items-center">
                                         <input type="radio" name="recommandation" value="peut_etre" 
-                                               class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500">
+                                               class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500">
                                         <span class="ml-2 text-sm text-gray-700">Peut-être</span>
                                     </label>
                                     <label class="flex items-center">
                                         <input type="radio" name="recommandation" value="non" 
-                                               class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500">
+                                               class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500">
                                         <span class="ml-2 text-sm text-gray-700">Non</span>
                                     </label>
                                 </div>
@@ -111,7 +111,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Accueil et intégration
                                 </label>
-                                <select name="accueil_integration" class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" required>
+                                <select name="accueil_integration" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -124,7 +124,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Encadrement et suivi
                                 </label>
-                                <select name="encadrement_suivi" class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" required>
+                                <select name="encadrement_suivi" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -137,7 +137,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Conditions de travail
                                 </label>
-                                <select name="conditions_travail" class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" required>
+                                <select name="conditions_travail" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -150,7 +150,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Ambiance de travail
                                 </label>
-                                <select name="ambiance_travail" class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" required>
+                                <select name="ambiance_travail" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -171,7 +171,7 @@
                                     Quelles compétences avez-vous développées pendant ce stage ?
                                 </label>
                                 <textarea name="competences_developpees" rows="4" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Décrivez les compétences techniques, relationnelles, organisationnelles..."></textarea>
                             </div>
 
@@ -180,7 +180,7 @@
                                     Ce stage a-t-il répondu à vos attentes ?
                                 </label>
                                 <textarea name="reponse_attentes" rows="3" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="En quoi ce stage a-t-il répondu ou non à vos attentes initiales ?"></textarea>
                             </div>
 
@@ -189,7 +189,7 @@
                                     Quels aspects du stage ont été les plus enrichissants ?
                                 </label>
                                 <textarea name="aspects_enrichissants" rows="3" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Projets, missions, rencontres, découvertes..."></textarea>
                             </div>
                         </div>
@@ -205,7 +205,7 @@
                                     Que pourrions-nous améliorer pour les futurs stagiaires ?
                                 </label>
                                 <textarea name="suggestions_amelioration" rows="4" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Vos suggestions pour améliorer l'expérience des futurs stagiaires..."></textarea>
                             </div>
 
@@ -216,12 +216,12 @@
                                 <div class="flex space-x-4">
                                     <label class="flex items-center">
                                         <input type="radio" name="contact_futur" value="oui" 
-                                               class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500" required>
+                                               class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500" required>
                                         <span class="ml-2 text-sm text-gray-700">Oui, pour des opportunités futures</span>
                                     </label>
                                     <label class="flex items-center">
                                         <input type="radio" name="contact_futur" value="non" 
-                                               class="h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500">
+                                               class="h-4 w-4 text-bracongo-red-600 border-gray-300 focus:ring-bracongo-red-500">
                                         <span class="ml-2 text-sm text-gray-700">Non</span>
                                     </label>
                                 </div>
@@ -238,7 +238,7 @@
                                 Avez-vous d'autres commentaires ou suggestions ?
                             </label>
                             <textarea name="commentaire_libre" rows="4" 
-                                      class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                      class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                       placeholder="Tout autre commentaire que vous souhaitez partager..."></textarea>
                         </div>
                     </div>
@@ -250,7 +250,7 @@
                             Retour au suivi
                         </a>
                         <button type="submit" 
-                                class="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all transform hover:scale-105">
+                                class="px-8 py-3 bg-gradient-to-r from-bracongo-red-500 to-red-600 text-white rounded-lg hover:from-bracongo-red-600 hover:to-red-700 transition-all transform hover:scale-105">
                             Envoyer l'évaluation
                         </button>
                     </div>

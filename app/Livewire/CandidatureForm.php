@@ -56,6 +56,18 @@ class CandidatureForm extends Component
         $this->periode_debut_souhaitee = now()->addMonth()->format('Y-m-d');
         $this->periode_fin_souhaitee = now()->addMonths(4)->format('Y-m-d');
         
+        // Pré-remplir avec les données du candidat connecté
+        $candidat = auth('candidat')->user();
+        if ($candidat) {
+            $this->nom = $candidat->nom;
+            $this->prenom = $candidat->prenom;
+            $this->email = $candidat->email;
+            $this->telephone = $candidat->telephone ?? '';
+            $this->etablissement = $candidat->etablissement ?? '';
+            $this->niveau_etude = $candidat->niveau_etude ?? '';
+            $this->faculte = $candidat->faculte ?? '';
+        }
+        
         // Récupérer les paramètres d'URL si on vient d'une opportunité
         if (request()->has('domain')) {
             $this->opportunite_id = request()->get('domain');
@@ -281,22 +293,26 @@ class CandidatureForm extends Component
                 $validationRules['etablissement_autre'] = 'required|string|max:255';
             }
             
-            // Validation des fichiers seulement s'ils sont présents
+            // Vérifier les documents du candidat pour pré-remplir
+            $candidat = auth('candidat')->user();
+            $documentsCandidat = $candidat ? $candidat->documentsCandidat : collect();
+            
+            // Validation des fichiers seulement s'ils sont présents ou absents du profil
             if ($this->cv) {
                 $validationRules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
-            } else {
+            } elseif (!$candidat->getDocumentByType('cv')) {
                 $validationRules['cv'] = 'required';
             }
             
             if ($this->lettre_motivation) {
                 $validationRules['lettre_motivation'] = 'file|mimes:pdf,doc,docx|max:2048';
-            } else {
+            } elseif (!$candidat->getDocumentByType('lettre_motivation')) {
                 $validationRules['lettre_motivation'] = 'required';
             }
             
             if ($this->certificat_scolarite) {
                 $validationRules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:2048';
-            } else {
+            } elseif (!$candidat->getDocumentByType('certificat_scolarite')) {
                 $validationRules['certificat_scolarite'] = 'required';
             }
             
@@ -356,8 +372,11 @@ class CandidatureForm extends Component
             'certificats_competences' => $this->certificats_competences,
         ];
 
+        $candidat = auth('candidat')->user();
+        
         foreach ($documents as $type => $file) {
             if ($file) {
+                // Document uploadé dans ce formulaire
                 try {
                     $path = $file->store('documents', 'public');
                     
@@ -369,10 +388,33 @@ class CandidatureForm extends Component
                         'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
                     ]);
                     
-                    Log::info("Document $type sauvegardé: " . $file->getClientOriginalName());
+                    Log::info("Document $type uploadé et sauvegardé: " . $file->getClientOriginalName());
                 } catch (\Exception $e) {
                     Log::error("Erreur sauvegarde document $type: " . $e->getMessage());
-                    // Continue avec les autres documents même si un échoue
+                }
+            } elseif ($candidat) {
+                // Utiliser le document du profil candidat si disponible
+                $documentCandidat = $candidat->getDocumentByType($type);
+                if ($documentCandidat && $documentCandidat->fichierExiste()) {
+                    try {
+                        // Copier le document du profil vers le dossier de candidature
+                        $originalPath = $documentCandidat->chemin_fichier;
+                        $newPath = 'documents/' . basename($originalPath);
+                        
+                        if (Storage::disk('public')->copy($originalPath, $newPath)) {
+                            $candidature->documents()->create([
+                                'type_document' => $type,
+                                'nom_original' => $documentCandidat->nom_original,
+                                'chemin_fichier' => $newPath,
+                                'taille_fichier' => $documentCandidat->taille_fichier,
+                                'mime_type' => $documentCandidat->mime_type,
+                            ]);
+                            
+                            Log::info("Document $type copié depuis le profil: " . $documentCandidat->nom_original);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Erreur copie document profil $type: " . $e->getMessage());
+                    }
                 }
             }
         }
