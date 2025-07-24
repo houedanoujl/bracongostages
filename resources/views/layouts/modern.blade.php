@@ -59,9 +59,8 @@
                 <h3 class="footer-title">Navigation</h3>
                 <div class="space-y-3">
                     <a href="/" class="footer-link block">Accueil</a>
-                    <a href="/candidature" class="footer-link block">Postuler</a>
-                    <a href="/suivi" class="footer-link block">Suivi de candidature</a>
                     <a href="{{ route('opportunites') }}" class="footer-link block">Opportunités</a>
+                    <a href="/suivi" class="footer-link block">Suivi de candidature</a>
                 </div>
             </div>
 

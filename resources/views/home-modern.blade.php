@@ -145,7 +145,7 @@
         </div>
                 </div>
             <div class="flex items-center justify-between">
-                <div class="flex flex-col sm:flex-row gap-2">
+                <div id="footze" class="flex flex-col sm:flex-row gap-2 justify-between">
                     @auth('candidat')
                         <a href="/candidature?domain={{ $opportunite->slug }}" class="card-cta">
                             Postuler

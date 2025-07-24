@@ -28,7 +28,7 @@
                 </div>
                 <nav class="hidden md:flex space-x-8">
                     <a href="/" class="text-yellow-100 hover:text-yellow-300 transition-colors font-medium">Accueil</a>
-                    <a href="/candidature" class="text-yellow-100 hover:text-yellow-300 transition-colors font-medium">Candidature</a>
+                    <a href="/#opportunites" class="text-yellow-100 hover:text-yellow-300 transition-colors font-medium">Opportunités</a>
                     <a href="/suivi" class="text-yellow-100 hover:text-yellow-300 transition-colors font-medium">Suivi</a>
                 </nav>
             </div>

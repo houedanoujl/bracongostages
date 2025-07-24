@@ -31,7 +31,6 @@ class CandidatureForm extends Component
     public $releves_notes;
     public $lettres_recommandation;
     public $certificats_competences;
-    public $poste_souhaite = '';
 
     public $currentStep = 1;
     public $totalSteps = 4;
@@ -50,6 +49,12 @@ class CandidatureForm extends Component
     // Sélection d'opportunité si pas venue d'un lien
     public $opportunite_selectionnee = '';
     public $afficher_selection_opportunite = false;
+    
+    // Gestion des documents existants
+    public $utiliser_documents_existants = true;
+    public $documents_existants_disponibles = false;
+    public $cv_existant = null;
+    public $lettre_motivation_existante = null;
 
     public function mount()
     {
@@ -66,15 +71,27 @@ class CandidatureForm extends Component
             $this->etablissement = $candidat->etablissement ?? '';
             $this->niveau_etude = $candidat->niveau_etude ?? '';
             $this->faculte = $candidat->faculte ?? '';
+            
+            // Vérifier les documents existants
+            $cvDocument = $candidat->getDocumentByType('cv');
+            if ($cvDocument && $cvDocument->fichierExiste()) {
+                $this->cv_existant = $cvDocument->chemin_fichier;
+                $this->documents_existants_disponibles = true;
+            }
+            
+            $lettreDocument = $candidat->getDocumentByType('lettre_motivation');
+            if ($lettreDocument && $lettreDocument->fichierExiste()) {
+                $this->lettre_motivation_existante = $lettreDocument->chemin_fichier;
+                $this->documents_existants_disponibles = true;
+            }
         }
         
         // Récupérer les paramètres d'URL si on vient d'une opportunité
         if (request()->has('domain')) {
             $this->opportunite_id = request()->get('domain');
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
-            
-            // Pré-remplir le poste souhaité basé sur l'opportunité
-            $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
+            $this->opportunite_selectionnee = $this->opportunite_id;
+            $this->afficher_selection_opportunite = false;
         } else {
             // Si pas d'opportunité sélectionnée, afficher la sélection
             $this->afficher_selection_opportunite = true;
@@ -157,7 +174,6 @@ class CandidatureForm extends Component
                 // Validation des dates plus flexible
                 $rules = [
                     'objectif_stage' => 'required|string',
-                    'poste_souhaite' => 'required|string',
                     'directions_souhaitees' => 'required|array|min:1',
                     'periode_debut_souhaitee' => 'required|date',
                     'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
@@ -171,14 +187,54 @@ class CandidatureForm extends Component
                 $this->validate($rules);
                 break;
             case 4:
-                $this->validate([
-                    'cv' => 'required|file|mimes:pdf,doc,docx|max:2048',
-                    'lettre_motivation' => 'required|file|mimes:pdf,doc,docx|max:2048',
-                    'certificat_scolarite' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                    'releves_notes' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                    'lettres_recommandation' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
-                    'certificats_competences' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                ]);
+                $candidat = auth('candidat')->user();
+                $rules = [];
+                
+                // Si on utilise les documents existants et qu'ils sont disponibles
+                if ($this->utiliser_documents_existants && $this->documents_existants_disponibles) {
+                    // CV : obligatoire seulement si pas de CV existant
+                    if (!$this->cv_existant) {
+                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                    } elseif ($this->cv) {
+                        $rules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
+                    }
+                    
+                    // Lettre de motivation : obligatoire seulement si pas de lettre existante
+                    if (!$this->lettre_motivation_existante) {
+                        $rules['lettre_motivation'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                    } elseif ($this->lettre_motivation) {
+                        $rules['lettre_motivation'] = 'file|mimes:pdf,doc,docx|max:2048';
+                    }
+                } else {
+                    // Mode upload de nouveaux documents
+                    // CV : requis seulement si pas de CV dans le profil candidat
+                    if ($candidat && $candidat->getDocumentByType('cv')) {
+                        $rules['cv'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
+                    } else {
+                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                    }
+                    
+                    // Lettre de motivation : requis seulement si pas de lettre dans le profil candidat
+                    if ($candidat && $candidat->getDocumentByType('lettre_motivation')) {
+                        $rules['lettre_motivation'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
+                    } else {
+                        $rules['lettre_motivation'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                    }
+                }
+                
+                // Certificat de scolarité : toujours requis sauf si existe dans le profil
+                if ($candidat && $candidat->getDocumentByType('certificat_scolarite')) {
+                    $rules['certificat_scolarite'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                } else {
+                    $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                }
+                
+                // Documents optionnels
+                $rules['releves_notes'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                $rules['lettres_recommandation'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
+                $rules['certificats_competences'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                
+                $this->validate($rules);
                 break;
         }
     }
@@ -203,7 +259,6 @@ class CandidatureForm extends Component
                 'etablissement' => 'required|string',
                 'niveau_etude' => 'required|string',
                 'objectif_stage' => 'required|string',
-                'poste_souhaite' => 'required|string',
                 'directions_souhaitees' => 'required|array|min:1',
                 'periode_debut_souhaitee' => 'required|date',
                 'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
@@ -228,7 +283,6 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -282,7 +336,6 @@ class CandidatureForm extends Component
                 'etablissement' => 'required|string',
                 'niveau_etude' => 'required|string',
                 'objectif_stage' => 'required|string',
-                'poste_souhaite' => 'required|string',
                 'directions_souhaitees' => 'required|array|min:1',
                 'periode_debut_souhaitee' => 'required|date',
                 'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
@@ -330,7 +383,6 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -435,7 +487,6 @@ class CandidatureForm extends Component
         if ($this->opportunite_selectionnee) {
             $this->opportunite_id = $this->opportunite_selectionnee;
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
-            $this->poste_souhaite = $this->mapOpportuniteToPoste($this->opportunite_id);
             $this->afficher_selection_opportunite = false;
             $this->erreur_opportunite = false;
             $this->validationErrors = [];
@@ -462,6 +513,17 @@ class CandidatureForm extends Component
         $this->toastMessage = '';
     }
 
+    public function toggleDocumentsMode()
+    {
+        $this->utiliser_documents_existants = !$this->utiliser_documents_existants;
+        
+        // Si on bascule vers les documents existants, effacer les nouveaux uploads
+        if ($this->utiliser_documents_existants) {
+            $this->cv = null;
+            $this->lettre_motivation = null;
+        }
+    }
+
     public function resetForm()
     {
         $this->reset();
@@ -478,7 +540,6 @@ class CandidatureForm extends Component
             'etablissements' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_ETABLISSEMENT),
             'niveaux_etude' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_NIVEAU_ETUDE),
             'directions_disponibles' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_DIRECTION),
-            'postes_disponibles' => \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_POSTE),
             'opportunites_disponibles' => $this->getOpportunitesDisponibles(),
         ])->layout('layouts.simple');
     }
@@ -498,23 +559,6 @@ class CandidatureForm extends Component
         ];
 
         return $opportunites[$opportuniteId] ?? 'Opportunité générale';
-    }
-
-    /**
-     * Mapper l'opportunité vers un poste suggéré
-     */
-    private function mapOpportuniteToPoste($opportuniteId)
-    {
-        $mapping = [
-            'production' => 'Stagiaire Assistant(e) Production',
-            'marketing' => 'Stagiaire Assistant(e) Marketing',
-            'technique' => 'Stagiaire Assistant(e) Technique',
-            'rh' => 'Stagiaire Assistant(e) RH',
-            'finance' => 'Stagiaire Assistant(e) Financier(ère)',
-            'it' => 'Stagiaire Développeur(euse)',
-        ];
-
-        return $mapping[$opportuniteId] ?? '';
     }
 
     /**

@@ -21,7 +21,7 @@
             {{ $opportunite->description }}
         </p>
         <div class="hero-cta">
-            <a href="{{ route('candidature.form') }}" class="btn-primary-large">
+            <a href="/candidature?domain={{ $opportunite->slug }}" class="btn-primary-large">
                 <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -142,7 +142,7 @@
 
                     <!-- CTA Button -->
                     <div class="mt-8">
-                        <a href="{{ route('candidature.form') }}" class="w-full bg-bracongo-red-600 text-white text-center py-3 px-4 rounded-lg font-medium hover:bg-bracongo-red-700 transition duration-200 block">
+                        <a href="/candidature?domain={{ $opportunite->slug }}" class="w-full bg-bracongo-red-600 text-white text-center py-3 px-4 rounded-lg font-medium hover:bg-bracongo-red-700 transition duration-200 block">
                             Postuler maintenant
                         </a>
                     </div>
@@ -223,7 +223,7 @@
             Postulez dès maintenant et commencez votre parcours professionnel avec BRACONGO
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('candidature.form') }}" class="bg-bracongo-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-bracongo-red-700 transition duration-200">
+            <a href="/candidature?domain={{ $opportunite->slug }}" class="bg-bracongo-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-bracongo-red-700 transition duration-200">
                 Postuler à ce stage
             </a>
             <a href="{{ route('opportunites') }}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-bracongo-red-600 transition duration-200">

@@ -361,3 +361,10 @@
     border: 1px solid #b91c1c;
     color: white;
   }
+
+  #footze{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:space-between
+  }

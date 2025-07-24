@@ -424,17 +424,6 @@
                                 @error('objectif_stage') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
-                            <div>
-                                <label for="poste_souhaite" class="block text-sm font-medium text-gray-700 mb-2">Poste souhaité *</label>
-                                <select wire:model="poste_souhaite" id="poste_souhaite" 
-                                        class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('poste_souhaite') border-red-500 @enderror">
-                                    <option value="">Sélectionnez le poste souhaité</option>
-                                    @foreach($postes_disponibles as $poste)
-                                        <option value="{{ $poste }}">{{ $poste }}</option>
-                                    @endforeach
-                                </select>
-                                @error('poste_souhaite') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
-                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Directions souhaitées *</label>
@@ -472,59 +461,179 @@
                         <div class="space-y-6">
                             <h3 class="text-xl font-semibold text-gray-900 mb-6">Documents requis</h3>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="cv" class="block text-sm font-medium text-gray-700 mb-2">CV *</label>
-                                    @auth('candidat')
-                                        @php $cvCandidat = auth('candidat')->user()->getDocumentByType('cv'); @endphp
-                                        @if($cvCandidat)
-                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                <div class="flex items-center justify-between">
+                            <!-- Section de choix de documents si l'utilisateur a des documents existants -->
+                            @if($documents_existants_disponibles)
+                                <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg">
+                                    <h4 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Choix des documents
+                                    </h4>
+                                    <p class="text-sm text-blue-700 mb-4">
+                                        Vous avez déjà des documents dans votre profil. Choisissez comment procéder :
+                                    </p>
+                                    
+                                    <div class="space-y-3">
+                                        <label class="flex items-center p-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer">
+                                            <input type="radio" wire:click="$set('utiliser_documents_existants', true)" 
+                                                   {{ $utiliser_documents_existants ? 'checked' : '' }}
+                                                   class="text-blue-600 focus:ring-blue-600">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-blue-800">Utiliser mes documents existants</div>
+                                                <div class="text-xs text-blue-600">Postuler avec les documents déjà présents dans votre profil</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 bg-white border border-green-200 rounded-lg hover:bg-green-50 cursor-pointer">
+                                            <input type="radio" wire:click="$set('utiliser_documents_existants', false)" 
+                                                   {{ !$utiliser_documents_existants ? 'checked' : '' }}
+                                                   class="text-green-600 focus:ring-green-600">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-green-800">Uploader de nouveaux documents</div>
+                                                <div class="text-xs text-green-600">Remplacer par de nouveaux fichiers pour cette candidature</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <!-- Section des documents obligatoires -->
+                            @if($utiliser_documents_existants && $documents_existants_disponibles)
+                                <!-- Affichage des documents existants -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">CV *</label>
+                                        @if($cv_existant)
+                                            <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
                                                     <div>
-                                                        <p class="text-sm text-green-800">📄 CV du profil disponible</p>
-                                                        <p class="text-xs text-green-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
+                                                        <p class="text-sm font-semibold text-green-800">CV du profil sélectionné</p>
+                                                        <p class="text-xs text-green-600">{{ basename($cv_existant) }}</p>
                                                     </div>
-                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
                                                 </div>
                                             </div>
                                         @endif
-                                    @endauth
-                                    <input wire:model="cv" type="file" id="cv" accept=".pdf,.doc,.docx" 
-                                           class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('cv') border-red-500 @enderror">
-                                    @auth('candidat')
-                                        @if(auth('candidat')->user()->getDocumentByType('cv'))
-                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre CV du profil, ou uploadez un nouveau fichier pour le remplacer</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation *</label>
+                                        @if($lettre_motivation_existante)
+                                            <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                                    </svg>
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-green-800">Lettre du profil sélectionnée</p>
+                                                        <p class="text-xs text-green-600">{{ basename($lettre_motivation_existante) }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <svg class="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                                    </svg>
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-yellow-800">Lettre de motivation requise</p>
+                                                        <p class="text-xs text-yellow-600">Vous devez uploader une lettre de motivation</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @endif
-                                    @endauth
-                                    @error('cv') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
                                 
-                                <div>
-                                    <label for="lettre_motivation" class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation *</label>
-                                    @auth('candidat')
-                                        @php $lettreCandidat = auth('candidat')->user()->getDocumentByType('lettre_motivation'); @endphp
-                                        @if($lettreCandidat)
-                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                <div class="flex items-center justify-between">
-                                                    <div>
-                                                        <p class="text-sm text-green-800">📝 Lettre du profil disponible</p>
-                                                        <p class="text-xs text-green-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
+                                <!-- Si pas de lettre existante, afficher le champ d'upload -->
+                                @if(!$lettre_motivation_existante)
+                                    <div class="mt-4">
+                                        <label for="lettre_motivation" class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation * (requise)</label>
+                                        <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
+                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                        @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
+                            @else
+                                <!-- Champs d'upload pour nouveaux documents -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="cv" class="block text-sm font-medium text-gray-700 mb-2">CV *</label>
+                                        @auth('candidat')
+                                            @php $cvCandidat = auth('candidat')->user()->getDocumentByType('cv'); @endphp
+                                            @if($cvCandidat && !$utiliser_documents_existants)
+                                                <div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-yellow-800">📄 CV du profil disponible mais non utilisé</p>
+                                                            <p class="text-xs text-yellow-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Nouveau requis</span>
                                                     </div>
-                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisée automatiquement</span>
                                                 </div>
-                                            </div>
-                                        @endif
-                                    @endauth
-                                    <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
-                                           class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
-                                    @auth('candidat')
-                                        @if(auth('candidat')->user()->getDocumentByType('lettre_motivation'))
-                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre lettre du profil, ou uploadez un nouveau fichier</p>
-                                        @endif
-                                    @endauth
-                                    @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                            @elseif($cvCandidat)
+                                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-green-800">📄 CV du profil disponible</p>
+                                                            <p class="text-xs text-green-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endauth
+                                        <input wire:model="cv" type="file" id="cv" accept=".pdf,.doc,.docx" 
+                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('cv') border-red-500 @enderror">
+                                        @auth('candidat')
+                                            @if(auth('candidat')->user()->getDocumentByType('cv') && $utiliser_documents_existants)
+                                                <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre CV du profil, ou uploadez un nouveau fichier pour le remplacer</p>
+                                            @endif
+                                        @endauth
+                                        @error('cv') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="lettre_motivation" class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation *</label>
+                                        @auth('candidat')
+                                            @php $lettreCandidat = auth('candidat')->user()->getDocumentByType('lettre_motivation'); @endphp
+                                            @if($lettreCandidat && !$utiliser_documents_existants)
+                                                <div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-yellow-800">📝 Lettre du profil disponible mais non utilisée</p>
+                                                            <p class="text-xs text-yellow-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Nouvelle requise</span>
+                                                    </div>
+                                                </div>
+                                            @elseif($lettreCandidat)
+                                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-green-800">📝 Lettre du profil disponible</p>
+                                                            <p class="text-xs text-green-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisée automatiquement</span>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endauth
+                                        <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
+                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                        @auth('candidat')
+                                            @if(auth('candidat')->user()->getDocumentByType('lettre_motivation') && $utiliser_documents_existants)
+                                                <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre lettre du profil, ou uploadez un nouveau fichier</p>
+                                            @endif
+                                        @endauth
+                                        @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
