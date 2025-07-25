@@ -202,6 +202,7 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
         Route::get('/candidatures', [App\Http\Controllers\CandidatController::class, 'candidatures'])->name('candidatures');
         Route::get('/candidatures/{id}', [App\Http\Controllers\CandidatController::class, 'candidature'])->name('candidature');
         Route::get('/cv/download', [App\Http\Controllers\CandidatController::class, 'downloadCv'])->name('download-cv');
+        Route::get('/documents/{document}/download', [App\Http\Controllers\CandidatController::class, 'downloadDocument'])->name('document.download');
     });
 });
 

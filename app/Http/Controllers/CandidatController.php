@@ -260,6 +260,29 @@ class CandidatController extends Controller
     }
 
     /**
+     * Télécharger un document de candidature
+     */
+    public function downloadDocument($documentId)
+    {
+        $candidat = Auth::guard('candidat')->user();
+        
+        // Vérifier que le document appartient bien à une candidature du candidat connecté
+        $document = \App\Models\Document::whereHas('candidature', function ($query) use ($candidat) {
+            $query->where('email', $candidat->email);
+        })->findOrFail($documentId);
+        
+        if (!$document->fichierExiste()) {
+            return back()->with('error', 'Fichier non trouvé sur le serveur.');
+        }
+        
+        try {
+            return Storage::disk('public')->download($document->chemin_fichier, $document->nom_original);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur lors du téléchargement du fichier.');
+        }
+    }
+
+    /**
      * Mettre à jour les documents du candidat
      */
     public function updateDocuments(Request $request)
