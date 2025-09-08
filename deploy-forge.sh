@@ -6,7 +6,7 @@ set -e
 echo "🚀 Déploiement BRACONGO Stages en production..."
 
 # Variables d'environnement
-FORGE_SITE_PATH=${FORGE_SITE_PATH:-/home/forge/bracongo.bigfive.dev}
+FORGE_SITE_PATH=${FORGE_SITE_PATH:-/home/forge/bracongostages.bigfive.dev}
 FORGE_SITE_USER=${FORGE_SITE_USER:-forge}
 FORGE_SITE_BRANCH=${FORGE_SITE_BRANCH:-main}
 
@@ -34,7 +34,7 @@ APP_NAME="BRACONGO Stages"
 APP_ENV=production
 APP_KEY=base64:+DiT/dEhYPOyDTCYA3gPRrRoH4ts/a0uoxhRhO48zGs=
 APP_DEBUG=false
-APP_URL=https://bracongo.bigfive.dev
+APP_URL=https://bracongostages.bigfive.dev
 
 LOG_CHANNEL=stack
 LOG_DEPRECATIONS_CHANNEL=null
@@ -64,7 +64,7 @@ MAIL_PORT=587
 MAIL_USERNAME=
 MAIL_PASSWORD=
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="noreply@bracongo.bigfive.dev"
+MAIL_FROM_ADDRESS="noreply@bracongostages.bigfive.dev"
 MAIL_FROM_NAME="${APP_NAME}"
 
 FILAMENT_FILESYSTEM_DISK=public
@@ -96,7 +96,11 @@ $FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autol
 
 # 5. Installation/mise à jour des dépendances Node.js
 echo "📦 Installation des dépendances Node.js..."
-npm ci --production
+if [ -f "package-lock.json" ]; then
+    npm ci --only=production
+else
+    npm install --only=production
+fi
 
 # 6. Compilation des assets frontend
 echo "🎨 Compilation des assets frontend..."
