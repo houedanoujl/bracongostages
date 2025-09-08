@@ -1,41 +1,114 @@
 #!/bin/bash
 
-# Script de déploiement BRACONGO Stages pour Laravel Forge
-# Utilisé automatiquement par Forge lors des déploiements
-
+# Script de déploiement optimisé BRACONGO Stages pour Laravel Forge
 set -e
 
 echo "🚀 Déploiement BRACONGO Stages en production..."
 
-# Variables d'environnement (définies dans Forge)
-FORGE_SITE_PATH=${FORGE_SITE_PATH:-/home/forge/bracongo-stages.com}
+# Variables d'environnement
+FORGE_SITE_PATH=${FORGE_SITE_PATH:-/home/forge/bracongo.bigfive.dev}
 FORGE_SITE_USER=${FORGE_SITE_USER:-forge}
+FORGE_SITE_BRANCH=${FORGE_SITE_BRANCH:-main}
 
-cd $FORGE_SITE_PATH
+# cd $FORGE_SITE_PATH - Commenté car déjà dans le répertoire
 
-# 1. Git pull et mise à jour du code
+# 1. Création des répertoires requis AVANT toute autre opération
+echo "📁 Préparation des répertoires Laravel..."
+mkdir -p bootstrap/cache
+mkdir -p storage/framework/{cache,sessions,views}
+mkdir -p storage/logs
+chown -R $FORGE_SITE_USER:$FORGE_SITE_USER bootstrap/cache storage
+chmod -R 775 bootstrap/cache storage
+
+echo "✅ Répertoires créés et permissions définies"
+
+# 2. Git pull et mise à jour du code
 echo "📥 Récupération du code source..."
-git pull origin main
+git pull origin $FORGE_SITE_BRANCH
 
-# 2. Installation/mise à jour des dépendances Composer
+# 2. Création du fichier .env de production
+echo "📋 Configuration de l'environnement de production..."
+if [ ! -f .env ]; then
+    cat > .env << 'EOL'
+APP_NAME="BRACONGO Stages"
+APP_ENV=production
+APP_KEY=base64:+DiT/dEhYPOyDTCYA3gPRrRoH4ts/a0uoxhRhO48zGs=
+APP_DEBUG=false
+APP_URL=https://bracongo.bigfive.dev
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=error
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=forge
+DB_USERNAME=forge
+DB_PASSWORD=
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailgun.org
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="noreply@bracongo.bigfive.dev"
+MAIL_FROM_NAME="${APP_NAME}"
+
+FILAMENT_FILESYSTEM_DISK=public
+EOL
+    echo "✅ Fichier .env créé"
+else
+    echo "✅ Fichier .env existe déjà"
+fi
+
+# 3. Création des répertoires requis AVANT composer install
+echo "📁 Création des répertoires Laravel requis..."
+mkdir -p bootstrap/cache
+mkdir -p storage/framework/{cache,sessions,views}
+mkdir -p storage/logs
+chown -R $FORGE_SITE_USER:$FORGE_SITE_USER bootstrap/cache storage
+chmod -R 775 bootstrap/cache storage
+
+# Vérification que les répertoires sont bien créés et accessibles
+echo "🔍 Vérification des permissions des répertoires..."
+if [ ! -w bootstrap/cache ]; then
+    echo "❌ Erreur: bootstrap/cache n'est pas accessible en écriture"
+    exit 1
+fi
+echo "✅ Tous les répertoires sont prêts"
+
+# 4. Installation/mise à jour des dépendances Composer
 echo "📦 Installation des dépendances Composer..."
-composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+$FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-# 3. Installation/mise à jour des dépendances Node.js
+# 5. Installation/mise à jour des dépendances Node.js
 echo "📦 Installation des dépendances Node.js..."
 npm ci --production
 
-# 4. Compilation des assets frontend
+# 6. Compilation des assets frontend
 echo "🎨 Compilation des assets frontend..."
 npm run build
 
-# 5. Mise en cache de la configuration
+# 7. Mise en cache de la configuration
 echo "⚡ Optimisations Laravel..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 5.1 Test de la configuration mail
+# 6.1 Test de la configuration mail
 echo "📧 Test de la configuration mail..."
 if php artisan tinker --execute="try { Mail::raw('Test de configuration SMTP', function(\$message) { \$message->to('test@bracongo.cd')->subject('Test SMTP - ' . date('Y-m-d H:i:s')); }); echo '✅ Configuration mail OK'; } catch (Exception \$e) { echo '❌ Erreur mail: ' . \$e->getMessage(); }" 2>/dev/null; then
     echo "✅ Configuration mail validée"
@@ -43,47 +116,47 @@ else
     echo "⚠️ Configuration mail à vérifier"
 fi
 
-# 6. Exécution des migrations de base de données
+# 7. Exécution des migrations de base de données
 echo "🗄️ Mise à jour de la base de données..."
 php artisan migrate --force --no-interaction
 
-# 7. Création du lien symbolique pour le storage
+# 8. Création du lien symbolique pour le storage
 echo "🔗 Configuration du stockage..."
 php artisan storage:link
 
-# 8. Rechargement de PHP-FPM et services
+# 9. Rechargement de PHP-FPM et services
 echo "🔄 Rechargement des services..."
 sudo -S service php8.2-fpm reload
 
-# 9. Nettoyage des caches
+# 10. Nettoyage des caches
 echo "🧹 Nettoyage des caches..."
 php artisan cache:clear
 php artisan view:clear
 php artisan config:clear
 
-# 10. Optimisations finales
+# 11. Optimisations finales
 echo "⚡ Optimisations finales..."
 php artisan optimize
 
-# 11. Vérification de l'état de l'application
+# 12. Vérification de l'état de l'application
 echo "✅ Vérification de l'application..."
 php artisan about
 
-# 12. Test de connectivité base de données
+# 13. Test de connectivité base de données
 echo "📊 Test de connectivité base de données..."
 php artisan tinker --execute="echo 'DB OK: ' . \DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION);"
 
-# 13. Configuration des permissions finales
-echo "🔧 Configuration des permissions..."
+# 14. Configuration finale des permissions (sécurité)
+echo "🔧 Vérification finale des permissions..."
 chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# 14. Notification de fin de déploiement
+# 15. Notification de fin de déploiement
 echo "🎉 Déploiement BRACONGO Stages terminé avec succès !"
-echo "🍺 Application accessible sur: https://bracongo-stages.com"
-echo "⚙️ Admin Panel: https://bracongo-stages.com/admin"
+echo "🍺 Application accessible sur: https://bracongo.bigfive.dev"
+echo "⚙️ Admin Panel: https://bracongo.bigfive.dev/admin"
 
-# 15. Envoi d'une notification (optionnel)
+# 16. Envoi d'une notification (optionnel)
 if [ ! -z "$SLACK_WEBHOOK_URL" ]; then
     echo "📲 Envoi notification Slack..."
     curl -X POST -H 'Content-type: application/json' \
@@ -91,10 +164,10 @@ if [ ! -z "$SLACK_WEBHOOK_URL" ]; then
         $SLACK_WEBHOOK_URL
 fi
 
-# 16. Backup automatique post-déploiement (recommandé)
+# 17. Backup automatique post-déploiement (recommandé)
 if command -v mysqldump &> /dev/null; then
     echo "💾 Sauvegarde automatique post-déploiement..."
-    BACKUP_DIR="/home/forge/backups/bracongo-stages"
+    BACKUP_DIR="/home/forge/backups/bracongo-bigfive-dev"
     BACKUP_FILE="bracongo_stages_$(date +%Y%m%d_%H%M%S).sql"
     
     mkdir -p $BACKUP_DIR
@@ -107,9 +180,9 @@ fi
 echo "✅ Script de déploiement Forge terminé avec succès !"
 echo ""
 echo "🔗 Liens utiles :"
-echo "   • Site principal: https://bracongo-stages.com"
-echo "   • Admin Panel: https://bracongo-stages.com/admin"
-echo "   • Mailpit (si activé): https://mail.bracongo-stages.com"
+echo "   • Site principal: https://bracongo.bigfive.dev"
+echo "   • Admin Panel: https://bracongo.bigfive.dev/admin"
+echo "   • Mailpit (si activé): https://mail.bracongo.bigfive.dev"
 echo ""
 echo "📧 Comptes par défaut :"
 echo "   • Admin: admin@bracongo.com / BracongoAdmin2024!"
