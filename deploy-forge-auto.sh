@@ -107,9 +107,10 @@ fi
 # Node.js
 echo "🔧 Installation Node.js..."
 if [ -f "package-lock.json" ]; then
-    npm ci --only=production --no-audit
+    # Installer toutes les dépendances (y compris dev) pour pouvoir builder
+    npm ci --no-audit
 else
-    npm install --only=production --no-audit
+    npm install --no-audit
 fi
 echo "✅ Node.js installé"
 
@@ -129,7 +130,12 @@ fi
 
 # 7. Build des assets
 echo "🎨 Build des assets..."
-npm run build
+if command -v npx >/dev/null 2>&1; then
+    npx vite build
+else
+    # Fallback si npx n'est pas disponible
+    ./node_modules/.bin/vite build
+fi
 echo "✅ Assets construits"
 
 # 8. Configuration Laravel

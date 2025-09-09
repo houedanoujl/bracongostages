@@ -128,13 +128,14 @@ if [ "$USER" = "forge" ]; then
     chown -R forge:forge storage bootstrap/cache
 fi
 
-# 7. Installation Node.js (production uniquement)
+# 7. Installation Node.js (avec dépendances de dev pour le build)
 echo "📦 Installation Node.js..."
 if command_exists npm; then
     if [ -f "package-lock.json" ]; then
-        npm ci --only=production --no-audit
+        # Installer toutes les dépendances (y compris dev) pour pouvoir builder
+        npm ci --no-audit
     else
-        npm install --only=production --no-audit
+        npm install --no-audit
     fi
     echo "✅ Node.js installé avec succès"
 else
@@ -144,7 +145,12 @@ fi
 # 8. Build des assets
 echo "🎨 Build des assets..."
 if command_exists npm && [ -f "package.json" ]; then
-    npm run build
+    if command_exists npx; then
+        npx vite build
+    else
+        # Fallback si npx n'est pas disponible
+        ./node_modules/.bin/vite build
+    fi
     echo "✅ Assets construits avec succès"
 else
     echo "⚠️ Build des assets ignoré (npm non disponible ou package.json manquant)"
