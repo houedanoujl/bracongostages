@@ -8,7 +8,15 @@ echo "🚀 Déploiement BRACONGO Stages (Version Simple)..."
 
 # 1. Mise à jour du code
 echo "📥 Mise à jour du code..."
-git pull origin ${FORGE_SITE_BRANCH:-main}
+if [ -d ".git" ]; then
+    echo "✅ Repository Git détecté, mise à jour..."
+    git pull origin ${FORGE_SITE_BRANCH:-main}
+else
+    echo "⚠️ Aucun repository Git détecté dans ce répertoire"
+    echo "ℹ️ Vérifiez que le déploiement s'exécute dans le bon répertoire"
+    echo "ℹ️ Ou que le repository a été correctement cloné sur le serveur"
+    # Continue le déploiement même sans Git (pour les déploiements manuels)
+fi
 
 # 2. Création des répertoires Laravel
 echo "📁 Création des répertoires..."
