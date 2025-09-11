@@ -57,7 +57,13 @@ fi
 
 print_success "Prérequis vérifiés"
 
-# 1. Installation des dépendances
+# 1. Nettoyage des fichiers avec accents (conflit de classes)
+print_status "Nettoyage des fichiers avec accents..."
+rm -rf ./app/Filament/Resources/TémoignageResource/ 2>/dev/null || true
+find ./app -name "*Témoignage*" -delete 2>/dev/null || true
+print_success "Fichiers avec accents supprimés"
+
+# 2. Installation des dépendances
 print_status "Installation des dépendances PHP..."
 composer install --optimize-autoloader --no-dev
 
