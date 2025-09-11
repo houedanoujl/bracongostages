@@ -57,11 +57,11 @@ fi
 
 print_success "Prérequis vérifiés"
 
-# 1. Nettoyage des fichiers avec accents (conflit de classes)
-print_status "Nettoyage des fichiers avec accents..."
+# 1. Nettoyage des fichiers avec accents (serveur)
+print_status "Suppression des fichiers avec accents sur le serveur..."
 rm -rf ./app/Filament/Resources/TémoignageResource/ 2>/dev/null || true
-find ./app -name "*Témoignage*" -delete 2>/dev/null || true
-print_success "Fichiers avec accents supprimés"
+composer dump-autoload --optimize --no-dev 2>/dev/null || true
+print_success "Nettoyage terminé"
 
 # 2. Installation des dépendances
 print_status "Installation des dépendances PHP..."

@@ -40,11 +40,11 @@ class TemoignageResource extends Resource
     
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     
-    protected static ?string $navigationLabel = 'Témoignages';
+    protected static ?string $navigationLabel = 'Temoignages';
     
-    protected static ?string $modelLabel = 'témoignage';
+    protected static ?string $modelLabel = 'temoignage';
     
-    protected static ?string $pluralModelLabel = 'témoignages';
+    protected static ?string $pluralModelLabel = 'temoignages';
     
     protected static ?string $navigationGroup = 'Contenu';
     
@@ -105,11 +105,11 @@ class TemoignageResource extends Resource
                             ->imageResizeTargetHeight('300'),
                     ]),
                 
-                Section::make('Contenu du Témoignage')
-                    ->description('Le témoignage proprement dit')
+                Section::make('Contenu du Temoignage')
+                    ->description('Le temoignage proprement dit')
                     ->schema([
                         RichEditor::make('temoignage')
-                            ->label('Témoignage complet')
+                            ->label('Temoignage complet')
                             ->required()
                             ->columnSpanFull()
                             ->toolbarButtons([
@@ -198,7 +198,7 @@ class TemoignageResource extends Resource
                                     ->helperText('Plus petit = affiché en premier'),
                                 
                                 Toggle::make('actif')
-                                    ->label('Témoignage actif')
+                                    ->label('Temoignage actif')
                                     ->default(true)
                                     ->helperText('Visible sur le site'),
                             ]),
@@ -317,7 +317,7 @@ class TemoignageResource extends Resource
                         $record->update(['mis_en_avant' => !$record->mis_en_avant]);
                         
                         Notification::make()
-                            ->title('Témoignage mis à jour')
+                            ->title('Temoignage mis à jour')
                             ->success()
                             ->send();
                     }),
