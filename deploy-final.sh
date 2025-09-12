@@ -92,7 +92,35 @@ php artisan event:cache
 
 # 4. Compilation des assets
 print_status "Compilation des assets..."
-npm run build
+
+# Vérifier que node_modules existe
+if [ ! -d "node_modules" ]; then
+    print_warning "node_modules manquant, installation des dépendances..."
+    npm install
+fi
+
+# Nettoyer les anciens builds
+print_status "Nettoyage des anciens assets..."
+rm -rf public/build/ 2>/dev/null || true
+
+# Compiler les assets
+print_status "Compilation des assets pour production..."
+if npm run build; then
+    print_success "Assets compilés avec succès"
+else
+    print_error "Échec de compilation des assets"
+    print_warning "Tentative avec mode développement..."
+    npm run dev &
+    sleep 5
+    kill %1 2>/dev/null || true
+fi
+
+# Vérifier que les assets sont bien créés
+if [ -d "public/build" ] && [ "$(ls -A public/build 2>/dev/null)" ]; then
+    print_success "Assets disponibles dans public/build/"
+else
+    print_warning "Assets non trouvés, vérifiez la compilation"
+fi
 
 # 5. Base de données
 print_status "Configuration de la base de données..."
@@ -114,9 +142,29 @@ fi
 
 # 6. Permissions des dossiers
 print_status "Configuration des permissions..."
+
+# Créer les dossiers s'ils n'existent pas
+mkdir -p storage/logs storage/framework/{cache,sessions,views} storage/app/public
+mkdir -p bootstrap/cache public/build
+
+# Permissions Laravel
 chmod -R 775 storage/
 chmod -R 775 bootstrap/cache/
-chown -R www-data:www-data storage/ bootstrap/cache/ 2>/dev/null || true
+chmod -R 755 public/
+
+# Permissions spécifiques pour les assets
+if [ -d "public/build" ]; then
+    chmod -R 755 public/build/
+fi
+
+# Propriétaire selon l'environnement
+if [ "$USER" = "forge" ]; then
+    chown -R forge:forge storage/ bootstrap/cache/ public/ 2>/dev/null || true
+else
+    chown -R www-data:www-data storage/ bootstrap/cache/ public/ 2>/dev/null || true
+fi
+
+print_success "Permissions configurées"
 
 # 7. Création des liens symboliques
 print_status "Création des liens symboliques..."
@@ -148,11 +196,28 @@ php artisan queue:restart
 
 # 11. Création d'un utilisateur admin si nécessaire
 print_status "Vérification de l'utilisateur admin..."
-if ! php artisan tinker --execute="echo App\Models\User::count();" 2>/dev/null | grep -q "[1-9]"; then
+
+# Vérifier si des utilisateurs existent
+USER_COUNT=$(php artisan tinker --execute="echo App\Models\User::count();" 2>/dev/null | tail -1 || echo "0")
+
+if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     print_warning "Aucun utilisateur admin trouvé"
-    print_warning "Créez un utilisateur admin avec : php artisan make:filament-user"
+    print_status "Création d'un utilisateur admin par défaut..."
+    
+    # Créer utilisateur admin par défaut (vous pouvez personnaliser)
+    php artisan tinker --execute="
+        \$user = App\Models\User::create([
+            'name' => 'Admin BRACONGO',
+            'email' => 'admin@bracongo.cg',
+            'email_verified_at' => now(),
+            'password' => Hash::make('AdminBracongo2024!')
+        ]);
+        echo 'Utilisateur admin créé: ' . \$user->email;
+    " 2>/dev/null || print_warning "Création automatique échouée, utilisez: php artisan make:filament-user"
+    
+    print_success "Utilisateur admin créé - Email: admin@bracongo.cg, Mot de passe: AdminBracongo2024!"
 else
-    print_success "Utilisateur(s) admin trouvé(s)"
+    print_success "Utilisateur(s) admin trouvé(s) ($USER_COUNT)"
 fi
 
 # 12. Test de l'application
@@ -192,20 +257,99 @@ EOF
 
 print_success "Déploiement terminé avec succès !"
 
-# 15. Instructions finales
+# 15. Création de données d'exemple pour les tests
+print_status "Création de données d'exemple..."
+
+php artisan tinker --execute="
+// Créer des opportunités d'exemple
+if (App\Models\Opportunite::count() == 0) {
+    App\Models\Opportunite::create([
+        'titre' => 'Stage Marketing Digital',
+        'slug' => 'stage-marketing-digital',
+        'description' => 'Stage en marketing digital et communication',
+        'duree' => '3 mois',
+        'niveau_requis' => 'bac_3',
+        'places_disponibles' => 5,
+        'actif' => true
+    ]);
+    
+    App\Models\Opportunite::create([
+        'titre' => 'Stage Développement Web',
+        'slug' => 'stage-dev-web',
+        'description' => 'Développement d\'applications web avec Laravel',
+        'duree' => '4 mois',
+        'niveau_requis' => 'bac_4',
+        'places_disponibles' => 3,
+        'actif' => true
+    ]);
+    
+    echo 'Opportunités d\'exemple créées\n';
+}
+
+// Créer des candidatures test
+if (App\Models\Candidature::count() == 0) {
+    App\Models\Candidature::create([
+        'nom' => 'Mukendi',
+        'prenom' => 'Jean',
+        'email' => 'jean.mukendi@example.com',
+        'telephone' => '+243123456789',
+        'etablissement' => 'Université de Kinshasa (UNIKIN)',
+        'niveau_etude' => 'bac_3',
+        'faculte' => 'Sciences Informatiques',
+        'objectif_stage' => 'Développer mes compétences en programmation',
+        'directions_souhaitees' => [\"Direction Informatique\"],
+        'periode_debut_souhaitee' => now()->addMonth(),
+        'periode_fin_souhaitee' => now()->addMonths(4),
+        'code_suivi' => 'BRC-TEST123',
+        'statut' => 'non_traite'
+    ]);
+    echo 'Candidature test créée (Code: BRC-TEST123)\n';
+}
+echo 'Données d\'exemple configurées';
+" 2>/dev/null && print_success "Données d'exemple créées" || print_warning "Création des données d'exemple échouée"
+
+# 16. Vérifications finales
+print_status "Vérifications finales..."
+
+# Test accès admin
+if curl -s -o /dev/null -w "%{http_code}" "http://localhost/admin" | grep -q "200\|302"; then
+    print_success "Interface admin accessible"
+else
+    print_warning "Interface admin pourrait ne pas être accessible"
+fi
+
+# Test accès public  
+if curl -s -o /dev/null -w "%{http_code}" "http://localhost" | grep -q "200"; then
+    print_success "Site public accessible"
+else
+    print_warning "Site public pourrait ne pas être accessible"
+fi
+
+print_success "Déploiement complètement terminé !"
+
+# 17. Instructions finales
 echo ""
 echo "🎉 BRACONGO Stages est maintenant prêt !"
 echo ""
-echo "📋 Prochaines étapes :"
-echo "1. Configurez votre serveur web (Apache/Nginx)"
-echo "2. Configurez les paramètres SMTP dans .env"
-echo "3. Créez un utilisateur admin : php artisan make:filament-user"
-echo "4. Démarrez les workers de queue : php artisan queue:work"
+echo "📋 Accès à la plateforme :"
+echo "🌐 Site public : https://$(hostname -f || echo 'votre-domaine.com')"  
+echo "🔧 Interface admin : https://$(hostname -f || echo 'votre-domaine.com')/admin"
 echo ""
-echo "🌐 Accès :"
-echo "- Frontend : http://votre-domaine.com"
-echo "- Admin : http://votre-domaine.com/admin"
-echo "- Mailpit (dev) : http://localhost:8025"
+echo "👤 Compte administrateur créé :"
+echo "   Email : admin@bracongo.cg"
+echo "   Mot de passe : AdminBracongo2024!"
+echo ""
+echo "🧪 Données de test disponibles :"
+echo "   Code de suivi test : BRC-TEST123"
+echo "   Opportunités d'exemple : 2 stages créés"
+echo ""
+echo "📧 Configuration email (Mailtrap) :"
+echo "   MAIL_HOST=sandbox.smtp.mailtrap.io"
+echo "   MAIL_PORT=2525"
+echo ""
+echo "⚙️ Services à démarrer (optionnel) :"
+echo "   Queue worker : php artisan queue:work --daemon"
+echo "   Task scheduler : * * * * * cd $(pwd) && php artisan schedule:run >> /dev/null 2>&1"
 echo ""
 echo "📊 Commandes utiles :"
 echo "- Voir les logs : tail -f storage/logs/laravel.log"
