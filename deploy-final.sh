@@ -85,7 +85,7 @@ fi
 
 # 3. Publication et optimisation des assets Filament
 print_status "Publication des assets Filament..."
-php artisan filament:assets --force 2>/dev/null || print_warning "Commande filament:assets non disponible"
+php artisan filament:assets 2>/dev/null || print_warning "Commande filament:assets non disponible"
 php artisan vendor:publish --provider="Filament\FilamentServiceProvider" --force 2>/dev/null || true
 php artisan vendor:publish --provider="Filament\Forms\FormsServiceProvider" --force 2>/dev/null || true
 php artisan vendor:publish --provider="Filament\Notifications\NotificationsServiceProvider" --force 2>/dev/null || true

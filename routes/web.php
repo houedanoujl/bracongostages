@@ -189,6 +189,12 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
         Route::post('/register', [App\Http\Controllers\CandidatController::class, 'store'])->name('store');
         Route::get('/login', [App\Http\Controllers\CandidatController::class, 'login'])->name('login');
         Route::post('/login', [App\Http\Controllers\CandidatController::class, 'authenticate'])->name('authenticate');
+        
+        // Routes de réinitialisation de mot de passe
+        Route::get('/forgot-password', [App\Http\Controllers\CandidatController::class, 'showForgotPasswordForm'])->name('password.request');
+        Route::post('/forgot-password', [App\Http\Controllers\CandidatController::class, 'sendResetLink'])->name('password.email');
+        Route::get('/reset-password/{token}', [App\Http\Controllers\CandidatController::class, 'showResetPasswordForm'])->name('password.reset');
+        Route::post('/reset-password', [App\Http\Controllers\CandidatController::class, 'resetPassword'])->name('password.update');
     });
     
     // Routes protégées (pour les candidats connectés)

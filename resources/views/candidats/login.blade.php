@@ -40,6 +40,12 @@
                             Se souvenir de moi
                         </label>
                     </div>
+                    
+                    <div class="text-sm">
+                        <a href="{{ route('candidat.password.request') }}" class="text-blue-600 hover:text-blue-500 font-medium">
+                            Mot de passe oublié ?
+                        </a>
+                    </div>
                 </div>
 
                 <button type="submit" 

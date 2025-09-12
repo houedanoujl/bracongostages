@@ -339,4 +339,113 @@ class CandidatController extends Controller
 
         return back()->with('error', 'Aucun document à mettre à jour.');
     }
+
+    /**
+     * Afficher le formulaire de demande de réinitialisation de mot de passe
+     */
+    public function showForgotPasswordForm()
+    {
+        return view('candidats.forgot-password');
+    }
+
+    /**
+     * Envoyer le lien de réinitialisation de mot de passe
+     */
+    public function sendResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:candidats,email',
+        ], [
+            'email.exists' => 'Aucun compte candidat trouvé avec cette adresse email.'
+        ]);
+
+        // Générer un token de réinitialisation
+        $token = Str::random(64);
+        
+        // Sauvegarder le token en base (utilise la table password_reset_tokens)
+        \DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'email' => $request->email,
+                'token' => Hash::make($token),
+                'created_at' => now()
+            ]
+        );
+
+        // Envoyer l'email avec le lien de réinitialisation
+        $candidat = Candidat::where('email', $request->email)->first();
+        $resetUrl = route('candidat.password.reset', ['token' => $token, 'email' => $request->email]);
+        
+        try {
+            \Mail::send('emails.candidat-password-reset', [
+                'candidat' => $candidat,
+                'resetUrl' => $resetUrl,
+                'token' => $token
+            ], function($message) use ($candidat) {
+                $message->to($candidat->email, $candidat->nom_complet)
+                       ->subject('Réinitialisation de votre mot de passe - BRACONGO Stages');
+            });
+
+            return back()->with('success', 'Un lien de réinitialisation a été envoyé à votre adresse email.');
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi email reset password: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
+        }
+    }
+
+    /**
+     * Afficher le formulaire de réinitialisation de mot de passe
+     */
+    public function showResetPasswordForm(Request $request)
+    {
+        $token = $request->route('token');
+        $email = $request->get('email');
+
+        // Vérifier que le token existe et n'est pas expiré (24h)
+        $resetRecord = \DB::table('password_reset_tokens')
+            ->where('email', $email)
+            ->where('created_at', '>', now()->subDay())
+            ->first();
+
+        if (!$resetRecord || !Hash::check($token, $resetRecord->token)) {
+            return redirect()->route('candidat.login')
+                ->with('error', 'Ce lien de réinitialisation est invalide ou expiré.');
+        }
+
+        return view('candidats.reset-password', compact('token', 'email'));
+    }
+
+    /**
+     * Réinitialiser le mot de passe
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email|exists:candidats,email',
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        // Vérifier le token
+        $resetRecord = \DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('created_at', '>', now()->subDay())
+            ->first();
+
+        if (!$resetRecord || !Hash::check($request->token, $resetRecord->token)) {
+            return back()->with('error', 'Token invalide ou expiré.');
+        }
+
+        // Mettre à jour le mot de passe
+        $candidat = Candidat::where('email', $request->email)->first();
+        $candidat->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        // Supprimer le token utilisé
+        \DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        return redirect()->route('candidat.login')
+            ->with('success', 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.');
+    }
 }
