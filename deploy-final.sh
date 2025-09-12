@@ -83,7 +83,19 @@ else
     print_success "Fichier .env déjà présent"
 fi
 
-# 3. Optimisation de Laravel
+# 3. Publication et optimisation des assets Filament
+print_status "Publication des assets Filament..."
+php artisan filament:assets --force 2>/dev/null || print_warning "Commande filament:assets non disponible"
+php artisan vendor:publish --provider="Filament\FilamentServiceProvider" --force 2>/dev/null || true
+php artisan vendor:publish --provider="Filament\Forms\FormsServiceProvider" --force 2>/dev/null || true
+php artisan vendor:publish --provider="Filament\Notifications\NotificationsServiceProvider" --force 2>/dev/null || true
+php artisan vendor:publish --provider="Filament\Support\SupportServiceProvider" --force 2>/dev/null || true
+
+# Optimisation Filament
+print_status "Optimisation des assets Filament..."
+php artisan filament:optimize 2>/dev/null || print_warning "Optimisation Filament non disponible"
+
+# 4. Optimisation de Laravel
 print_status "Optimisation de Laravel..."
 php artisan config:cache
 php artisan route:cache
@@ -172,6 +184,18 @@ chmod -R 755 public/
 if [ -d "public/build" ]; then
     chmod -R 755 public/build/
 fi
+
+# Permissions pour les assets Filament
+if [ -d "public/css/filament" ]; then
+    chmod -R 755 public/css/filament/
+fi
+
+if [ -d "public/js/filament" ]; then
+    chmod -R 755 public/js/filament/
+fi
+
+# Créer les dossiers Filament s'ils n'existent pas
+mkdir -p public/css/filament public/js/filament
 
 # Propriétaire selon l'environnement
 if [ "$USER" = "forge" ]; then
