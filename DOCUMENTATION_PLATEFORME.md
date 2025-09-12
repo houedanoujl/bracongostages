@@ -21,8 +21,8 @@
 ### 👤 Comptes d'Accès Admin
 
 **Compte Super Administrateur :**
-- **URL** : `/admin`
-- **Création** : `php artisan make:filament-user`
+- **Username** : admin@bracongo.com
+- **pssword** :  BracongoAdmin2024! !
 - **Permissions** : Accès complet à toutes les fonctionnalités
 
 ---
