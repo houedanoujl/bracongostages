@@ -127,17 +127,33 @@ print_status "Configuration de la base de données..."
 
 # Vérifier si la base de données est accessible
 if php artisan db:show 2>/dev/null; then
-    print_status "Migration de la base de données..."
-    php artisan migrate --force
+    print_status "Configuration de la base de données..."
     
-    print_status "Création des données de test..."
-    php artisan db:seed --force
+    # Demander confirmation pour le reset (seulement en mode interactif)
+    if [[ -t 0 ]]; then
+        echo ""
+        print_warning "⚠️  Attention: Le reset de la base va supprimer TOUTES les données existantes !"
+        read -p "Voulez-vous continuer ? (y/N): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_warning "Reset annulé. Tentative de migration normale..."
+            php artisan migrate --force
+            php artisan db:seed --force
+        else
+            print_status "Reset complet de la base de données..."
+            php artisan migrate:fresh --seed --force
+        fi
+    else
+        # Mode non-interactif : faire le reset directement
+        print_status "Reset complet de la base de données (mode automatique)..."
+        php artisan migrate:fresh --seed --force
+    fi
     
     print_success "Base de données configurée"
 else
     print_warning "Impossible de se connecter à la base de données"
     print_warning "Veuillez configurer les paramètres de base de données dans .env"
-    print_warning "Puis exécutez : php artisan migrate --seed"
+    print_warning "Puis exécutez : php artisan migrate:fresh --seed"
 fi
 
 # 6. Permissions des dossiers
