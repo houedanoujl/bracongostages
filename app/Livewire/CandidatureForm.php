@@ -452,8 +452,9 @@ class CandidatureForm extends Component
                 if ($documentCandidat && $documentCandidat->fichierExiste()) {
                     try {
                         // Copier le document du profil vers le dossier de candidature
-                        $originalPath = $documentCandidat->chemin_fichier;
-                        $newPath = 'documents/' . basename($originalPath);
+                        // Utiliser getCheminReel() pour obtenir le chemin correct
+                        $originalPath = $documentCandidat->getCheminReel() ?? $documentCandidat->chemin_fichier;
+                        $newPath = 'documents/' . uniqid() . '_' . basename($originalPath);
                         
                         if (Storage::disk('public')->copy($originalPath, $newPath)) {
                             $candidature->documents()->create([
@@ -465,6 +466,8 @@ class CandidatureForm extends Component
                             ]);
                             
                             Log::info("Document $type copié depuis le profil: " . $documentCandidat->nom_original);
+                        } else {
+                            Log::warning("Impossible de copier le document $type depuis $originalPath vers $newPath");
                         }
                     } catch (\Exception $e) {
                         Log::error("Erreur copie document profil $type: " . $e->getMessage());

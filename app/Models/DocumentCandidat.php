@@ -39,7 +39,11 @@ class DocumentCandidat extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->chemin_fichier);
+        $cheminReel = $this->getCheminReel();
+        if ($cheminReel) {
+            return Storage::disk('public')->url($cheminReel);
+        }
+        return Storage::disk('public')->url($this->chemin_fichier);
     }
 
     /**
@@ -63,7 +67,37 @@ class DocumentCandidat extends Model
      */
     public function fichierExiste(): bool
     {
-        return Storage::exists($this->chemin_fichier);
+        // Vérifier d'abord dans le disque public (où les fichiers sont stockés)
+        if (Storage::disk('public')->exists($this->chemin_fichier)) {
+            return true;
+        }
+        
+        // Vérifier aussi dans le dossier documents_candidat/ du disque public
+        $cheminAlternatif = 'documents_candidat/' . basename($this->chemin_fichier);
+        if (Storage::disk('public')->exists($cheminAlternatif)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Obtenir le chemin réel du fichier (corrige les chemins)
+     */
+    public function getCheminReel(): ?string
+    {
+        // Vérifier d'abord le chemin original dans le disque public
+        if (Storage::disk('public')->exists($this->chemin_fichier)) {
+            return $this->chemin_fichier;
+        }
+        
+        // Vérifier dans le dossier documents_candidat/ du disque public
+        $cheminAlternatif = 'documents_candidat/' . basename($this->chemin_fichier);
+        if (Storage::disk('public')->exists($cheminAlternatif)) {
+            return $cheminAlternatif;
+        }
+        
+        return null;
     }
 
     /**
@@ -71,8 +105,9 @@ class DocumentCandidat extends Model
      */
     public function supprimerFichier(): bool
     {
-        if ($this->fichierExiste()) {
-            return Storage::delete($this->chemin_fichier);
+        $cheminReel = $this->getCheminReel();
+        if ($cheminReel) {
+            return Storage::disk('public')->delete($cheminReel);
         }
         return true;
     }
