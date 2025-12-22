@@ -8,11 +8,6 @@
             </svg>
             Télécharger
         </a>
-        @if($document->fichierExiste())
-            <span class="text-xs text-green-600">✓ Disponible</span>
-        @else
-            <span class="text-xs text-red-600">✗ Introuvable</span>
-        @endif
     </div>
 @else
     <span class="text-xs text-gray-500">Aucun document</span>

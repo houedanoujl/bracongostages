@@ -34,26 +34,14 @@
                     
                     <button 
                         type="submit"
-                        class="w-full bg-gradient-to-r from-bracongo-red-500 to-bracongo-red-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-bracongo-red-600 hover:to-bracongo-red-700 transition duration-300 shadow-lg"
+                        class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-3 px-6 rounded-lg hover:from-red-700 hover:to-red-800 transition duration-300 shadow-lg"
                     >
                         Rechercher ma candidature
                     </button>
                 </form>
                 
-                <!-- Bouton de test rapide -->
-                <div class="mt-4 text-center">
-                    <p class="text-sm text-gray-500 mb-2">Vous n'avez pas de code ? Testez avec :</p>
-                    <button 
-                        type="button"
-                        onclick="document.getElementById('searchCode').value = 'BRC-TEST123'"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors"
-                    >
-                        📋 BRC-TEST123 (Test)
-                    </button>
-                </div>
-                
                 <div class="mt-8 text-center">
-                    <a href="/candidature" class="text-bracongo-red-600 hover:text-bracongo-red-700 font-medium">
+                    <a href="/candidature" class="text-red-600 hover:text-red-700 font-medium">
                         ← Retour au formulaire de candidature
                     </a>
                 </div>

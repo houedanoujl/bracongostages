@@ -153,27 +153,31 @@ Route::get('/admin/documents/{document}/download', function ($documentId) {
         $document = \App\Models\Document::findOrFail($documentId);
         \Log::info('Document trouvé: ' . $document->nom_original . ', Chemin: ' . $document->chemin_fichier);
         
-        // Vérifier si le fichier existe au chemin exact
-        if ($document->fichierExiste()) {
-            \Log::info('Téléchargement en cours...');
-            return \Illuminate\Support\Facades\Storage::download(
-                $document->chemin_fichier, 
-                $document->nom_original
-            );
+        // Utiliser la méthode getCheminReel() pour trouver le bon chemin
+        $cheminReel = $document->getCheminReel();
+        
+        if ($cheminReel) {
+            \Log::info('Téléchargement du fichier: ' . $cheminReel);
+            
+            // Essayer d'abord avec le disque public
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($cheminReel)) {
+                return \Illuminate\Support\Facades\Storage::disk('public')->download(
+                    $cheminReel, 
+                    $document->nom_original
+                );
+            }
+            
+            // Sinon essayer avec le disque par défaut
+            if (\Illuminate\Support\Facades\Storage::exists($cheminReel)) {
+                return \Illuminate\Support\Facades\Storage::download(
+                    $cheminReel, 
+                    $document->nom_original
+                );
+            }
         }
         
-        // Si le fichier n'existe pas au chemin exact, chercher dans documents/
-        $cheminAlternatif = 'documents/' . basename($document->chemin_fichier);
-        if (\Illuminate\Support\Facades\Storage::exists($cheminAlternatif)) {
-            \Log::info('Fichier trouvé au chemin alternatif: ' . $cheminAlternatif);
-            return \Illuminate\Support\Facades\Storage::download(
-                $cheminAlternatif, 
-                $document->nom_original
-            );
-        }
-        
-        \Log::error('Fichier non trouvé: ' . $document->chemin_fichier . ' ni ' . $cheminAlternatif);
-        abort(404, 'Fichier non trouvé sur le serveur. Chemin recherché: ' . $document->chemin_fichier);
+        \Log::error('Fichier non trouvé pour le document ID: ' . $documentId . ', chemin: ' . $document->chemin_fichier);
+        abort(404, 'Fichier non trouvé sur le serveur.');
         
     } catch (\Exception $e) {
         \Log::error('Erreur téléchargement document: ' . $e->getMessage());

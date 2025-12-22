@@ -37,7 +37,11 @@ class Document extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->chemin_fichier);
+        $cheminReel = $this->getCheminReel();
+        if ($cheminReel) {
+            return Storage::disk('public')->url($cheminReel);
+        }
+        return Storage::disk('public')->url($this->chemin_fichier);
     }
 
     /**
@@ -115,7 +119,43 @@ class Document extends Model
      */
     public function fichierExiste(): bool
     {
+        // Vérifier d'abord dans le disque public (où les fichiers sont stockés)
+        if (Storage::disk('public')->exists($this->chemin_fichier)) {
+            return true;
+        }
+        
+        // Vérifier aussi dans le dossier documents/ du disque public
+        $cheminAlternatif = 'documents/' . basename($this->chemin_fichier);
+        if (Storage::disk('public')->exists($cheminAlternatif)) {
+            return true;
+        }
+        
+        // Vérifier dans le disque par défaut en dernier recours
         return Storage::exists($this->chemin_fichier);
+    }
+
+    /**
+     * Obtenir le chemin réel du fichier (corrige les chemins)
+     */
+    public function getCheminReel(): ?string
+    {
+        // Vérifier d'abord le chemin original dans le disque public
+        if (Storage::disk('public')->exists($this->chemin_fichier)) {
+            return $this->chemin_fichier;
+        }
+        
+        // Vérifier dans le dossier documents/ du disque public
+        $cheminAlternatif = 'documents/' . basename($this->chemin_fichier);
+        if (Storage::disk('public')->exists($cheminAlternatif)) {
+            return $cheminAlternatif;
+        }
+        
+        // Vérifier dans le disque par défaut
+        if (Storage::exists($this->chemin_fichier)) {
+            return $this->chemin_fichier;
+        }
+        
+        return null;
     }
 
     /**
@@ -123,9 +163,19 @@ class Document extends Model
      */
     public function supprimerFichier(): bool
     {
-        if ($this->fichierExiste()) {
-            return Storage::delete($this->chemin_fichier);
+        $cheminReel = $this->getCheminReel();
+        
+        if ($cheminReel) {
+            // Essayer de supprimer du disque public
+            if (Storage::disk('public')->exists($cheminReel)) {
+                return Storage::disk('public')->delete($cheminReel);
+            }
+            // Sinon du disque par défaut
+            if (Storage::exists($cheminReel)) {
+                return Storage::delete($cheminReel);
+            }
         }
+        
         return true;
     }
 

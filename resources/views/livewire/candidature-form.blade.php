@@ -506,15 +506,39 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">CV *</label>
                                         @if($cv_existant)
                                             <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
-                                                <div class="flex items-center">
-                                                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
-                                                    <div>
-                                                        <p class="text-sm font-semibold text-green-800">CV du profil sélectionné</p>
-                                                        <p class="text-xs text-green-600">{{ basename($cv_existant) }}</p>
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                        <div>
+                                                            <p class="text-sm font-semibold text-green-800">CV du profil sélectionné</p>
+                                                            <p class="text-xs text-green-600">{{ basename($cv_existant) }}</p>
+                                                        </div>
                                                     </div>
+                                                    <a href="{{ asset('storage/' . $cv_existant) }}" target="_blank" 
+                                                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition-colors">
+                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                        </svg>
+                                                        Voir
+                                                    </a>
                                                 </div>
+                                            </div>
+                                            <!-- Option pour uploader un nouveau CV -->
+                                            <div class="mt-3">
+                                                <label class="flex items-center text-sm text-gray-600 cursor-pointer">
+                                                    <input type="checkbox" wire:model.live="remplacer_cv" class="rounded border-gray-300 text-red-600 focus:ring-red-500 mr-2">
+                                                    <span>Remplacer par un nouveau CV</span>
+                                                </label>
+                                                @if($remplacer_cv ?? false)
+                                                    <div class="mt-2">
+                                                        <input wire:model="cv" type="file" id="cv_nouveau" accept=".pdf,.doc,.docx" 
+                                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('cv') border-red-500 @enderror">
+                                                        @error('cv') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endif
                                     </div>
@@ -523,15 +547,39 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation *</label>
                                         @if($lettre_motivation_existante)
                                             <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
-                                                <div class="flex items-center">
-                                                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                                    </svg>
-                                                    <div>
-                                                        <p class="text-sm font-semibold text-green-800">Lettre du profil sélectionnée</p>
-                                                        <p class="text-xs text-green-600">{{ basename($lettre_motivation_existante) }}</p>
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                                        </svg>
+                                                        <div>
+                                                            <p class="text-sm font-semibold text-green-800">Lettre du profil sélectionnée</p>
+                                                            <p class="text-xs text-green-600">{{ basename($lettre_motivation_existante) }}</p>
+                                                        </div>
                                                     </div>
+                                                    <a href="{{ asset('storage/' . $lettre_motivation_existante) }}" target="_blank" 
+                                                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition-colors">
+                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                        </svg>
+                                                        Voir
+                                                    </a>
                                                 </div>
+                                            </div>
+                                            <!-- Option pour uploader une nouvelle lettre -->
+                                            <div class="mt-3">
+                                                <label class="flex items-center text-sm text-gray-600 cursor-pointer">
+                                                    <input type="checkbox" wire:model.live="remplacer_lettre" class="rounded border-gray-300 text-red-600 focus:ring-red-500 mr-2">
+                                                    <span>Remplacer par une nouvelle lettre</span>
+                                                </label>
+                                                @if($remplacer_lettre ?? false)
+                                                    <div class="mt-2">
+                                                        <input wire:model="lettre_motivation" type="file" id="lettre_nouveau" accept=".pdf,.doc,.docx" 
+                                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                                        @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @endif
                                             </div>
                                         @else
                                             <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
@@ -572,7 +620,14 @@
                                                             <p class="text-sm text-yellow-800">📄 CV du profil disponible mais non utilisé</p>
                                                             <p class="text-xs text-yellow-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
                                                         </div>
-                                                        <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Nouveau requis</span>
+                                                        <a href="{{ asset('storage/' . $cvCandidat->chemin_fichier) }}" target="_blank" 
+                                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded hover:bg-yellow-200 transition-colors">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                            </svg>
+                                                            Voir
+                                                        </a>
                                                     </div>
                                                 </div>
                                             @elseif($cvCandidat)
@@ -582,7 +637,17 @@
                                                             <p class="text-sm text-green-800">📄 CV du profil disponible</p>
                                                             <p class="text-xs text-green-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
                                                         </div>
-                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
+                                                        <div class="flex items-center space-x-2">
+                                                            <a href="{{ asset('storage/' . $cvCandidat->chemin_fichier) }}" target="_blank" 
+                                                               class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded hover:bg-green-200 transition-colors">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                                </svg>
+                                                                Voir
+                                                            </a>
+                                                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             @endif
@@ -608,7 +673,14 @@
                                                             <p class="text-sm text-yellow-800">📝 Lettre du profil disponible mais non utilisée</p>
                                                             <p class="text-xs text-yellow-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
                                                         </div>
-                                                        <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Nouvelle requise</span>
+                                                        <a href="{{ asset('storage/' . $lettreCandidat->chemin_fichier) }}" target="_blank" 
+                                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded hover:bg-yellow-200 transition-colors">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                            </svg>
+                                                            Voir
+                                                        </a>
                                                     </div>
                                                 </div>
                                             @elseif($lettreCandidat)
@@ -618,7 +690,17 @@
                                                             <p class="text-sm text-green-800">📝 Lettre du profil disponible</p>
                                                             <p class="text-xs text-green-600">{{ $lettreCandidat->nom_original }} ({{ $lettreCandidat->taille_formatee }})</p>
                                                         </div>
-                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisée automatiquement</span>
+                                                        <div class="flex items-center space-x-2">
+                                                            <a href="{{ asset('storage/' . $lettreCandidat->chemin_fichier) }}" target="_blank" 
+                                                               class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded hover:bg-green-200 transition-colors">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                                </svg>
+                                                                Voir
+                                                            </a>
+                                                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisée</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             @endif

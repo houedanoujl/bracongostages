@@ -55,6 +55,8 @@ class CandidatureForm extends Component
     public $documents_existants_disponibles = false;
     public $cv_existant = null;
     public $lettre_motivation_existante = null;
+    public $remplacer_cv = false;
+    public $remplacer_lettre = false;
 
     public function mount()
     {
