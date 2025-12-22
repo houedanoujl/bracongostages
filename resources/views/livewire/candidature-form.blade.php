@@ -372,13 +372,13 @@
                                 <select wire:model.live="etablissement" id="etablissement" 
                                         class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('etablissement') border-red-500 @enderror">
                                     <option value="">Sélectionnez votre établissement</option>
-                                    @foreach($etablissements as $etablissement_option)
-                                        <option value="{{ $etablissement_option }}">{{ $etablissement_option }}</option>
+                                    @foreach($etablissements as $etablissement_key => $etablissement_label)
+                                        <option value="{{ $etablissement_key }}">{{ $etablissement_label }}</option>
                                     @endforeach
                                 </select>
                                 @error('etablissement') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 
-                                @if($etablissement === 'Autres')
+                                @if($etablissement === 'autres')
                                     <div class="mt-4">
                                         <label for="etablissement_autre" class="block text-sm font-medium text-gray-700 mb-2">Nom de votre établissement *</label>
                                         <input wire:model="etablissement_autre" type="text" id="etablissement_autre" 
@@ -429,8 +429,8 @@
                                 <select wire:model="poste_souhaite" id="poste_souhaite" 
                                         class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('poste_souhaite') border-red-500 @enderror">
                                     <option value="">Sélectionner un poste</option>
-                                    @foreach(\App\Models\Candidature::getPostesDisponibles() as $poste)
-                                        <option value="{{ $poste }}">{{ $poste }}</option>
+                                    @foreach(\App\Models\Candidature::getPostesDisponibles() as $poste_key => $poste_label)
+                                        <option value="{{ $poste_key }}">{{ $poste_label }}</option>
                                     @endforeach
                                 </select>
                                 @error('poste_souhaite') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
@@ -439,11 +439,11 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Directions souhaitées *</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    @foreach($directions_disponibles as $direction)
+                                    @foreach($directions_disponibles as $direction_key => $direction_label)
                                         <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                                            <input wire:model="directions_souhaitees" type="checkbox" value="{{ $direction }}" 
+                                            <input wire:model="directions_souhaitees" type="checkbox" value="{{ $direction_key }}" 
                                                    class="rounded border-gray-300 text-red-600 focus:ring-red-600">
-                                            <span class="ml-3 text-sm text-gray-700">{{ $direction }}</span>
+                                            <span class="ml-3 text-sm text-gray-700">{{ $direction_label }}</span>
                                         </label>
                                     @endforeach
                                 </div>
