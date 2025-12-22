@@ -14,10 +14,15 @@ RUN apt-get update && apt-get install -y \
     unzip \
     supervisor \
     && docker-php-ext-configure intl \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
+# Install Redis extension using pickle (more reliable than pecl)
+RUN curl -L -o /tmp/pickle.phar https://github.com/FriendsOfPHP/pickle/releases/latest/download/pickle.phar \
+    && php /tmp/pickle.phar install redis --defaults \
+    && docker-php-ext-enable redis \
+    && rm /tmp/pickle.phar
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -28,8 +33,11 @@ WORKDIR /var/www
 # Development stage
 FROM base as development
 
-# Install Xdebug for development
-RUN pecl install xdebug && docker-php-ext-enable xdebug
+# Install Xdebug for development (using pickle for reliability)
+RUN curl -L -o /tmp/pickle.phar https://github.com/FriendsOfPHP/pickle/releases/latest/download/pickle.phar \
+    && php /tmp/pickle.phar install xdebug --defaults \
+    && docker-php-ext-enable xdebug \
+    && rm /tmp/pickle.phar
 
 # Copy application
 COPY . .
