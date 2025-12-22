@@ -74,9 +74,9 @@
                     <select id="niveau_etude" name="niveau_etude"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Sélectionner un niveau</option>
-                        @foreach(\App\Models\Candidature::getNiveauxEtude() as $niveau)
-                            <option value="{{ $niveau }}" {{ old('niveau_etude') == $niveau ? 'selected' : '' }}>
-                                {{ $niveau }}
+                        @foreach(\App\Models\Candidature::getNiveauxEtude() as $key => $label)
+                            <option value="{{ $key }}" {{ old('niveau_etude') == $key ? 'selected' : '' }}>
+                                {{ $label }}
                             </option>
                         @endforeach
                     </select>

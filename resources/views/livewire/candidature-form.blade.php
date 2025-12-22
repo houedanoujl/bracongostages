@@ -424,6 +424,17 @@
                                 @error('objectif_stage') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
+                            <div>
+                                <label for="poste_souhaite" class="block text-sm font-medium text-gray-700 mb-2">Poste souhaité *</label>
+                                <select wire:model="poste_souhaite" id="poste_souhaite" 
+                                        class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('poste_souhaite') border-red-500 @enderror">
+                                    <option value="">Sélectionner un poste</option>
+                                    @foreach(\App\Models\Candidature::getPostesDisponibles() as $poste)
+                                        <option value="{{ $poste }}">{{ $poste }}</option>
+                                    @endforeach
+                                </select>
+                                @error('poste_souhaite') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Directions souhaitées *</label>
@@ -707,6 +718,7 @@
                                         @endauth
                                         <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
                                                class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                        <p class="text-xs text-amber-600 mt-1">📄 Taille maximale : 2 MB (formats acceptés : PDF, DOC, DOCX)</p>
                                         @auth('candidat')
                                             @if(auth('candidat')->user()->getDocumentByType('lettre_motivation') && $utiliser_documents_existants)
                                                 <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre lettre du profil, ou uploadez un nouveau fichier</p>
@@ -719,7 +731,9 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="certificat_scolarite" class="block text-sm font-medium text-gray-700 mb-2">Certificat de scolarité *</label>
+                                    <label for="certificat_scolarite" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Certificat de scolarité <span class="text-red-600 font-bold">* (obligatoire)</span>
+                                    </label>
                                     @auth('candidat')
                                         @php $certificatCandidat = auth('candidat')->user()->getDocumentByType('certificat_scolarite'); @endphp
                                         @if($certificatCandidat)
@@ -732,10 +746,15 @@
                                                     <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisé automatiquement</span>
                                                 </div>
                                             </div>
+                                        @else
+                                            <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                <p class="text-sm text-amber-800">⚠️ Aucun certificat dans votre profil. Veuillez en télécharger un.</p>
+                                            </div>
                                         @endif
                                     @endauth
                                     <input wire:model="certificat_scolarite" type="file" id="certificat_scolarite" accept=".pdf,.jpg,.jpeg,.png" 
                                            class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('certificat_scolarite') border-red-500 @enderror">
+                                    <p class="text-xs text-gray-500 mt-1">📄 Taille max : 5 MB (formats : PDF, JPG, PNG)</p>
                                     @auth('candidat')
                                         @if(auth('candidat')->user()->getDocumentByType('certificat_scolarite'))
                                             <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser votre certificat du profil, ou uploadez un nouveau fichier</p>

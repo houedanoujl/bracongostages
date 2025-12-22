@@ -22,6 +22,7 @@ class CandidatureForm extends Component
     public $niveau_etude = '';
     public $faculte = '';
     public $objectif_stage = '';
+    public $poste_souhaite = '';
     public $directions_souhaitees = [];
     public $periode_debut_souhaitee = '';
     public $periode_fin_souhaitee = '';
@@ -107,9 +108,24 @@ class CandidatureForm extends Component
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
             $this->opportunite_selectionnee = $this->opportunite_id;
             $this->afficher_selection_opportunite = false;
+            
+            // Pré-remplir les directions souhaitées avec celles de l'opportunité
+            $this->preRemplirDirections($this->opportunite_id);
         } else {
             // Si pas d'opportunité sélectionnée, afficher la sélection
             $this->afficher_selection_opportunite = true;
+        }
+    }
+    
+    /**
+     * Pré-remplit les directions souhaitées avec les directions associées de l'opportunité
+     */
+    protected function preRemplirDirections($opportuniteSlug)
+    {
+        $opportunite = \App\Models\Opportunite::where('slug', $opportuniteSlug)->first();
+        
+        if ($opportunite && !empty($opportunite->directions_associees)) {
+            $this->directions_souhaitees = $opportunite->directions_associees;
         }
     }
 
@@ -189,6 +205,7 @@ class CandidatureForm extends Component
                 // Validation des dates plus flexible
                 $rules = [
                     'objectif_stage' => 'required|string',
+                    'poste_souhaite' => 'required|string',
                     'directions_souhaitees' => 'required|array|min:1',
                     'periode_debut_souhaitee' => 'required|date',
                     'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
@@ -209,47 +226,70 @@ class CandidatureForm extends Component
                 if ($this->utiliser_documents_existants && $this->documents_existants_disponibles) {
                     // CV : obligatoire seulement si pas de CV existant
                     if (!$this->cv_existant) {
-                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:5120';
                     } elseif ($this->cv) {
-                        $rules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
+                        $rules['cv'] = 'file|mimes:pdf,doc,docx|max:5120';
                     }
                     
-                    // Lettre de motivation : obligatoire seulement si pas de lettre existante
+                    // Lettre de motivation : obligatoire seulement si pas de lettre existante (max 2MB)
                     if (!$this->lettre_motivation_existante) {
                         $rules['lettre_motivation'] = 'required|file|mimes:pdf,doc,docx|max:2048';
                     } elseif ($this->lettre_motivation) {
                         $rules['lettre_motivation'] = 'file|mimes:pdf,doc,docx|max:2048';
                     }
+                    
+                    // Certificat de scolarité : OBLIGATOIRE - seulement si pas existant dans le profil
+                    if (!$this->certificat_scolarite_existant) {
+                        $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    } elseif ($this->certificat_scolarite) {
+                        $rules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    }
                 } else {
                     // Mode upload de nouveaux documents
                     // CV : requis seulement si pas de CV dans le profil candidat
                     if ($candidat && $candidat->getDocumentByType('cv')) {
-                        $rules['cv'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
+                        $rules['cv'] = 'nullable|file|mimes:pdf,doc,docx|max:5120';
                     } else {
-                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:2048';
+                        $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:5120';
                     }
                     
-                    // Lettre de motivation : requis seulement si pas de lettre dans le profil candidat
+                    // Lettre de motivation : requis seulement si pas de lettre dans le profil candidat (max 2MB)
                     if ($candidat && $candidat->getDocumentByType('lettre_motivation')) {
                         $rules['lettre_motivation'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
                     } else {
                         $rules['lettre_motivation'] = 'required|file|mimes:pdf,doc,docx|max:2048';
                     }
-                }
-                
-                // Certificat de scolarité : toujours requis sauf si existe dans le profil
-                if ($candidat && $candidat->getDocumentByType('certificat_scolarite')) {
-                    $rules['certificat_scolarite'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
-                } else {
-                    $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                    
+                    // Certificat de scolarité : TOUJOURS OBLIGATOIRE sauf si existe dans le profil
+                    if ($candidat && $candidat->getDocumentByType('certificat_scolarite')) {
+                        $rules['certificat_scolarite'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    } else {
+                        $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    }
                 }
                 
                 // Documents optionnels
-                $rules['releves_notes'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
-                $rules['lettres_recommandation'] = 'nullable|file|mimes:pdf,doc,docx|max:2048';
-                $rules['certificats_competences'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                $rules['releves_notes'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                $rules['lettres_recommandation'] = 'nullable|file|mimes:pdf,doc,docx|max:5120';
+                $rules['certificats_competences'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
                 
-                $this->validate($rules);
+                // Messages personnalisés
+                $messages = [
+                    'cv.required' => 'Le CV est obligatoire.',
+                    'cv.max' => 'Le CV ne doit pas dépasser 5 MB.',
+                    'cv.mimes' => 'Le CV doit être au format PDF, DOC ou DOCX.',
+                    'lettre_motivation.required' => 'La lettre de motivation est obligatoire.',
+                    'lettre_motivation.max' => 'La lettre de motivation ne doit pas dépasser 2 MB.',
+                    'lettre_motivation.mimes' => 'La lettre de motivation doit être au format PDF, DOC ou DOCX.',
+                    'certificat_scolarite.required' => 'Le certificat de scolarité est obligatoire.',
+                    'certificat_scolarite.max' => 'Le certificat de scolarité ne doit pas dépasser 5 MB.',
+                    'certificat_scolarite.mimes' => 'Le certificat de scolarité doit être au format PDF, JPG ou PNG.',
+                    'releves_notes.max' => 'Les relevés de notes ne doivent pas dépasser 5 MB.',
+                    'lettres_recommandation.max' => 'Les lettres de recommandation ne doivent pas dépasser 5 MB.',
+                    'certificats_competences.max' => 'Les certificats de compétences ne doivent pas dépasser 5 MB.',
+                ];
+                
+                $this->validate($rules, $messages);
                 break;
         }
     }
@@ -298,6 +338,7 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
+                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -398,6 +439,7 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
+                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -509,6 +551,9 @@ class CandidatureForm extends Component
             $this->erreur_opportunite = false;
             $this->validationErrors = [];
             session()->forget('validation_error');
+            
+            // Pré-remplir les directions souhaitées avec celles de l'opportunité
+            $this->preRemplirDirections($this->opportunite_id);
             
             // Toast de succès
             $this->displayToast('Opportunité sélectionnée avec succès ! Vous pouvez maintenant continuer.', 'success');

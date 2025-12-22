@@ -25,6 +25,7 @@ class Candidature extends Model
         'niveau_etude',
         'faculte',
         'objectif_stage',
+        'poste_souhaite',
         'opportunite_id',
         'directions_souhaitees',
         'projets_souhaites',
