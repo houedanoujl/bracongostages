@@ -55,8 +55,16 @@ class CandidatureForm extends Component
     public $documents_existants_disponibles = false;
     public $cv_existant = null;
     public $lettre_motivation_existante = null;
+    public $certificat_scolarite_existant = null;
+    public $releves_notes_existants = null;
+    public $lettres_recommandation_existantes = null;
+    public $certificats_competences_existants = null;
     public $remplacer_cv = false;
     public $remplacer_lettre = false;
+    public $remplacer_certificat_scolarite = false;
+    public $remplacer_releves_notes = false;
+    public $remplacer_lettres_recommandation = false;
+    public $remplacer_certificats_competences = false;
 
     public function mount()
     {
@@ -74,17 +82,22 @@ class CandidatureForm extends Component
             $this->niveau_etude = $candidat->niveau_etude ?? '';
             $this->faculte = $candidat->faculte ?? '';
             
-            // Vérifier les documents existants
-            $cvDocument = $candidat->getDocumentByType('cv');
-            if ($cvDocument && $cvDocument->fichierExiste()) {
-                $this->cv_existant = $cvDocument->chemin_fichier;
-                $this->documents_existants_disponibles = true;
-            }
+            // Vérifier tous les documents existants
+            $documentsTypes = [
+                'cv' => 'cv_existant',
+                'lettre_motivation' => 'lettre_motivation_existante',
+                'certificat_scolarite' => 'certificat_scolarite_existant',
+                'releves_notes' => 'releves_notes_existants',
+                'lettres_recommandation' => 'lettres_recommandation_existantes',
+                'certificats_competences' => 'certificats_competences_existants',
+            ];
             
-            $lettreDocument = $candidat->getDocumentByType('lettre_motivation');
-            if ($lettreDocument && $lettreDocument->fichierExiste()) {
-                $this->lettre_motivation_existante = $lettreDocument->chemin_fichier;
-                $this->documents_existants_disponibles = true;
+            foreach ($documentsTypes as $type => $property) {
+                $document = $candidat->getDocumentByType($type);
+                if ($document && $document->fichierExiste()) {
+                    $this->$property = $document->chemin_fichier;
+                    $this->documents_existants_disponibles = true;
+                }
             }
         }
         

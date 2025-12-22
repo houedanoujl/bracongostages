@@ -746,8 +746,27 @@
                                 
                                 <div>
                                     <label for="releves_notes" class="block text-sm font-medium text-gray-700 mb-2">Relevés de notes récents</label>
+                                    @auth('candidat')
+                                        @php $relevesCandidat = auth('candidat')->user()->getDocumentByType('releves_notes'); @endphp
+                                        @if($relevesCandidat && $relevesCandidat->fichierExiste())
+                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <p class="text-sm text-green-800">📊 Relevés du profil disponibles</p>
+                                                        <p class="text-xs text-green-600">{{ $relevesCandidat->nom_original }} ({{ $relevesCandidat->taille_formatee }})</p>
+                                                    </div>
+                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisés automatiquement</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endauth
                                     <input wire:model="releves_notes" type="file" id="releves_notes" accept=".pdf,.jpg,.jpeg,.png" 
                                            class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('releves_notes') border-red-500 @enderror">
+                                    @auth('candidat')
+                                        @if($relevesCandidat ?? false)
+                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser vos relevés du profil</p>
+                                        @endif
+                                    @endauth
                                     @error('releves_notes') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -760,6 +779,20 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label for="lettres_recommandation" class="block text-sm font-medium text-gray-700 mb-2">Lettres de recommandation</label>
+                                        @auth('candidat')
+                                            @php $lettresRecoCandidat = auth('candidat')->user()->getDocumentByType('lettres_recommandation'); @endphp
+                                            @if($lettresRecoCandidat && $lettresRecoCandidat->fichierExiste())
+                                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-green-800">📋 Lettres du profil disponibles</p>
+                                                            <p class="text-xs text-green-600">{{ $lettresRecoCandidat->nom_original }} ({{ $lettresRecoCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisées</span>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endauth
                                         <input wire:model="lettres_recommandation" type="file" id="lettres_recommandation" accept=".pdf,.doc,.docx" 
                                                class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettres_recommandation') border-red-500 @enderror">
                                         @error('lettres_recommandation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
@@ -768,6 +801,20 @@
                                     
                                     <div>
                                         <label for="certificats_competences" class="block text-sm font-medium text-gray-700 mb-2">Certificats de compétences</label>
+                                        @auth('candidat')
+                                            @php $certifsCandidat = auth('candidat')->user()->getDocumentByType('certificats_competences'); @endphp
+                                            @if($certifsCandidat && $certifsCandidat->fichierExiste())
+                                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <p class="text-sm text-green-800">🏆 Certificats du profil disponibles</p>
+                                                            <p class="text-xs text-green-600">{{ $certifsCandidat->nom_original }} ({{ $certifsCandidat->taille_formatee }})</p>
+                                                        </div>
+                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisés</span>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endauth
                                         <input wire:model="certificats_competences" type="file" id="certificats_competences" accept=".pdf,.jpg,.jpeg,.png" 
                                                class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('certificats_competences') border-red-500 @enderror">
                                         @error('certificats_competences') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror

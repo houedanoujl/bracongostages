@@ -15,24 +15,22 @@
                 @csrf
 
                 <!-- Informations personnelles -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
-                        <input type="text" id="prenom" name="prenom" value="{{ old('prenom') }}" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        @error('prenom')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div>
+                    <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+                    <input type="text" id="prenom" name="prenom" value="{{ old('prenom') }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    @error('prenom')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
-                    <div>
-                        <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                        <input type="text" id="nom" name="nom" value="{{ old('nom') }}" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        @error('nom')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div>
+                    <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                    <input type="text" id="nom" name="nom" value="{{ old('nom') }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    @error('nom')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
@@ -71,49 +69,45 @@
                     @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="niveau_etude" class="block text-sm font-medium text-gray-700 mb-1">Niveau d'étude</label>
-                        <select id="niveau_etude" name="niveau_etude"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="">Sélectionner un niveau</option>
-                            @foreach(\App\Models\Candidature::getNiveauxEtude() as $niveau)
-                                <option value="{{ $niveau }}" {{ old('niveau_etude') == $niveau ? 'selected' : '' }}>
-                                    {{ $niveau }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('niveau_etude')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div>
+                    <label for="niveau_etude" class="block text-sm font-medium text-gray-700 mb-1">Niveau d'étude</label>
+                    <select id="niveau_etude" name="niveau_etude"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Sélectionner un niveau</option>
+                        @foreach(\App\Models\Candidature::getNiveauxEtude() as $niveau)
+                            <option value="{{ $niveau }}" {{ old('niveau_etude') == $niveau ? 'selected' : '' }}>
+                                {{ $niveau }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('niveau_etude')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
-                    <div>
-                        <label for="faculte" class="block text-sm font-medium text-gray-700 mb-1">Faculté</label>
-                        <input type="text" id="faculte" name="faculte" value="{{ old('faculte') }}"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        @error('faculte')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div>
+                    <label for="faculte" class="block text-sm font-medium text-gray-700 mb-1">Faculté</label>
+                    <input type="text" id="faculte" name="faculte" value="{{ old('faculte') }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    @error('faculte')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Mot de passe -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
-                        <input type="password" id="password" name="password" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        @error('password')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    @error('password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
-                    <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe *</label>
-                        <input type="password" id="password_confirmation" name="password_confirmation" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
+                <div>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe *</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
 
                 <!-- Fichiers -->
