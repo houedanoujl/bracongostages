@@ -37,6 +37,35 @@ class Candidature extends Model
         'date_debut_stage',
         'date_fin_stage',
         'code_suivi',
+        // Nouveaux champs workflow
+        'service_affecte',
+        'tuteur_id',
+        'programme_stage',
+        'date_test',
+        'lieu_test',
+        'note_test',
+        'commentaire_test',
+        'date_induction',
+        'induction_completee',
+        'date_debut_stage_reel',
+        'date_fin_stage_reel',
+        'note_evaluation',
+        'commentaire_evaluation',
+        'competences_acquises_evaluation',
+        'appreciation_tuteur',
+        'date_evaluation',
+        'attestation_generee',
+        'chemin_attestation',
+        'date_attestation',
+        'montant_transport',
+        'remboursement_effectue',
+        'date_remboursement',
+        'reference_paiement',
+        'reponse_lettre_envoyee',
+        'date_reponse_lettre',
+        'chemin_reponse_lettre',
+        'historique_statuts',
+        'notes_internes',
     ];
 
     protected $casts = [
@@ -45,7 +74,23 @@ class Candidature extends Model
         'periode_fin_souhaitee' => 'date',
         'date_debut_stage' => 'date',
         'date_fin_stage' => 'date',
+        'date_test' => 'date',
+        'date_induction' => 'date',
+        'date_debut_stage_reel' => 'date',
+        'date_fin_stage_reel' => 'date',
+        'date_evaluation' => 'date',
+        'date_attestation' => 'date',
+        'date_remboursement' => 'date',
+        'date_reponse_lettre' => 'date',
         'statut' => StatutCandidature::class,
+        'induction_completee' => 'boolean',
+        'attestation_generee' => 'boolean',
+        'remboursement_effectue' => 'boolean',
+        'reponse_lettre_envoyee' => 'boolean',
+        'historique_statuts' => 'array',
+        'note_test' => 'decimal:2',
+        'note_evaluation' => 'decimal:2',
+        'montant_transport' => 'decimal:2',
     ];
 
     protected static function boot()
@@ -57,7 +102,7 @@ class Candidature extends Model
                 $candidature->code_suivi = 'BRC-' . strtoupper(Str::random(8));
             }
             if (empty($candidature->statut)) {
-                $candidature->statut = StatutCandidature::NON_TRAITE;
+                $candidature->statut = StatutCandidature::DOSSIER_RECU;
             }
         });
     }
@@ -84,6 +129,78 @@ class Candidature extends Model
     public function evaluation(): HasOne
     {
         return $this->hasOne(Evaluation::class);
+    }
+
+    /**
+     * Relation avec le tuteur de stage
+     */
+    public function tuteur(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'tuteur_id');
+    }
+
+    /**
+     * Changer le statut avec historique
+     */
+    public function changerStatut(StatutCandidature $nouveauStatut, ?string $commentaire = null): bool
+    {
+        $ancienStatut = $this->statut;
+        
+        // Vérifier si la transition est autorisée
+        if (!$ancienStatut->canTransitionTo($nouveauStatut)) {
+            return false;
+        }
+        
+        // Ajouter à l'historique
+        $historique = $this->historique_statuts ?? [];
+        $historique[] = [
+            'de' => $ancienStatut->value,
+            'vers' => $nouveauStatut->value,
+            'date' => now()->toIso8601String(),
+            'utilisateur' => auth()->user()?->name ?? 'Système',
+            'commentaire' => $commentaire,
+        ];
+        
+        $this->historique_statuts = $historique;
+        $this->statut = $nouveauStatut;
+        $this->save();
+        
+        return true;
+    }
+
+    /**
+     * Obtenir l'étape actuelle du workflow
+     */
+    public function getEtapeWorkflow(): int
+    {
+        return $this->statut->getEtape();
+    }
+
+    /**
+     * Obtenir les prochaines actions possibles
+     */
+    public function getActionsDisponibles(): array
+    {
+        return $this->statut->getNextStatuts();
+    }
+
+    /**
+     * Vérifier si le stage est en cours
+     */
+    public function estEnCours(): bool
+    {
+        return $this->statut === StatutCandidature::STAGE_EN_COURS;
+    }
+
+    /**
+     * Vérifier si le stage est terminé
+     */
+    public function estTermine(): bool
+    {
+        return in_array($this->statut, [
+            StatutCandidature::TERMINE,
+            StatutCandidature::REJETE,
+        ]);
     }
 
     /**
@@ -146,58 +263,26 @@ class Candidature extends Model
     }
 
     /**
-     * Changer le statut de la candidature
-     */
-    public function changerStatut(StatutCandidature $nouveauStatut, ?string $motifRejet = null): bool
-    {
-        if (!$this->statut->canTransitionTo($nouveauStatut)) {
-            return false;
-        }
-
-        $ancienStatut = $this->statut;
-        $this->statut = $nouveauStatut;
-        
-        if ($nouveauStatut === StatutCandidature::REJETE && $motifRejet) {
-            $this->motif_rejet = $motifRejet;
-        }
-
-        $saved = $this->save();
-
-        if ($saved && $ancienStatut !== $nouveauStatut) {
-            // Envoyer une notification asynchrone
-            \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, $nouveauStatut);
-            
-            // Envoyer une notification email si le candidat a un compte
-            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
-            if ($candidat) {
-                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, $nouveauStatut));
-            }
-        }
-
-        return $saved;
-    }
-
-    /**
-     * Valider la candidature avec dates de stage
+     * Valider la candidature avec dates de stage (décision positive)
      */
     public function valider(\Carbon\Carbon $dateDebut, \Carbon\Carbon $dateFin): bool
     {
         $ancienStatut = $this->statut;
-        $this->statut = StatutCandidature::VALIDE;
+        $this->statut = StatutCandidature::DECISION_POSITIVE;
         $this->date_debut_stage = $dateDebut;
         $this->date_fin_stage = $dateFin;
         $this->motif_rejet = null;
 
         $saved = $this->save();
 
-        if ($saved && $ancienStatut !== StatutCandidature::VALIDE) {
+        if ($saved && $ancienStatut !== StatutCandidature::DECISION_POSITIVE) {
             // Envoyer une notification asynchrone
-            \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::VALIDE);
+            \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::DECISION_POSITIVE);
             
             // Envoyer une notification email si le candidat a un compte
             $candidat = \App\Models\Candidat::where('email', $this->email)->first();
             if ($candidat) {
-                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::VALIDE));
+                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::DECISION_POSITIVE));
             }
         }
 

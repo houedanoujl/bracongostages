@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CandidatureResource\Pages;
 use App\Models\Candidature;
+use App\Models\User;
 use App\Enums\StatutCandidature;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -84,10 +85,7 @@ class CandidatureResource extends Resource
                             ->rows(3),
                         Select::make('poste_souhaite')
                             ->label('Poste souhaité')
-                            ->options(array_combine(
-                                Candidature::getPostesDisponibles(),
-                                Candidature::getPostesDisponibles()
-                            ))
+                            ->options(Candidature::getPostesDisponibles())
                             ->required()
                             ->searchable(),
                         TextInput::make('opportunite_id')
@@ -95,10 +93,7 @@ class CandidatureResource extends Resource
                             ->maxLength(255),
                         Select::make('directions_souhaitees')
                             ->multiple()
-                            ->options(array_combine(
-                                Candidature::getDirectionsDisponibles(),
-                                Candidature::getDirectionsDisponibles()
-                            ))
+                            ->options(Candidature::getDirectionsDisponibles())
                             ->required()
                             ->searchable(),
                         DatePicker::make('periode_debut_souhaitee')
@@ -176,15 +171,142 @@ class CandidatureResource extends Resource
                         Select::make('statut')
                             ->options(StatutCandidature::getOptions())
                             ->required()
-                            ->default(StatutCandidature::NON_TRAITE->value),
+                            ->default(StatutCandidature::DOSSIER_RECU->value),
                         Textarea::make('motif_rejet')
+                            ->label('Motif de rejet')
                             ->visible(fn (Forms\Get $get) => $get('statut') === StatutCandidature::REJETE->value),
-                        DatePicker::make('date_debut_stage'),
-                        DatePicker::make('date_fin_stage'),
+                        Textarea::make('notes_internes')
+                            ->label('Notes internes')
+                            ->rows(3),
                         TextInput::make('code_suivi')
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
+
+                // Section Tests
+                Forms\Components\Section::make('Tests de niveau')
+                    ->schema([
+                        DatePicker::make('date_test')
+                            ->label('Date du test'),
+                        TextInput::make('lieu_test')
+                            ->label('Lieu du test'),
+                        TextInput::make('note_test')
+                            ->label('Note obtenue')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('/100'),
+                        Textarea::make('commentaire_test')
+                            ->label('Commentaires sur le test')
+                            ->rows(2),
+                    ])->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Affectation
+                Forms\Components\Section::make('Affectation')
+                    ->schema([
+                        TextInput::make('service_affecte')
+                            ->label('Service d\'affectation'),
+                        Select::make('tuteur_id')
+                            ->label('Tuteur de stage')
+                            ->relationship('tuteur', 'name')
+                            ->searchable()
+                            ->preload(),
+                        Textarea::make('programme_stage')
+                            ->label('Programme de stage')
+                            ->rows(3),
+                        DatePicker::make('date_debut_stage_reel')
+                            ->label('Date réelle de début'),
+                        DatePicker::make('date_fin_stage_reel')
+                            ->label('Date réelle de fin'),
+                    ])->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Induction RH
+                Forms\Components\Section::make('Induction RH')
+                    ->schema([
+                        DatePicker::make('date_induction')
+                            ->label('Date de l\'induction'),
+                        Forms\Components\Toggle::make('induction_completee')
+                            ->label('Induction complétée'),
+                    ])->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Réponse lettre
+                Forms\Components\Section::make('Réponse à la lettre de recommandation')
+                    ->schema([
+                        Forms\Components\Toggle::make('reponse_lettre_envoyee')
+                            ->label('Réponse envoyée'),
+                        DatePicker::make('date_reponse_lettre')
+                            ->label('Date d\'envoi'),
+                        TextInput::make('chemin_reponse_lettre')
+                            ->label('Fichier de réponse'),
+                    ])->columns(3)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Évaluation
+                Forms\Components\Section::make('Évaluation de fin de stage')
+                    ->schema([
+                        DatePicker::make('date_evaluation')
+                            ->label('Date de l\'évaluation'),
+                        TextInput::make('note_evaluation')
+                            ->label('Note finale')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('/100'),
+                        Select::make('appreciation_tuteur')
+                            ->label('Appréciation du tuteur')
+                            ->options([
+                                'excellent' => 'Excellent',
+                                'tres_bien' => 'Très bien',
+                                'bien' => 'Bien',
+                                'satisfaisant' => 'Satisfaisant',
+                                'insuffisant' => 'Insuffisant',
+                            ]),
+                        Textarea::make('commentaire_evaluation')
+                            ->label('Commentaires')
+                            ->rows(3),
+                        Textarea::make('competences_acquises_evaluation')
+                            ->label('Compétences acquises')
+                            ->rows(3),
+                    ])->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Attestation
+                Forms\Components\Section::make('Attestation de stage')
+                    ->schema([
+                        Forms\Components\Toggle::make('attestation_generee')
+                            ->label('Attestation générée'),
+                        DatePicker::make('date_attestation')
+                            ->label('Date de l\'attestation'),
+                        TextInput::make('chemin_attestation')
+                            ->label('Fichier attestation'),
+                    ])->columns(3)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Section Remboursement transport
+                Forms\Components\Section::make('Remboursement transport')
+                    ->schema([
+                        TextInput::make('montant_transport')
+                            ->label('Montant')
+                            ->numeric()
+                            ->prefix('CDF'),
+                        Forms\Components\Toggle::make('remboursement_effectue')
+                            ->label('Remboursement effectué'),
+                        DatePicker::make('date_remboursement')
+                            ->label('Date du remboursement'),
+                        TextInput::make('reference_paiement')
+                            ->label('Référence paiement'),
+                    ])->columns(4)
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
@@ -226,40 +348,53 @@ class CandidatureResource extends Resource
                     ->label('Poste souhaité')
                     ->toggleable()
                     ->wrap()
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(function ($state) {
+                        $postes = Candidature::getPostesDisponibles();
+                        return $postes[$state] ?? $state;
+                    }),
                 Tables\Columns\TextColumn::make('directions_souhaitees')
                     ->label('Directions')
                     ->toggleable()
-                    ->formatStateUsing(fn ($state) => is_array($state) ? implode(', ', $state) : $state)
+                    ->formatStateUsing(function ($state) {
+                        if (!is_array($state)) return $state;
+                        $directions = Candidature::getDirectionsDisponibles();
+                        return collect($state)->map(fn($d) => $directions[$d] ?? $d)->implode(', ');
+                    })
                     ->wrap(),
-                Tables\Columns\BadgeColumn::make('statut')
+                Tables\Columns\TextColumn::make('statut')
+                    ->badge()
                     ->formatStateUsing(fn (StatutCandidature $state) => $state->getLabel())
-                    ->colors([
-                        'secondary' => StatutCandidature::NON_TRAITE->value,
-                        'primary' => StatutCandidature::ANALYSE_DOSSIER->value,
-                        'warning' => [
-                            StatutCandidature::ATTENTE_TEST->value,
-                            StatutCandidature::ATTENTE_RESULTATS->value,
-                            StatutCandidature::ATTENTE_AFFECTATION->value,
-                        ],
-                        'success' => StatutCandidature::VALIDE->value,
-                        'danger' => StatutCandidature::REJETE->value,
-                    ]),
+                    ->color(fn (StatutCandidature $state) => $state->getColor())
+                    ->icon(fn (StatutCandidature $state) => $state->getIcon()),
+                Tables\Columns\TextColumn::make('service_affecte')
+                    ->label('Service')
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
+                Tables\Columns\TextColumn::make('tuteur.name')
+                    ->label('Tuteur')
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date de candidature')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('date_debut_stage')
+                Tables\Columns\TextColumn::make('date_debut_stage_reel')
                     ->label('Début stage')
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('date_fin_stage')
+                Tables\Columns\TextColumn::make('date_fin_stage_reel')
                     ->label('Fin stage')
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\IconColumn::make('attestation_generee')
+                    ->label('Attestation')
+                    ->boolean()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('documents_count')
                     ->label('Documents')
                     ->counts('documents')
@@ -271,11 +406,32 @@ class CandidatureResource extends Resource
                 SelectFilter::make('statut')
                     ->options(StatutCandidature::getOptions())
                     ->multiple(),
+                SelectFilter::make('phase_workflow')
+                    ->label('Phase du workflow')
+                    ->options([
+                        'reception' => 'Réception & Analyse',
+                        'tests' => 'Tests',
+                        'decision' => 'Décision',
+                        'integration' => 'Intégration',
+                        'stage' => 'Stage en cours',
+                        'cloture' => 'Clôture',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!filled($data['value'])) return $query;
+                        
+                        $statutsParPhase = [
+                            'reception' => ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'],
+                            'tests' => ['attente_test', 'test_planifie', 'test_passe', 'attente_resultats'],
+                            'decision' => ['attente_decision', 'accepte', 'valide', 'rejete'],
+                            'integration' => ['planification', 'attente_affectation', 'affecte', 'reponse_lettre_envoyee', 'induction_planifiee', 'induction_terminee'],
+                            'stage' => ['accueil_service', 'stage_en_cours', 'en_evaluation', 'evaluation_terminee'],
+                            'cloture' => ['attestation_generee', 'remboursement_en_cours', 'termine'],
+                        ];
+                        
+                        return $query->whereIn('statut', $statutsParPhase[$data['value']] ?? []);
+                    }),
                 SelectFilter::make('etablissement')
-                    ->options(array_combine(
-                        Candidature::getEtablissements(),
-                        Candidature::getEtablissements()
-                    ))
+                    ->options(Candidature::getEtablissements())
                     ->multiple()
                     ->searchable(),
                 SelectFilter::make('niveau_etude')
@@ -284,18 +440,12 @@ class CandidatureResource extends Resource
                     ->multiple(),
                 SelectFilter::make('poste_souhaite')
                     ->label('Poste souhaité')
-                    ->options(array_combine(
-                        Candidature::getPostesDisponibles(),
-                        Candidature::getPostesDisponibles()
-                    ))
+                    ->options(Candidature::getPostesDisponibles())
                     ->multiple()
                     ->searchable(),
                 SelectFilter::make('directions_souhaitees')
                     ->label('Direction souhaitée')
-                    ->options(array_combine(
-                        Candidature::getDirectionsDisponibles(),
-                        Candidature::getDirectionsDisponibles()
-                    ))
+                    ->options(Candidature::getDirectionsDisponibles())
                     ->query(function (Builder $query, array $data): Builder {
                         if (filled($data['value'])) {
                             return $query->where('directions_souhaitees', 'like', '%"' . $data['value'] . '"%');
@@ -330,78 +480,377 @@ class CandidatureResource extends Resource
                         ->label('Modifier')
                         ->color('warning'),
                     
-                    // Actions d'approbation améliorées
-                    Action::make('analyser')
-                        ->label('Analyser le dossier')
+                    // ========== ÉTAPE 1 → 2 : Réception → Analyse DRH ==========
+                    Action::make('analyser_dossier')
+                        ->label('Analyser (DRH)')
                         ->icon('heroicon-o-magnifying-glass')
                         ->color('primary')
                         ->requiresConfirmation()
-                        ->modalHeading('Analyser le dossier')
-                        ->modalDescription('Passer cette candidature en analyse de dossier?')
-                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::NON_TRAITE)
+                        ->modalHeading('Prise en charge du dossier')
+                        ->modalDescription('Le dossier sera transmis à la DRH pour analyse.')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::DOSSIER_RECU)
                         ->action(function (Candidature $record) {
                             $record->changerStatut(StatutCandidature::ANALYSE_DOSSIER);
                             Notification::make()
-                                ->title('Dossier en cours d\'analyse')
+                                ->title('Dossier en analyse DRH')
                                 ->success()
                                 ->send();
                         }),
 
+                    // ========== ÉTAPE 2 → 3 : Analyse → Programmation test ==========
                     Action::make('programmer_test')
-                        ->label('Programmer un test')
+                        ->label('Programmer test')
                         ->icon('heroicon-o-academic-cap')
                         ->color('warning')
-                        ->requiresConfirmation()
-                        ->modalHeading('Programmer un test')
-                        ->modalDescription('Passer cette candidature en attente de test?')
+                        ->modalHeading('Programmer un test de niveau')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ANALYSE_DOSSIER)
-                        ->action(function (Candidature $record) {
+                        ->form([
+                            DatePicker::make('date_test')
+                                ->label('Date du test')
+                                ->required()
+                                ->minDate(now())
+                                ->default(now()->addDays(7)),
+                            TextInput::make('lieu_test')
+                                ->label('Lieu du test')
+                                ->placeholder('Ex: Salle de conférence, Siège'),
+                            Textarea::make('instructions_test')
+                                ->label('Instructions pour le candidat')
+                                ->rows(3)
+                                ->placeholder('Documents à apporter, heure d\'arrivée...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'date_test' => $data['date_test'],
+                            ]);
                             $record->changerStatut(StatutCandidature::ATTENTE_TEST);
                             Notification::make()
-                                ->title('Test programmé')
+                                ->title('Test programmé pour le ' . \Carbon\Carbon::parse($data['date_test'])->format('d/m/Y'))
                                 ->success()
                                 ->send();
                         }),
 
-                    Action::make('valider')
-                        ->label('Valider et Affecter')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->modalHeading('Valider la candidature')
-                        ->modalDescription('Confirmer l\'affectation de ce stagiaire?')
-                        ->visible(fn (Candidature $record) => !$record->statut->isTerminal())
+                    // ========== ÉTAPE 3 → 4 : Test programmé → Test passé ==========
+                    Action::make('enregistrer_test')
+                        ->label('Enregistrer résultat test')
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('info')
+                        ->modalHeading('Résultat du test de niveau')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ATTENTE_TEST)
                         ->form([
-                            DatePicker::make('date_debut_stage')
-                                ->label('Date de début')
-                                ->required()
-                                ->default(now()->addDays(7)),
-                            DatePicker::make('date_fin_stage')
-                                ->label('Date de fin')
-                                ->required()
-                                ->default(now()->addMonths(3)),
-                            Textarea::make('note_validation')
-                                ->label('Note de validation')
-                                ->placeholder('Informations complémentaires...')
-                                ->rows(3),
+                            TextInput::make('note_test')
+                                ->label('Note obtenue')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(20)
+                                ->suffix('/20')
+                                ->required(),
+                            Select::make('resultat_test')
+                                ->label('Résultat')
+                                ->options([
+                                    'admis' => 'Admis',
+                                    'ajourne' => 'Ajourné',
+                                    'absent' => 'Absent',
+                                ])
+                                ->required(),
+                            Textarea::make('commentaire_test')
+                                ->label('Commentaires')
+                                ->rows(3)
+                                ->placeholder('Observations sur la performance...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
-                            try {
-                                $record->valider($data['date_debut_stage'], $data['date_fin_stage']);
-                                Notification::make()
-                                    ->title('Candidature validée avec succès!')
-                                    ->body('Le candidat a été notifié par email.')
-                                    ->success()
-                                    ->send();
-                            } catch (\Exception $e) {
-                                Notification::make()
-                                    ->title('Erreur lors de la validation')
-                                    ->body('Erreur: ' . $e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
+                            $record->update([
+                                'note_test' => $data['note_test'],
+                                'resultat_test' => $data['resultat_test'],
+                            ]);
+                            $record->changerStatut(StatutCandidature::TEST_PASSE);
+                            Notification::make()
+                                ->title('Résultat enregistré: ' . ucfirst($data['resultat_test']))
+                                ->success()
+                                ->send();
                         }),
 
+                    // ========== ÉTAPE 4 → 5 : Test passé → Décision DRH ==========
+                    Action::make('decision_positive')
+                        ->label('Accepter la candidature')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->modalHeading('Décision favorable')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE)
+                        ->form([
+                            Textarea::make('decision_drh')
+                                ->label('Motivation de la décision')
+                                ->rows(3)
+                                ->placeholder('Raisons de l\'acceptation...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'decision_drh' => $data['decision_drh'] ?? 'Candidature acceptée',
+                            ]);
+                            $record->changerStatut(StatutCandidature::ACCEPTE);
+                            Notification::make()
+                                ->title('Candidature acceptée')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 5 → 6 : Décision positive → Affectation ==========
+                    Action::make('affecter')
+                        ->label('Affecter au service')
+                        ->icon('heroicon-o-building-office')
+                        ->color('primary')
+                        ->modalHeading('Affectation du stagiaire')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ACCEPTE)
+                        ->form([
+                            Select::make('service_affecte')
+                                ->label('Service d\'affectation')
+                                ->options(Candidature::getDirectionsDisponibles())
+                                ->required()
+                                ->searchable(),
+                            Select::make('tuteur_id')
+                                ->label('Tuteur de stage')
+                                ->options(fn () => User::pluck('name', 'id'))
+                                ->searchable()
+                                ->preload(),
+                            DatePicker::make('date_debut_stage')
+                                ->label('Date de début de stage')
+                                ->required()
+                                ->minDate(now()),
+                            DatePicker::make('date_fin_stage')
+                                ->label('Date de fin de stage')
+                                ->required()
+                                ->minDate(now()),
+                            DatePicker::make('date_affectation')
+                                ->label('Date d\'affectation')
+                                ->default(now())
+                                ->required(),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'service_affecte' => $data['service_affecte'],
+                                'tuteur_id' => $data['tuteur_id'] ?? null,
+                                'date_debut_stage' => $data['date_debut_stage'],
+                                'date_fin_stage' => $data['date_fin_stage'],
+                                'date_affectation' => $data['date_affectation'],
+                            ]);
+                            $record->changerStatut(StatutCandidature::AFFECTE);
+                            Notification::make()
+                                ->title('Stagiaire affecté avec succès')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 6 → 7 : Affecté → Réponse recommandation ==========
+                    Action::make('envoyer_reponse')
+                        ->label('Réponse recommandation')
+                        ->icon('heroicon-o-envelope')
+                        ->color('info')
+                        ->modalHeading('Réponse à la lettre de recommandation')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::AFFECTE)
+                        ->form([
+                            DatePicker::make('date_reponse_recommandation')
+                                ->label('Date de la réponse')
+                                ->default(now())
+                                ->required(),
+                            Textarea::make('contenu_reponse')
+                                ->label('Contenu de la réponse')
+                                ->rows(4)
+                                ->placeholder('Résumé de la réponse envoyée...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'date_reponse_recommandation' => $data['date_reponse_recommandation'],
+                            ]);
+                            $record->changerStatut(StatutCandidature::REPONSE_LETTRE_ENVOYEE);
+                            Notification::make()
+                                ->title('Réponse enregistrée')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 7 → 8 : Réponse → Induction RH ==========
+                    Action::make('induction_rh')
+                        ->label('Induction RH')
+                        ->icon('heroicon-o-users')
+                        ->color('warning')
+                        ->modalHeading('Session d\'induction RH')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::REPONSE_LETTRE_ENVOYEE)
+                        ->form([
+                            DatePicker::make('date_induction')
+                                ->label('Date de l\'induction')
+                                ->required()
+                                ->default(now()),
+                            Textarea::make('notes_induction')
+                                ->label('Notes de l\'induction')
+                                ->rows(3)
+                                ->placeholder('Points abordés, documents remis...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'date_induction' => $data['date_induction'],
+                            ]);
+                            $record->changerStatut(StatutCandidature::INDUCTION_TERMINEE);
+                            Notification::make()
+                                ->title('Induction RH effectuée')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 8 → 9 : Induction → Accueil service ==========
+                    Action::make('accueil_service')
+                        ->label('Accueil service')
+                        ->icon('heroicon-o-home')
+                        ->color('success')
+                        ->modalHeading('Accueil dans le service')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::INDUCTION_TERMINEE)
+                        ->form([
+                            DatePicker::make('date_accueil_service')
+                                ->label('Date d\'accueil')
+                                ->required()
+                                ->default(now()),
+                            Textarea::make('programme_stage')
+                                ->label('Programme de stage')
+                                ->rows(5)
+                                ->placeholder('Objectifs, tâches principales, planning...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'date_accueil_service' => $data['date_accueil_service'],
+                                'programme_stage' => $data['programme_stage'] ?? null,
+                            ]);
+                            $record->changerStatut(StatutCandidature::ACCUEIL_SERVICE);
+                            Notification::make()
+                                ->title('Stagiaire accueilli dans le service')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 9 → 10 : Accueil → Stage en cours ==========
+                    Action::make('demarrer_stage')
+                        ->label('Démarrer le stage')
+                        ->icon('heroicon-o-play')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->modalHeading('Démarrage effectif du stage')
+                        ->modalDescription('Confirmer le début du stage?')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ACCUEIL_SERVICE)
+                        ->action(function (Candidature $record) {
+                            $record->changerStatut(StatutCandidature::STAGE_EN_COURS);
+                            Notification::make()
+                                ->title('Stage démarré')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 10 → 11 : Stage en cours → Évaluation ==========
+                    Action::make('evaluer_stage')
+                        ->label('Évaluation fin de stage')
+                        ->icon('heroicon-o-star')
+                        ->color('warning')
+                        ->modalHeading('Évaluation de fin de stage')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::STAGE_EN_COURS)
+                        ->form([
+                            DatePicker::make('date_evaluation')
+                                ->label('Date d\'évaluation')
+                                ->required()
+                                ->default(now()),
+                            TextInput::make('note_evaluation')
+                                ->label('Note finale')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(20)
+                                ->suffix('/20')
+                                ->required(),
+                            Select::make('appreciation')
+                                ->label('Appréciation globale')
+                                ->options([
+                                    'excellent' => 'Excellent',
+                                    'tres_bien' => 'Très bien',
+                                    'bien' => 'Bien',
+                                    'assez_bien' => 'Assez bien',
+                                    'passable' => 'Passable',
+                                    'insuffisant' => 'Insuffisant',
+                                ])
+                                ->required(),
+                            Textarea::make('commentaire_evaluation')
+                                ->label('Commentaires et recommandations')
+                                ->rows(4)
+                                ->placeholder('Évaluation détaillée du stagiaire...'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'date_evaluation' => $data['date_evaluation'],
+                                'note_evaluation' => $data['note_evaluation'],
+                                'commentaire_evaluation' => $data['commentaire_evaluation'] ?? null,
+                            ]);
+                            $record->changerStatut(StatutCandidature::EVALUATION_TERMINEE);
+                            Notification::make()
+                                ->title('Évaluation enregistrée')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 11 → 12 : Évaluation → Attestation ==========
+                    Action::make('generer_attestation')
+                        ->label('Générer attestation')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->modalHeading('Génération de l\'attestation de stage')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::EVALUATION_TERMINEE)
+                        ->form([
+                            DatePicker::make('date_attestation')
+                                ->label('Date de l\'attestation')
+                                ->required()
+                                ->default(now()),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'attestation_generee' => true,
+                                'date_attestation' => $data['date_attestation'],
+                            ]);
+                            $record->changerStatut(StatutCandidature::ATTESTATION_GENEREE);
+                            Notification::make()
+                                ->title('Attestation générée')
+                                ->body('L\'attestation de stage a été créée.')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ÉTAPE 12 → 13 : Attestation → Remboursement ==========
+                    Action::make('rembourser_transport')
+                        ->label('Remboursement transport')
+                        ->icon('heroicon-o-banknotes')
+                        ->color('info')
+                        ->modalHeading('Remboursement des frais de transport')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ATTESTATION_GENEREE)
+                        ->form([
+                            TextInput::make('montant_transport')
+                                ->label('Montant remboursé')
+                                ->numeric()
+                                ->prefix('FCFA')
+                                ->required(),
+                            TextInput::make('reference_paiement')
+                                ->label('Référence du paiement')
+                                ->placeholder('N° de transaction, chèque...'),
+                            DatePicker::make('date_remboursement')
+                                ->label('Date du remboursement')
+                                ->required()
+                                ->default(now()),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            $record->update([
+                                'montant_transport' => $data['montant_transport'],
+                                'reference_paiement' => $data['reference_paiement'] ?? null,
+                                'date_remboursement' => $data['date_remboursement'],
+                                'remboursement_effectue' => true,
+                            ]);
+                            $record->changerStatut(StatutCandidature::TERMINE);
+                            Notification::make()
+                                ->title('Remboursement effectué')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ========== ACTION TRANSVERSALE : Rejet ==========
                     Action::make('rejeter')
                         ->label('Rejeter')
                         ->icon('heroicon-o-x-circle')
@@ -444,23 +893,49 @@ class CandidatureResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     
-                    // Actions en masse
+                    // Actions en masse - Prise en charge DRH
                     Tables\Actions\BulkAction::make('analyser_masse')
-                        ->label('Analyser les dossiers sélectionnés')
+                        ->label('Analyser (DRH)')
                         ->icon('heroicon-o-magnifying-glass')
                         ->color('primary')
                         ->requiresConfirmation()
                         ->action(function ($records) {
                             $count = 0;
                             foreach ($records as $record) {
-                                if ($record->statut === StatutCandidature::NON_TRAITE) {
+                                if ($record->statut === StatutCandidature::DOSSIER_RECU) {
                                     $record->changerStatut(StatutCandidature::ANALYSE_DOSSIER);
                                     $count++;
                                 }
                             }
                             Notification::make()
-                                ->title("$count candidatures mises en analyse")
+                                ->title("$count candidatures mises en analyse DRH")
                                 ->success()
+                                ->send();
+                        }),
+                    
+                    // Rejet en masse
+                    Tables\Actions\BulkAction::make('rejeter_masse')
+                        ->label('Rejeter les sélectionnés')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->form([
+                            Textarea::make('motif_rejet')
+                                ->label('Motif du rejet (commun)')
+                                ->required()
+                                ->rows(3),
+                        ])
+                        ->action(function ($records, array $data) {
+                            $count = 0;
+                            foreach ($records as $record) {
+                                if (!$record->statut->isTerminal()) {
+                                    $record->rejeter($data['motif_rejet']);
+                                    $count++;
+                                }
+                            }
+                            Notification::make()
+                                ->title("$count candidatures rejetées")
+                                ->warning()
                                 ->send();
                         }),
                 ]),
