@@ -92,13 +92,19 @@ class CandidatureForm extends Component
                 'lettres_recommandation' => 'lettres_recommandation_existantes',
                 'certificats_competences' => 'certificats_competences_existants',
             ];
-            
+
             foreach ($documentsTypes as $type => $property) {
                 $document = $candidat->getDocumentByType($type);
                 if ($document && $document->fichierExiste()) {
                     $this->$property = $document->chemin_fichier;
                     $this->documents_existants_disponibles = true;
                 }
+            }
+
+            // Vérifier aussi le CV stocké directement sur le candidat (uploadé lors de l'inscription)
+            if (!$this->cv_existant && $candidat->cv_path && Storage::disk('public')->exists($candidat->cv_path)) {
+                $this->cv_existant = $candidat->cv_path;
+                $this->documents_existants_disponibles = true;
             }
         }
         
@@ -246,8 +252,9 @@ class CandidatureForm extends Component
                     }
                 } else {
                     // Mode upload de nouveaux documents
-                    // CV : requis seulement si pas de CV dans le profil candidat
-                    if ($candidat && $candidat->getDocumentByType('cv')) {
+                    // CV : requis seulement si pas de CV dans le profil candidat (documents_candidat OU cv_path)
+                    $hasCvInProfile = $candidat && ($candidat->getDocumentByType('cv') || ($candidat->cv_path && Storage::disk('public')->exists($candidat->cv_path)));
+                    if ($hasCvInProfile) {
                         $rules['cv'] = 'nullable|file|mimes:pdf,doc,docx|max:5120';
                     } else {
                         $rules['cv'] = 'required|file|mimes:pdf,doc,docx|max:5120';
@@ -405,11 +412,13 @@ class CandidatureForm extends Component
             // Vérifier les documents du candidat pour pré-remplir
             $candidat = auth('candidat')->user();
             $documentsCandidat = $candidat ? $candidat->documentsCandidat : collect();
-            
+
             // Validation des fichiers seulement s'ils sont présents ou absents du profil
+            // Prendre en compte cv_path (uploadé lors de l'inscription) en plus de documents_candidat
+            $hasCvInProfile = $candidat && ($candidat->getDocumentByType('cv') || ($candidat->cv_path && Storage::disk('public')->exists($candidat->cv_path)));
             if ($this->cv) {
                 $validationRules['cv'] = 'file|mimes:pdf,doc,docx|max:2048';
-            } elseif (!$candidat->getDocumentByType('cv')) {
+            } elseif (!$hasCvInProfile) {
                 $validationRules['cv'] = 'required';
             }
             
@@ -510,7 +519,7 @@ class CandidatureForm extends Component
                         // Utiliser getCheminReel() pour obtenir le chemin correct
                         $originalPath = $documentCandidat->getCheminReel() ?? $documentCandidat->chemin_fichier;
                         $newPath = 'documents/' . uniqid() . '_' . basename($originalPath);
-                        
+
                         if (Storage::disk('public')->copy($originalPath, $newPath)) {
                             $candidature->documents()->create([
                                 'type_document' => $type,
@@ -519,13 +528,35 @@ class CandidatureForm extends Component
                                 'taille_fichier' => $documentCandidat->taille_fichier,
                                 'mime_type' => $documentCandidat->mime_type,
                             ]);
-                            
+
                             Log::info("Document $type copié depuis le profil: " . $documentCandidat->nom_original);
                         } else {
                             Log::warning("Impossible de copier le document $type depuis $originalPath vers $newPath");
                         }
                     } catch (\Exception $e) {
                         Log::error("Erreur copie document profil $type: " . $e->getMessage());
+                    }
+                } elseif ($type === 'cv' && $candidat->cv_path && Storage::disk('public')->exists($candidat->cv_path)) {
+                    // Fallback: utiliser le CV uploadé lors de l'inscription (stocké dans cv_path)
+                    try {
+                        $originalPath = $candidat->cv_path;
+                        $newPath = 'documents/' . uniqid() . '_' . basename($originalPath);
+
+                        if (Storage::disk('public')->copy($originalPath, $newPath)) {
+                            $candidature->documents()->create([
+                                'type_document' => 'cv',
+                                'nom_original' => basename($originalPath),
+                                'chemin_fichier' => $newPath,
+                                'taille_fichier' => Storage::disk('public')->size($originalPath),
+                                'mime_type' => Storage::disk('public')->mimeType($originalPath) ?? 'application/pdf',
+                            ]);
+
+                            Log::info("CV copié depuis cv_path du candidat: " . basename($originalPath));
+                        } else {
+                            Log::warning("Impossible de copier le CV depuis $originalPath vers $newPath");
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Erreur copie CV depuis cv_path: " . $e->getMessage());
                     }
                 }
             }
