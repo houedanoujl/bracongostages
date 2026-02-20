@@ -15,14 +15,14 @@ PHP_FPM_PID=$!
 # Essayer de se connecter à MySQL de manière non-bloquante
 echo "⏳ Tentative de connexion à la base de données (non-bloquante)..."
 (
+    # Installer les dépendances Composer si vendor n'existe pas (avant tout artisan)
+    if [ ! -d "/var/www/vendor" ]; then
+        echo "📦 Installation des dépendances Composer..."
+        cd /var/www && composer install --no-interaction --prefer-dist
+    fi
+
     if php /var/www/docker/scripts/wait-for-db.php; then
         echo "✅ Base de données disponible, poursuite de l'initialisation..."
-        
-        # Installer les dépendances Composer si vendor n'existe pas
-        if [ ! -d "/var/www/vendor" ]; then
-            echo "📦 Installation des dépendances Composer..."
-            composer install --no-dev --optimize-autoloader
-        fi
 
         # Générer la clé d'application si elle n'existe pas
         if [ ! -f "/var/www/.env" ]; then
@@ -36,7 +36,8 @@ echo "⏳ Tentative de connexion à la base de données (non-bloquante)..."
         fi
 
         # Vérifier si les tables existent déjà
-        TABLE_COUNT=$(php artisan tinker --execute="echo \DB::connection()->getSchemaBuilder()->hasTable('users') ? '1' : '0';" 2>/dev/null | tail -1 || echo "0")
+        TABLE_COUNT=$(php artisan tinker --execute="echo \DB::connection()->getSchemaBuilder()->hasTable('users') ? '1' : '0';" 2>/dev/null | tail -1)
+        TABLE_COUNT="${TABLE_COUNT:-0}"
 
         if [ "$TABLE_COUNT" = "0" ]; then
             echo "🗄️ Création des tables de base de données..."
