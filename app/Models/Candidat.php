@@ -96,7 +96,23 @@ class Candidat extends Authenticatable
      */
     public function getDocumentByType(string $type): ?DocumentCandidat
     {
-        return $this->documentsCandidat()->where('type_document', $type)->first();
+        $document = $this->documentsCandidat()->where('type_document', $type)->first();
+        
+        // Fallback : si pas de document_candidat pour le CV, vérifier cv_path
+        if (!$document && $type === 'cv' && $this->cv_path) {
+            // Créer un objet DocumentCandidat virtuel pour l'affichage
+            $document = new DocumentCandidat([
+                'candidat_id' => $this->id,
+                'type_document' => 'cv',
+                'nom_original' => basename($this->cv_path),
+                'chemin_fichier' => $this->cv_path,
+                'taille_fichier' => 0,
+                'mime_type' => 'application/pdf',
+            ]);
+            $document->id = -1; // ID virtuel pour indiquer que ce n'est pas en base
+        }
+        
+        return $document;
     }
 
     /**

@@ -79,8 +79,9 @@ return [
         ],
 
         'mailtrap' => [
-            'transport' => 'mailtrap',
-            'api_key' => env('MAILTRAP_API_KEY'),
+            'transport' => 'mailtrap-sdk',
+            'host' => env('MAILTRAP_HOST', 'send.api.mailtrap.io'),
+            'apiKey' => env('MAILTRAP_API_KEY'),
         ],
     ],
 

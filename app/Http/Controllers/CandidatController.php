@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Candidat;
 use App\Models\Candidature;
+use App\Models\DocumentCandidat;
 use App\Models\Opportunite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,6 +81,18 @@ class CandidatController extends Controller
             'is_active' => true,
         ]);
 
+        // Sauvegarder aussi le CV dans documents_candidat pour le profil
+        if ($cvPath && $request->hasFile('cv')) {
+            DocumentCandidat::create([
+                'candidat_id' => $candidat->id,
+                'type_document' => 'cv',
+                'nom_original' => $request->file('cv')->getClientOriginalName(),
+                'chemin_fichier' => $cvPath,
+                'taille_fichier' => $request->file('cv')->getSize(),
+                'mime_type' => $request->file('cv')->getMimeType(),
+            ]);
+        }
+
         // Connexion automatique
         Auth::guard('candidat')->login($candidat);
 
@@ -151,7 +164,90 @@ class CandidatController extends Controller
     public function profile()
     {
         $candidat = Auth::guard('candidat')->user();
+        
+        // Auto-synchroniser : si le candidat n'a pas de documents_candidat
+        // mais a des documents via ses candidatures, les importer
+        $this->syncDocumentsFromCandidatures($candidat);
+        
         return view('candidats.profile', compact('candidat'));
+    }
+
+    /**
+     * Synchroniser les documents depuis les candidatures vers le profil candidat
+     * Si le candidat n'a pas de documents_candidat pour un type donné,
+     * on récupère le document le plus récent de ses candidatures.
+     */
+    private function syncDocumentsFromCandidatures(Candidat $candidat): void
+    {
+        $typesDocument = array_keys(DocumentCandidat::getTypesDocument());
+        
+        foreach ($typesDocument as $type) {
+            // Vérifier si le candidat a déjà ce type de document dans son profil
+            $existant = $candidat->documentsCandidat()->where('type_document', $type)->first();
+            if ($existant) {
+                continue;
+            }
+            
+            // Chercher dans les candidatures du candidat (par email)
+            $candidatures = Candidature::where('email', $candidat->email)->pluck('id');
+            if ($candidatures->isEmpty()) {
+                continue;
+            }
+            
+            // Mapper les types de DocumentCandidat vers les types de Document (candidature)
+            $typeMapping = [
+                'cv' => 'CV',
+                'lettre_motivation' => 'Lettre de motivation',
+                'certificat_scolarite' => 'certificat_scolarite',
+                'releves_notes' => 'releves_notes',
+                'lettres_recommandation' => 'Lettres de recommandation',
+                'certificats_competences' => 'certificats_competences',
+            ];
+            
+            $typeDocCandidature = $typeMapping[$type] ?? $type;
+            
+            // Chercher le document le plus récent dans les candidatures
+            $document = \App\Models\Document::whereIn('candidature_id', $candidatures)
+                ->where(function ($q) use ($type, $typeDocCandidature) {
+                    $q->where('type_document', $typeDocCandidature)
+                      ->orWhere('type_document', $type);
+                })
+                ->latest()
+                ->first();
+            
+            if ($document && $document->fichierExiste()) {
+                try {
+                    DocumentCandidat::create([
+                        'candidat_id' => $candidat->id,
+                        'type_document' => $type,
+                        'nom_original' => $document->nom_original,
+                        'chemin_fichier' => $document->getCheminReel() ?? $document->chemin_fichier,
+                        'taille_fichier' => $document->taille_fichier ?? 0,
+                        'mime_type' => $document->mime_type ?? 'application/octet-stream',
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning("Impossible de synchroniser le document {$type} pour le candidat {$candidat->id}: " . $e->getMessage());
+                }
+            }
+        }
+        
+        // Aussi synchroniser le cv_path vers documents_candidat s'il n'y a pas encore de CV
+        if ($candidat->cv_path && !$candidat->documentsCandidat()->where('type_document', 'cv')->exists()) {
+            if (Storage::disk('public')->exists($candidat->cv_path)) {
+                try {
+                    DocumentCandidat::create([
+                        'candidat_id' => $candidat->id,
+                        'type_document' => 'cv',
+                        'nom_original' => basename($candidat->cv_path),
+                        'chemin_fichier' => $candidat->cv_path,
+                        'taille_fichier' => Storage::disk('public')->size($candidat->cv_path),
+                        'mime_type' => Storage::disk('public')->mimeType($candidat->cv_path) ?? 'application/pdf',
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning("Impossible de synchroniser cv_path pour le candidat {$candidat->id}: " . $e->getMessage());
+                }
+            }
+        }
     }
 
     /**

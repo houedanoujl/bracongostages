@@ -576,6 +576,22 @@ class CandidatureForm extends Component
                         'taille_fichier' => $file->getSize(),
                         'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
                     ]);
+
+                    // Sauvegarder aussi dans le profil du candidat (documents_candidat)
+                    if ($candidat) {
+                        $ancienDoc = $candidat->getDocumentByType($type);
+                        if ($ancienDoc) {
+                            $ancienDoc->delete();
+                        }
+                        \App\Models\DocumentCandidat::create([
+                            'candidat_id' => $candidat->id,
+                            'type_document' => $type,
+                            'nom_original' => $file->getClientOriginalName(),
+                            'chemin_fichier' => $path,
+                            'taille_fichier' => $file->getSize(),
+                            'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
+                        ]);
+                    }
                     
                     Log::info("Document $type uploadé et sauvegardé: " . $file->getClientOriginalName());
                 } catch (\Exception $e) {

@@ -158,6 +158,8 @@
                                     @php $document = $candidat->getDocumentByType($type); @endphp
                                     @if($document)
                                         <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">✓ Disponible</span>
+                                    @else
+                                        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">Non fourni</span>
                                     @endif
                                 </div>
                                 
@@ -165,10 +167,20 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
                                 
                                 @if($document)
-                                    <div class="mt-2 text-sm">
-                                        <span class="text-gray-600">Fichier actuel :</span>
-                                        <span class="text-gray-800">{{ $document->nom_original }}</span>
-                                        <span class="text-gray-500">({{ $document->taille_formatee }})</span>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <div class="text-sm">
+                                            <span class="text-gray-600">Fichier actuel :</span>
+                                            <span class="text-gray-800">{{ $document->nom_original }}</span>
+                                            @if($document->taille_fichier > 0)
+                                                <span class="text-gray-500">({{ $document->taille_formatee }})</span>
+                                            @endif
+                                        </div>
+                                        @if($document->fichierExiste())
+                                            <a href="{{ $document->url }}" target="_blank" 
+                                               class="text-xs text-blue-600 hover:text-blue-800 underline ml-2 whitespace-nowrap">
+                                                📄 Voir le fichier
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                                 
