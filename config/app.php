@@ -113,6 +113,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Mailtrap\Bridge\Laravel\MailtrapSdkProvider::class,
         
         /*
          * Application Service Providers...

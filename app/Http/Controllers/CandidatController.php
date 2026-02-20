@@ -489,7 +489,12 @@ class CandidatController extends Controller
 
             return back()->with('success', 'Un lien de réinitialisation a été envoyé à votre adresse email.');
         } catch (\Exception $e) {
-            \Log::error('Erreur envoi email reset password: ' . $e->getMessage());
+            \Log::error('Erreur envoi email reset password: ' . $e->getMessage(), [
+                'exception_class' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+                'mail_mailer' => config('mail.default'),
+                'mailtrap_key_set' => !empty(config('mail.mailers.mailtrap.apiKey')),
+            ]);
             return back()->with('error', 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
         }
     }

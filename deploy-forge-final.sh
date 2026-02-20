@@ -100,8 +100,13 @@ fi
 
 # Installation Composer
 echo "🔧 Installation Composer..."
-composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 echo "✅ Composer installé"
+
+# S'assurer que les packages sont bien découverts (important pour Mailtrap SDK)
+echo "🔧 Découverte des packages..."
+php artisan package:discover --ansi
+echo "✅ Packages découverts"
 
 # Permissions finales pour vendor
 echo "🔧 Permissions finales pour vendor..."
