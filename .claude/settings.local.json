@@ -7,7 +7,11 @@
       "Bash(curl:*)",
       "Bash(docker ps:*)",
       "Bash(docker-compose:*)",
-      "Bash(docker compose exec app php artisan migrate --force)"
+      "Bash(docker compose exec app php artisan migrate --force)",
+      "Bash(docker compose exec:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
