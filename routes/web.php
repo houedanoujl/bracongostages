@@ -53,6 +53,64 @@ Route::post('/suivi/search', function (\Illuminate\Http\Request $request) {
     return redirect('/suivi/' . $candidature->code_suivi);
 })->name('candidature.suivi.search');
 
+// Route de diagnostic email (protégée par secret) - à supprimer après debug
+Route::get('/debug-mail/{secret}', function ($secret) {
+    if ($secret !== 'bracongo2026diag') {
+        abort(404);
+    }
+
+    $results = [];
+
+    // 1. Config mail
+    $results['mail_default'] = config('mail.default');
+    $results['mail_from'] = config('mail.from');
+    $results['mailers_defined'] = array_keys(config('mail.mailers', []));
+    $results['mailtrap_config'] = config('mail.mailers.mailtrap', 'NOT DEFINED');
+    $results['mailtrap_api_key_set'] = !empty(config('mail.mailers.mailtrap.apiKey', config('services.mailtrap-sdk.apiKey')));
+    $results['services_mailtrap'] = config('services.mailtrap-sdk', 'NOT DEFINED');
+    $results['env_mail_mailer'] = env('MAIL_MAILER', 'NOT SET');
+    $results['env_mailtrap_key'] = env('MAILTRAP_API_KEY') ? 'SET (' . substr(env('MAILTRAP_API_KEY'), 0, 8) . '...)' : 'NOT SET';
+    $results['config_cached'] = file_exists(base_path('bootstrap/cache/config.php')) ? 'YES' : 'NO';
+
+    // 2. Provider check
+    $results['mailtrap_provider_loaded'] = class_exists(\Mailtrap\Bridge\Laravel\MailtrapSdkProvider::class) ? 'YES' : 'NO';
+
+    // 3. Test transport
+    try {
+        $mailer = app('mail.manager')->mailer('mailtrap');
+        $results['transport_class'] = get_class($mailer->getSymfonyTransport());
+        $results['transport_status'] = 'OK';
+    } catch (\Exception $e) {
+        $results['transport_error'] = $e->getMessage();
+        $results['transport_class'] = get_class($e);
+    }
+
+    // 4. Test envoi
+    if (request()->has('test')) {
+        try {
+            \Illuminate\Support\Facades\Notification::route('mail', request('test'))
+                ->notify(new \App\Notifications\EmailGeneriqueNotification(
+                    'Test diagnostic BRACONGO - ' . now()->format('H:i:s'),
+                    'Ceci est un email de test envoyé depuis la route de diagnostic.'
+                ));
+            $results['send_test'] = 'SUCCESS - envoyé à ' . request('test');
+        } catch (\Exception $e) {
+            $results['send_test'] = 'FAILED: ' . $e->getMessage();
+            $results['send_trace'] = collect(explode("\n", $e->getTraceAsString()))->take(5)->implode("\n");
+        }
+    }
+
+    // 5. Dernières erreurs log
+    $logFile = storage_path('logs/laravel.log');
+    if (file_exists($logFile)) {
+        $lines = array_slice(file($logFile), -30);
+        $errorLines = array_filter($lines, fn($l) => str_contains($l, 'ERROR') || str_contains($l, 'mail') || str_contains($l, 'Mailtrap'));
+        $results['recent_errors'] = array_values(array_slice($errorLines, -10));
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+});
+
 // Routes pour les évaluations
 Route::get('/evaluation/{candidature}', [App\Http\Controllers\EvaluationController::class, 'show'])
     ->name('candidature.evaluation');
