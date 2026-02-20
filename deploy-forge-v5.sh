@@ -66,6 +66,10 @@ fi
 echo "📦 Découverte des packages Laravel..."
 php artisan package:discover --ansi || true
 
+# 4c. Découverte des composants Livewire (RelationManagers, etc.)
+echo "📦 Découverte des composants Livewire..."
+php artisan livewire:discover || true
+
 # 5. Installation Node.js
 echo "📦 Installation des dépendances Node.js..."
 if [ -f "package-lock.json" ]; then
