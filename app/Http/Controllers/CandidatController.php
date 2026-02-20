@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 
 class CandidatController extends Controller
 {
@@ -377,14 +379,17 @@ class CandidatController extends Controller
         $resetUrl = route('candidat.password.reset', ['token' => $token, 'email' => $request->email]);
         
         try {
-            \Mail::send('emails.candidat-password-reset', [
+            $contenuHtml = view('emails.candidat-password-reset', [
                 'candidat' => $candidat,
                 'resetUrl' => $resetUrl,
                 'token' => $token
-            ], function($message) use ($candidat) {
-                $message->to($candidat->email, $candidat->nom_complet)
-                       ->subject('Réinitialisation de votre mot de passe - BRACONGO Stages');
-            });
+            ])->render();
+
+            NotificationFacade::route('mail', $candidat->email)
+                ->notify(new ResetPasswordNotification(
+                    'Réinitialisation de votre mot de passe - BRACONGO Stages',
+                    $contenuHtml
+                ));
 
             return back()->with('success', 'Un lien de réinitialisation a été envoyé à votre adresse email.');
         } catch (\Exception $e) {

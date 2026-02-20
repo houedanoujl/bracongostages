@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\ContactMessage;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 
 class ContactController extends Controller
 {
@@ -34,9 +34,23 @@ class ContactController extends Controller
         ]);
 
         try {
-            // Envoyer l'email
-            Mail::to('stages@bracongo.cg')
-                ->send(new ContactMessage($validated));
+            // Rendre le contenu HTML de l'email de contact
+            $contenuHtml = view('emails.contact-message', [
+                'nom' => $validated['nom'],
+                'prenom' => $validated['prenom'],
+                'email' => $validated['email'],
+                'telephone' => $validated['telephone'] ?? 'Non renseigné',
+                'sujet' => $validated['sujet'],
+                'message' => $validated['message'],
+                'newsletter' => $validated['newsletter'] ?? false,
+            ])->render();
+
+            // Envoyer via Mailtrap
+            NotificationFacade::route('mail', 'stages@bracongo.cg')
+                ->notify(new ResetPasswordNotification(
+                    'Nouveau message de contact - BRACONGO Stages',
+                    $contenuHtml
+                ));
 
             // Log de l'action
             Log::info('Message de contact reçu', [
