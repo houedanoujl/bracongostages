@@ -28,6 +28,7 @@ use App\Notifications\EmailGeneriqueNotification;
 use App\Models\EmailTemplate;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\RichEditor;
 
 class CandidatureResource extends Resource
 {
@@ -84,9 +85,10 @@ class CandidatureResource extends Resource
 
                 Forms\Components\Section::make('Stage souhaité')
                     ->schema([
-                        Textarea::make('objectif_stage')
+                        RichEditor::make('objectif_stage')
                             ->required()
-                            ->rows(3),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                            ->columnSpanFull(),
                         Select::make('poste_souhaite')
                             ->label('Poste souhaité')
                             ->options(Candidature::getPostesDisponibles())
@@ -178,16 +180,29 @@ class CandidatureResource extends Resource
                             ->options(StatutCandidature::getOptions())
                             ->required()
                             ->default(StatutCandidature::DOSSIER_RECU->value),
-                        Textarea::make('motif_rejet')
+                        RichEditor::make('motif_rejet')
                             ->label('Motif de rejet')
-                            ->visible(fn (Forms\Get $get) => $get('statut') === StatutCandidature::REJETE->value),
-                        Textarea::make('notes_internes')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                            ->visible(fn (Forms\Get $get) => $get('statut') === StatutCandidature::REJETE->value)
+                            ->columnSpanFull(),
+                        RichEditor::make('notes_internes')
                             ->label('Notes internes')
-                            ->rows(3),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                            ->columnSpanFull(),
                         TextInput::make('code_suivi')
                             ->disabled()
                             ->dehydrated(false),
-                    ])->columns(2),
+                    ])->columns(2)
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_gestion')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Gestion sauvegardée')->success()->send();
+                            }),
+                    ]),
 
                 // Section Tests
                 Forms\Components\Section::make('Tests de niveau')
@@ -202,12 +217,49 @@ class CandidatureResource extends Resource
                             ->minValue(0)
                             ->maxValue(100)
                             ->suffix('/100'),
-                        Textarea::make('commentaire_test')
+                        RichEditor::make('commentaire_test')
                             ->label('Commentaires sur le test')
-                            ->rows(2),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                            ->columnSpanFull(),
                     ])->columns(2)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_tests')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Tests sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('notifier_convocation')
+                            ->label('✉️ Envoyer convocation test')
+                            ->color('warning')
+                            ->size('sm')
+                            ->icon('heroicon-o-envelope')
+                            ->visible(fn ($record) => $record && $record->date_test && $record->email)
+                            ->form([
+                                TextInput::make('heure_test')
+                                    ->label('Heure du test')
+                                    ->default('09:00')
+                                    ->required(),
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['sujet'])
+                                    ->required(),
+                                Textarea::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['contenu'])
+                                    ->rows(10)
+                                    ->required(),
+                            ])
+                            ->action(function (array $data, $record) {
+                                NotificationFacade::route('mail', $record->email)
+                                    ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                Notification::make()->title('Convocation envoyée à ' . $record->email)->success()->send();
+                            }),
+                    ]),
 
                 // Section Affectation
                 Forms\Components\Section::make('Affectation')
@@ -216,19 +268,57 @@ class CandidatureResource extends Resource
                             ->label('Service d\'affectation'),
                         Select::make('tuteur_id')
                             ->label('Tuteur de stage')
-                            ->relationship('tuteur', 'name')
+                            ->relationship('tuteur', 'name', fn (Builder $query) => $query->where('est_tuteur', true)->where('is_active', true))
+                            ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name . ($record->direction ? " ({$record->direction})" : ''))
                             ->searchable()
                             ->preload(),
-                        Textarea::make('programme_stage')
+                        RichEditor::make('programme_stage')
                             ->label('Programme de stage')
-                            ->rows(3),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link', 'h2', 'h3'])
+                            ->columnSpanFull(),
                         DatePicker::make('date_debut_stage_reel')
                             ->label('Date réelle de début'),
                         DatePicker::make('date_fin_stage_reel')
                             ->label('Date réelle de fin'),
                     ])->columns(2)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_affectation')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Affectation sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('notifier_confirmation_dates')
+                            ->label('✉️ Envoyer confirmation dates')
+                            ->color('success')
+                            ->size('sm')
+                            ->icon('heroicon-o-calendar-days')
+                            ->visible(fn ($record) => $record && $record->date_debut_stage && $record->date_fin_stage && $record->email)
+                            ->form([
+                                TextInput::make('heure_presentation')
+                                    ->label('Heure de présentation')
+                                    ->default('08:00')
+                                    ->required(),
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['sujet'])
+                                    ->required(),
+                                Textarea::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['contenu'])
+                                    ->rows(10)
+                                    ->required(),
+                            ])
+                            ->action(function (array $data, $record) {
+                                NotificationFacade::route('mail', $record->email)
+                                    ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                Notification::make()->title('Confirmation dates envoyée à ' . $record->email)->success()->send();
+                            }),
+                    ]),
 
                 // Section Induction RH
                 Forms\Components\Section::make('Induction RH')
@@ -239,7 +329,17 @@ class CandidatureResource extends Resource
                             ->label('Induction complétée'),
                     ])->columns(2)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_induction')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Induction sauvegardée')->success()->send();
+                            }),
+                    ]),
 
                 // Section Réponse lettre
                 Forms\Components\Section::make('Réponse à la lettre de recommandation')
@@ -252,7 +352,17 @@ class CandidatureResource extends Resource
                             ->label('Fichier de réponse'),
                     ])->columns(3)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_reponse_lettre')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Réponse lettre sauvegardée')->success()->send();
+                            }),
+                    ]),
 
                 // Section Évaluation
                 Forms\Components\Section::make('Évaluation de fin de stage')
@@ -274,15 +384,64 @@ class CandidatureResource extends Resource
                                 'satisfaisant' => 'Satisfaisant',
                                 'insuffisant' => 'Insuffisant',
                             ]),
-                        Textarea::make('commentaire_evaluation')
+                        RichEditor::make('commentaire_evaluation')
                             ->label('Commentaires')
-                            ->rows(3),
-                        Textarea::make('competences_acquises_evaluation')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                            ->columnSpanFull(),
+                        RichEditor::make('competences_acquises_evaluation')
                             ->label('Compétences acquises')
-                            ->rows(3),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                            ->columnSpanFull(),
                     ])->columns(2)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_evaluation')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Évaluation sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('notifier_resultat')
+                            ->label('✉️ Envoyer résultat au candidat')
+                            ->color('info')
+                            ->size('sm')
+                            ->icon('heroicon-o-envelope')
+                            ->visible(fn ($record) => $record && $record->note_test !== null && $record->email)
+                            ->form([
+                                Forms\Components\Select::make('type_resultat')
+                                    ->label('Type de résultat')
+                                    ->options([
+                                        'resultat_admis' => '✅ Admis',
+                                        'resultat_non_admis' => '❌ Non admis',
+                                    ])
+                                    ->required()
+                                    ->live(),
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->required(),
+                                Textarea::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->rows(10)
+                                    ->required(),
+                            ])
+                            ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                $slug = ($record->note_test >= 50) ? 'resultat_admis' : 'resultat_non_admis';
+                                $rendered = self::renderTemplate($slug, $record);
+                                $form->fill([
+                                    'type_resultat' => $slug,
+                                    'sujet_email' => $rendered['sujet'],
+                                    'contenu_email' => $rendered['contenu'],
+                                ]);
+                            })
+                            ->action(function (array $data, $record) {
+                                NotificationFacade::route('mail', $record->email)
+                                    ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                Notification::make()->title('Résultat envoyé à ' . $record->email)->success()->send();
+                            }),
+                    ]),
 
                 // Section Attestation
                 Forms\Components\Section::make('Attestation de stage')
@@ -295,7 +454,17 @@ class CandidatureResource extends Resource
                             ->label('Fichier attestation'),
                     ])->columns(3)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_attestation')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Attestation sauvegardée')->success()->send();
+                            }),
+                    ]),
 
                 // Section Remboursement transport
                 Forms\Components\Section::make('Remboursement transport')
@@ -312,8 +481,32 @@ class CandidatureResource extends Resource
                             ->label('Référence paiement'),
                     ])->columns(4)
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed()
+                    ->footerActions([
+                        Forms\Components\Actions\Action::make('save_remboursement')
+                            ->label('💾 Sauvegarder')
+                            ->color('primary')
+                            ->size('sm')
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                Notification::make()->title('Section Remboursement sauvegardée')->success()->send();
+                            }),
+                    ]),
             ]);
+    }
+
+    /**
+     * Helper pour charger et rendre un template email avec les placeholders remplacés
+     */
+    public static function renderTemplate(string $slug, $record, array $extras = []): array
+    {
+        try {
+            $template = EmailTemplate::getTemplate($slug);
+        } catch (\Exception $e) {
+            return ['sujet' => '[Template manquant: ' . $slug . ']', 'contenu' => ''];
+        }
+
+        return $template->remplacerPlaceholders($record, $extras);
     }
 
     public static function table(Table $table): Table
@@ -518,19 +711,37 @@ class CandidatureResource extends Resource
                                 ->default(now()->addDays(7)),
                             TextInput::make('lieu_test')
                                 ->label('Lieu du test')
+                                ->default('Bracongo - Avenue des Brasseries, numéro 7666, Quartier Kingabwa, Commune de Limete, Kinshasa')
                                 ->placeholder('Ex: Salle de conférence, Siège'),
-                            Textarea::make('instructions_test')
-                                ->label('Instructions pour le candidat')
-                                ->rows(3)
-                                ->placeholder('Documents à apporter, heure d\'arrivée...'),
+                            TextInput::make('heure_test')
+                                ->label('Heure du test')
+                                ->default('09:00')
+                                ->placeholder('Ex: 09:00')
+                                ->required(),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             $record->update([
                                 'date_test' => $data['date_test'],
+                                'lieu_test' => $data['lieu_test'] ?? null,
                             ]);
                             $record->changerStatut(StatutCandidature::ATTENTE_TEST);
+
+                            // Envoi automatique de la convocation au test
+                            try {
+                                $rendered = self::renderTemplate('convocation_test', $record->fresh(), [
+                                    'heure_test' => $data['heure_test'] ?? '09:00',
+                                ]);
+                                if ($rendered['sujet'] && $record->email) {
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
+                                }
+                            } catch (\Exception $e) {
+                                // Log silencieux si template manquant
+                            }
+
                             Notification::make()
                                 ->title('Test programmé pour le ' . \Carbon\Carbon::parse($data['date_test'])->format('d/m/Y'))
+                                ->body('📧 Convocation envoyée à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -558,9 +769,9 @@ class CandidatureResource extends Resource
                                     'absent' => 'Absent',
                                 ])
                                 ->required(),
-                            Textarea::make('commentaire_test')
+                            RichEditor::make('commentaire_test')
                                 ->label('Commentaires')
-                                ->rows(3)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Observations sur la performance...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -583,9 +794,9 @@ class CandidatureResource extends Resource
                         ->modalHeading('Décision favorable')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE)
                         ->form([
-                            Textarea::make('decision_drh')
+                            RichEditor::make('decision_drh')
                                 ->label('Motivation de la décision')
-                                ->rows(3)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Raisons de l\'acceptation...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -593,8 +804,19 @@ class CandidatureResource extends Resource
                                 'decision_drh' => $data['decision_drh'] ?? 'Candidature acceptée',
                             ]);
                             $record->changerStatut(StatutCandidature::ACCEPTE);
+
+                            // Envoi automatique email acceptation
+                            try {
+                                $rendered = self::renderTemplate('resultat_admis', $record->fresh());
+                                if ($rendered['sujet'] && $record->email) {
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
+                                }
+                            } catch (\Exception $e) {}
+
                             Notification::make()
                                 ->title('Candidature acceptée')
+                                ->body('📧 Email d\'acceptation envoyé à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -614,7 +836,7 @@ class CandidatureResource extends Resource
                                 ->searchable(),
                             Select::make('tuteur_id')
                                 ->label('Tuteur de stage')
-                                ->options(fn () => User::pluck('name', 'id'))
+                                ->options(fn () => User::where('est_tuteur', true)->where('is_active', true)->get()->pluck('nom_complet_avec_direction', 'id'))
                                 ->searchable()
                                 ->preload(),
                             DatePicker::make('date_debut_stage')
@@ -639,8 +861,21 @@ class CandidatureResource extends Resource
                                 'date_affectation' => $data['date_affectation'],
                             ]);
                             $record->changerStatut(StatutCandidature::AFFECTE);
+
+                            // Envoi automatique email confirmation dates de stage
+                            try {
+                                $rendered = self::renderTemplate('confirmation_dates', $record->fresh(), [
+                                    'heure_presentation' => '08:00',
+                                ]);
+                                if ($rendered['sujet'] && $record->email) {
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
+                                }
+                            } catch (\Exception $e) {}
+
                             Notification::make()
                                 ->title('Stagiaire affecté avec succès')
+                                ->body('📧 Confirmation des dates envoyée à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -657,9 +892,9 @@ class CandidatureResource extends Resource
                                 ->label('Date de la réponse')
                                 ->default(now())
                                 ->required(),
-                            Textarea::make('contenu_reponse')
+                            RichEditor::make('contenu_reponse')
                                 ->label('Contenu de la réponse')
-                                ->rows(4)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Résumé de la réponse envoyée...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -685,9 +920,9 @@ class CandidatureResource extends Resource
                                 ->label('Date de l\'induction')
                                 ->required()
                                 ->default(now()),
-                            Textarea::make('notes_induction')
+                            RichEditor::make('notes_induction')
                                 ->label('Notes de l\'induction')
-                                ->rows(3)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Points abordés, documents remis...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -713,9 +948,9 @@ class CandidatureResource extends Resource
                                 ->label('Date d\'accueil')
                                 ->required()
                                 ->default(now()),
-                            Textarea::make('programme_stage')
+                            RichEditor::make('programme_stage')
                                 ->label('Programme de stage')
-                                ->rows(5)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'h2', 'h3'])
                                 ->placeholder('Objectifs, tâches principales, planning...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -777,9 +1012,9 @@ class CandidatureResource extends Resource
                                     'insuffisant' => 'Insuffisant',
                                 ])
                                 ->required(),
-                            Textarea::make('commentaire_evaluation')
+                            RichEditor::make('commentaire_evaluation')
                                 ->label('Commentaires et recommandations')
-                                ->rows(4)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Évaluation détaillée du stagiaire...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
@@ -1027,18 +1262,28 @@ class CandidatureResource extends Resource
                         ->modalDescription('Cette action est irréversible.')
                         ->visible(fn (Candidature $record) => !$record->statut->isTerminal())
                         ->form([
-                            Textarea::make('motif_rejet')
+                            RichEditor::make('motif_rejet')
                                 ->label('Motif du rejet')
                                 ->required()
-                                ->rows(4)
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                 ->placeholder('Veuillez expliquer les raisons du rejet...'),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             try {
                                 $record->rejeter($data['motif_rejet']);
+
+                                // Envoi automatique email de rejet
+                                try {
+                                    $rendered = self::renderTemplate('resultat_non_admis', $record->fresh());
+                                    if ($rendered['sujet'] && $record->email) {
+                                        NotificationFacade::route('mail', $record->email)
+                                            ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
+                                    }
+                                } catch (\Exception $emailException) {}
+
                                 Notification::make()
                                     ->title('Candidature rejetée')
-                                    ->body('Le candidat a été notifié par email.')
+                                    ->body('📧 Email de notification envoyé à ' . $record->email)
                                     ->warning()
                                     ->send();
                             } catch (\Exception $e) {
@@ -1087,10 +1332,10 @@ class CandidatureResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->form([
-                            Textarea::make('motif_rejet')
+                            RichEditor::make('motif_rejet')
                                 ->label('Motif du rejet (commun)')
                                 ->required()
-                                ->rows(3),
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList']),
                         ])
                         ->action(function ($records, array $data) {
                             $count = 0;

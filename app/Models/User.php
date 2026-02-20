@@ -27,6 +27,10 @@ class User extends Authenticatable implements FilamentUser
         'direction',
         'is_active',
         'last_login_at',
+        'est_tuteur',
+        'poste',
+        'competences_tuteur',
+        'bio_tuteur',
     ];
 
     /**
@@ -48,8 +52,17 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'est_tuteur' => 'boolean',
         'password' => 'hashed',
     ];
+
+    /**
+     * Relation: les candidatures dont cet utilisateur est tuteur
+     */
+    public function candidaturesTuterees()
+    {
+        return $this->hasMany(\App\Models\Candidature::class, 'tuteur_id');
+    }
 
     /**
      * Déterminer si l'utilisateur peut accéder au panel Filament
