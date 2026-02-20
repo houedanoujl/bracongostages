@@ -49,6 +49,10 @@ rm -rf storage/framework/cache/data/* 2>/dev/null || true
 echo "🔧 Configuration des permissions..."
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache 2>/dev/null || true
+# vendor/ doit aussi appartenir à forge pour que composer puisse écrire
+if [ -d "vendor" ]; then
+    chown -R $FORGE_SITE_USER:$FORGE_SITE_USER vendor 2>/dev/null || true
+fi
 
 # 4. Installation Composer (composer.lock est commité dans le repo)
 echo "📦 Installation des dépendances Composer..."
