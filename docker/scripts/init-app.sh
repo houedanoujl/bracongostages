@@ -7,20 +7,30 @@ set -e
 
 echo "🚀 Initialisation de BRACONGO Stages..."
 
-# Démarrer PHP-FPM en arrière-plan immédiatement
+# Créer les répertoires storage nécessaires
+mkdir -p /var/www/storage/framework/{cache,sessions,views}
+mkdir -p /var/www/storage/logs
+mkdir -p /var/www/storage/app/public
+mkdir -p /var/www/bootstrap/cache
+
+# Installer les dépendances Composer si autoload.php n'existe pas (avant tout artisan)
+if [ ! -f "/var/www/vendor/autoload.php" ]; then
+    echo "📦 Installation des dépendances Composer..."
+    cd /var/www && composer install --no-interaction --prefer-dist
+fi
+
+# Démarrer PHP-FPM en arrière-plan (avant les tâches longues pour éviter le 502)
 echo "🚀 Démarrage de PHP-FPM..."
 php-fpm &
 PHP_FPM_PID=$!
 
+# Publier les assets Filament (CSS/JS) - après PHP-FPM pour ne pas retarder le démarrage
+echo "🎨 Publication des assets Filament..."
+cd /var/www && php artisan filament:assets --ansi
+
 # Essayer de se connecter à MySQL de manière non-bloquante
 echo "⏳ Tentative de connexion à la base de données (non-bloquante)..."
 (
-    # Installer les dépendances Composer si vendor n'existe pas (avant tout artisan)
-    if [ ! -d "/var/www/vendor" ]; then
-        echo "📦 Installation des dépendances Composer..."
-        cd /var/www && composer install --no-interaction --prefer-dist
-    fi
-
     if php /var/www/docker/scripts/wait-for-db.php; then
         echo "✅ Base de données disponible, poursuite de l'initialisation..."
 

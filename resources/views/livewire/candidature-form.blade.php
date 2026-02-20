@@ -121,14 +121,14 @@
                                 <ul class="space-y-1 text-green-600">
                                     <li>• CV actualisé (PDF, DOC, DOCX)</li>
                                     <li>• Lettre de motivation (PDF, DOC, DOCX)</li>
-                                    <li>• Certificat de scolarité (PDF, JPG, PNG)</li>
+                                    <li>• Lettres de recommandation (PDF, DOC, DOCX)</li>
                                 </ul>
                             </div>
                             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                                 <h5 class="font-medium text-yellow-700 mb-2">Documents optionnels</h5>
                                 <ul class="space-y-1 text-yellow-600">
+                                    <li>• Certificat de scolarité (PDF, JPG, PNG)</li>
                                     <li>• Relevés de notes récents</li>
-                                    <li>• Lettres de recommandation</li>
                                     <li>• Certificats de compétences</li>
                                 </ul>
                             </div>
@@ -378,7 +378,7 @@
                                 </select>
                                 @error('etablissement') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 
-                                @if($etablissement === 'autres')
+                                @if($etablissement === 'autres' || $etablissement === 'Autres')
                                     <div class="mt-4">
                                         <label for="etablissement_autre" class="block text-sm font-medium text-gray-700 mb-2">Nom de votre établissement *</label>
                                         <input wire:model="etablissement_autre" type="text" id="etablissement_autre" 

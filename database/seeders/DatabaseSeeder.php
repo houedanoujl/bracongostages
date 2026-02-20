@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             EtablissementPartenaireSeeder::class,
             CandidatureSeeder::class,
             EvaluationSeeder::class,
+            EmailTemplateSeeder::class,
         ]);
     }
 } 

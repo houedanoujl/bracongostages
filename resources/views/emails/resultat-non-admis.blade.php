@@ -119,31 +119,19 @@
 
         <div class="content">
             <div class="greeting">
-                Bonjour {{ $prenom }} {{ $nom }},
+                Madame / Monsieur {{ $nom }},
             </div>
 
             <div class="message">
-                <p>Nous vous remercions d'avoir participé au test de niveau dans le cadre de notre programme de stages, qui s'est déroulé le <strong>{{ \Carbon\Carbon::parse($date_test)->format('d/m/Y') }}</strong>.</p>
+                <p>Pour donner suite au test de sélection organisé le <strong>{{ \Carbon\Carbon::parse($date_test)->format('d/m/Y') }}</strong>, nous vous remercions pour votre participation.</p>
 
-                <p>Après examen attentif de vos résultats, nous avons le regret de vous informer que votre candidature n'a pas été retenue pour cette session.</p>
-            </div>
+                <p>Après évaluation, nous regrettons de vous informer que vous n'avez pas atteint la moyenne requise pour cette session.</p>
 
-            <div class="highlight">
-                <h3 style="margin-top: 0; color: #92400e;">💡 Ne vous découragez pas !</h3>
-                <p style="margin-bottom: 0; color: #92400e;">
-                    Cette décision ne remet pas en cause vos compétences. Nous vous encourageons vivement à continuer à développer vos connaissances et à postuler à nos prochaines opportunités de stage. Chaque expérience est une occasion d'apprentissage.
-                </p>
-            </div>
-
-            <div style="text-align: center;">
-                <a href="{{ url('/opportunites') }}" class="cta-button">
-                    🔍 Voir les opportunités disponibles
-                </a>
+                <p>Nous vous encourageons à poursuivre vos efforts et à postuler à de prochaines opportunités.</p>
             </div>
 
             <div class="message">
-                <p>Nous vous souhaitons beaucoup de succès dans la suite de votre parcours académique et professionnel.</p>
-                <p>N'hésitez pas à consulter régulièrement notre plateforme pour de nouvelles opportunités.</p>
+                <p>Nous vous souhaitons plein succès dans la suite de votre parcours académique et professionnel.</p>
             </div>
         </div>
 

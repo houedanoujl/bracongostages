@@ -79,9 +79,21 @@ class CandidatureForm extends Component
             $this->prenom = $candidat->prenom;
             $this->email = $candidat->email;
             $this->telephone = $candidat->telephone ?? '';
-            $this->etablissement = $candidat->etablissement ?? '';
-            $this->niveau_etude = $candidat->niveau_etude ?? '';
             $this->faculte = $candidat->faculte ?? '';
+            
+            // Résoudre l'établissement : mapper le libellé vers la clé si nécessaire
+            $this->etablissement = $this->resolveSelectKey(
+                $candidat->etablissement ?? '',
+                \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_ETABLISSEMENT),
+                \App\Models\Candidature::getEtablissements()
+            );
+            
+            // Résoudre le niveau d'étude : mapper le libellé vers la clé si nécessaire
+            $this->niveau_etude = $this->resolveSelectKey(
+                $candidat->niveau_etude ?? '',
+                \App\Models\ConfigurationListe::getOptions(\App\Models\ConfigurationListe::TYPE_NIVEAU_ETUDE),
+                \App\Models\Candidature::getNiveauxEtude()
+            );
             
             // Vérifier tous les documents existants
             $documentsTypes = [
@@ -124,14 +136,60 @@ class CandidatureForm extends Component
     }
     
     /**
-     * Pré-remplit les directions souhaitées avec les directions associées de l'opportunité
+     * Résout une valeur (qui peut être un libellé ou une clé) vers la clé attendue par un select.
+     * Si la valeur est déjà une clé valide, la retourne telle quelle.
+     * Sinon, cherche parmi les libellés pour retrouver la clé correspondante.
+     */
+    protected function resolveSelectKey(string $value, array ...$optionsSets): string
+    {
+        if (empty($value)) {
+            return '';
+        }
+        
+        foreach ($optionsSets as $options) {
+            // Si c'est déjà une clé valide
+            if (array_key_exists($value, $options)) {
+                return $value;
+            }
+            
+            // Chercher par libellé (correspondance exacte)
+            $key = array_search($value, $options);
+            if ($key !== false) {
+                return $key;
+            }
+            
+            // Chercher par libellé (correspondance partielle insensible à la casse)
+            $valueLower = mb_strtolower($value);
+            foreach ($options as $k => $label) {
+                if (mb_strtolower($label) === $valueLower || str_contains(mb_strtolower($label), $valueLower) || str_contains($valueLower, mb_strtolower($label))) {
+                    return $k;
+                }
+            }
+        }
+        
+        return $value;
+    }
+
+    /**
+     * Pré-remplit les directions souhaitées et le poste souhaité depuis l'opportunité
      */
     protected function preRemplirDirections($opportuniteSlug)
     {
         $opportunite = \App\Models\Opportunite::where('slug', $opportuniteSlug)->first();
         
-        if ($opportunite && !empty($opportunite->directions_associees)) {
-            $this->directions_souhaitees = $opportunite->directions_associees;
+        if ($opportunite) {
+            // Pré-remplir les directions
+            if (!empty($opportunite->directions_associees)) {
+                $this->directions_souhaitees = $opportunite->directions_associees;
+            }
+            
+            // Pré-remplir le poste souhaité depuis la catégorie ou le titre de l'opportunité
+            if (empty($this->poste_souhaite) && !empty($opportunite->categorie)) {
+                $this->poste_souhaite = $this->resolveSelectKey(
+                    $opportunite->categorie,
+                    \App\Models\Candidature::getPostesDisponibles()
+                );
+            }
         }
     }
 
@@ -201,7 +259,7 @@ class CandidatureForm extends Component
                 ];
                 
                 // Si "Autres" est sélectionné, valider le champ établissement_autre
-                if ($this->etablissement === 'Autres') {
+                if (strtolower($this->etablissement) === 'autres') {
                     $rules['etablissement_autre'] = 'required|string|max:255';
                 }
                 
@@ -335,7 +393,7 @@ class CandidatureForm extends Component
             ];
             
             // Si "Autres" est sélectionné, valider le champ établissement_autre
-            if ($this->etablissement === 'Autres') {
+            if (strtolower($this->etablissement) === 'autres') {
                 $validationRules['etablissement_autre'] = 'required|string|max:255';
             }
             
@@ -349,7 +407,7 @@ class CandidatureForm extends Component
                 'email' => $this->email,
                 'telephone' => $this->telephone,
                 'etablissement' => $this->etablissement,
-                'etablissement_autre' => $this->etablissement === 'Autres' ? $this->etablissement_autre : null,
+                'etablissement_autre' => strtolower($this->etablissement) === 'autres' ? $this->etablissement_autre : null,
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
@@ -413,7 +471,7 @@ class CandidatureForm extends Component
             ];
             
             // Si "Autres" est sélectionné, valider le champ établissement_autre
-            if ($this->etablissement === 'Autres') {
+            if (strtolower($this->etablissement) === 'autres') {
                 $validationRules['etablissement_autre'] = 'required|string|max:255';
             }
             
@@ -457,7 +515,7 @@ class CandidatureForm extends Component
                 'email' => $this->email,
                 'telephone' => $this->telephone,
                 'etablissement' => $this->etablissement,
-                'etablissement_autre' => $this->etablissement === 'Autres' ? $this->etablissement_autre : null,
+                'etablissement_autre' => strtolower($this->etablissement) === 'autres' ? $this->etablissement_autre : null,
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,

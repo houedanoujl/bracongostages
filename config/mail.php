@@ -77,6 +77,11 @@ return [
             'credentials' => storage_path('app/google-credentials.json'),
             'impersonate' => env('GMAIL_IMPERSONATE_EMAIL', 'stages@bracongo.cd'),
         ],
+
+        'mailtrap' => [
+            'transport' => 'mailtrap',
+            'api_key' => env('MAILTRAP_API_KEY'),
+        ],
     ],
 
     /*

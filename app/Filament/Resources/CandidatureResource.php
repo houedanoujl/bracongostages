@@ -24,10 +24,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\ActionSize;
-use App\Notifications\ConvocationTestNotification;
-use App\Notifications\ResultatAdmisNotification;
-use App\Notifications\ResultatNonAdmisNotification;
-use App\Notifications\ConfirmationDatesStageNotification;
+use App\Notifications\EmailGeneriqueNotification;
+use App\Models\EmailTemplate;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Filament\Forms\Components\TimePicker;
 
@@ -94,9 +92,11 @@ class CandidatureResource extends Resource
                             ->options(Candidature::getPostesDisponibles())
                             ->required()
                             ->searchable(),
-                        TextInput::make('opportunite_id')
-                            ->label('ID Opportunité')
-                            ->maxLength(255),
+                        Select::make('opportunite_id')
+                            ->label('Opportunité')
+                            ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())
+                            ->searchable()
+                            ->placeholder('Sélectionner une opportunité'),
                         Select::make('directions_souhaitees')
                             ->multiple()
                             ->options(Candidature::getDirectionsDisponibles())
@@ -862,18 +862,40 @@ class CandidatureResource extends Resource
                         ->icon('heroicon-o-envelope')
                         ->color('warning')
                         ->modalHeading('Envoyer la convocation au test')
-                        ->modalDescription('Un email de convocation sera envoyé au candidat.')
+                        ->modalDescription('Vérifiez et modifiez le contenu avant envoi.')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ATTENTE_TEST && $record->date_test)
+                        ->mountUsing(function (Forms\ComponentContainer $form, Candidature $record) {
+                            $template = EmailTemplate::getTemplate('convocation_test');
+                            $rendered = $template->remplacerPlaceholders($record, ['heure_test' => '09:00']);
+                            $form->fill([
+                                'heure_test' => '09:00',
+                                'sujet' => $rendered['sujet'],
+                                'contenu' => $rendered['contenu'],
+                            ]);
+                        })
                         ->form([
                             TextInput::make('heure_test')
                                 ->label('Heure du test')
                                 ->placeholder('Ex: 09:00')
                                 ->required()
-                                ->default('09:00'),
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, $record) {
+                                    $template = EmailTemplate::getTemplate('convocation_test');
+                                    $rendered = $template->remplacerPlaceholders($record, ['heure_test' => $state ?? '09:00']);
+                                    $set('sujet', $rendered['sujet']);
+                                    $set('contenu', $rendered['contenu']);
+                                }),
+                            TextInput::make('sujet')
+                                ->label('Sujet de l\'email')
+                                ->required(),
+                            Textarea::make('contenu')
+                                ->label('Contenu du message')
+                                ->required()
+                                ->rows(12),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new ConvocationTestNotification($record, $data['heure_test']));
+                                ->notify(new EmailGeneriqueNotification($data['sujet'], $data['contenu']));
                             Notification::make()
                                 ->title('Convocation envoyée')
                                 ->body('Email de convocation envoyé à ' . $record->email)
@@ -885,13 +907,29 @@ class CandidatureResource extends Resource
                         ->label('Envoyer résultat : Admis')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->requiresConfirmation()
                         ->modalHeading('Envoyer le résultat : Admis')
-                        ->modalDescription('Un email d\'admission sera envoyé au candidat.')
+                        ->modalDescription('Vérifiez et modifiez le contenu avant envoi.')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE && ($record->resultat_test ?? '') === 'admis')
-                        ->action(function (Candidature $record) {
+                        ->mountUsing(function (Forms\ComponentContainer $form, Candidature $record) {
+                            $template = EmailTemplate::getTemplate('resultat_admis');
+                            $rendered = $template->remplacerPlaceholders($record);
+                            $form->fill([
+                                'sujet' => $rendered['sujet'],
+                                'contenu' => $rendered['contenu'],
+                            ]);
+                        })
+                        ->form([
+                            TextInput::make('sujet')
+                                ->label('Sujet de l\'email')
+                                ->required(),
+                            Textarea::make('contenu')
+                                ->label('Contenu du message')
+                                ->required()
+                                ->rows(12),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new ResultatAdmisNotification($record));
+                                ->notify(new EmailGeneriqueNotification($data['sujet'], $data['contenu']));
                             Notification::make()
                                 ->title('Résultat envoyé')
                                 ->body('Email d\'admission envoyé à ' . $record->email)
@@ -903,13 +941,29 @@ class CandidatureResource extends Resource
                         ->label('Envoyer résultat : Non admis')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
-                        ->requiresConfirmation()
                         ->modalHeading('Envoyer le résultat : Non admis')
-                        ->modalDescription('Un email de non-admission sera envoyé au candidat.')
+                        ->modalDescription('Vérifiez et modifiez le contenu avant envoi.')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE && ($record->resultat_test ?? '') !== 'admis')
-                        ->action(function (Candidature $record) {
+                        ->mountUsing(function (Forms\ComponentContainer $form, Candidature $record) {
+                            $template = EmailTemplate::getTemplate('resultat_non_admis');
+                            $rendered = $template->remplacerPlaceholders($record);
+                            $form->fill([
+                                'sujet' => $rendered['sujet'],
+                                'contenu' => $rendered['contenu'],
+                            ]);
+                        })
+                        ->form([
+                            TextInput::make('sujet')
+                                ->label('Sujet de l\'email')
+                                ->required(),
+                            Textarea::make('contenu')
+                                ->label('Contenu du message')
+                                ->required()
+                                ->rows(12),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new ResultatNonAdmisNotification($record));
+                                ->notify(new EmailGeneriqueNotification($data['sujet'], $data['contenu']));
                             Notification::make()
                                 ->title('Résultat envoyé')
                                 ->body('Email de non-admission envoyé à ' . $record->email)
@@ -922,18 +976,40 @@ class CandidatureResource extends Resource
                         ->icon('heroicon-o-calendar-days')
                         ->color('success')
                         ->modalHeading('Envoyer la confirmation des dates de stage')
-                        ->modalDescription('Un email avec les dates de stage sera envoyé au candidat.')
+                        ->modalDescription('Vérifiez et modifiez le contenu avant envoi.')
                         ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::AFFECTE && $record->date_debut_stage && $record->date_fin_stage)
+                        ->mountUsing(function (Forms\ComponentContainer $form, Candidature $record) {
+                            $template = EmailTemplate::getTemplate('confirmation_dates');
+                            $rendered = $template->remplacerPlaceholders($record, ['heure_presentation' => '08:00']);
+                            $form->fill([
+                                'heure_presentation' => '08:00',
+                                'sujet' => $rendered['sujet'],
+                                'contenu' => $rendered['contenu'],
+                            ]);
+                        })
                         ->form([
                             TextInput::make('heure_presentation')
                                 ->label('Heure de présentation')
                                 ->placeholder('Ex: 08:00')
                                 ->required()
-                                ->default('08:00'),
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, $record) {
+                                    $template = EmailTemplate::getTemplate('confirmation_dates');
+                                    $rendered = $template->remplacerPlaceholders($record, ['heure_presentation' => $state ?? '08:00']);
+                                    $set('sujet', $rendered['sujet']);
+                                    $set('contenu', $rendered['contenu']);
+                                }),
+                            TextInput::make('sujet')
+                                ->label('Sujet de l\'email')
+                                ->required(),
+                            Textarea::make('contenu')
+                                ->label('Contenu du message')
+                                ->required()
+                                ->rows(12),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new ConfirmationDatesStageNotification($record, $data['heure_presentation']));
+                                ->notify(new EmailGeneriqueNotification($data['sujet'], $data['contenu']));
                             Notification::make()
                                 ->title('Confirmation envoyée')
                                 ->body('Email de confirmation des dates envoyé à ' . $record->email)

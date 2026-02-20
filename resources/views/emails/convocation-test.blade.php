@@ -126,12 +126,12 @@
 
         <div class="content">
             <div class="greeting">
-                Bonjour {{ $prenom }} {{ $nom }},
+                Madame / Monsieur {{ $nom }},
             </div>
 
             <div class="message">
-                <p>Nous avons le plaisir de vous informer que votre candidature a été retenue pour la phase de test dans le cadre de notre programme de stages.</p>
-                <p>Vous êtes convoqué(e) à passer un test de niveau selon les modalités suivantes :</p>
+                <p>Dans le cadre du processus de sélection des stagiaires au sein de Bracongo, nous avons le plaisir de vous informer que votre candidature a été retenue pour la phase de test.</p>
+                <p>Vous êtes invité(e) à vous présenter selon les modalités suivantes :</p>
             </div>
 
             <div class="info-box">
@@ -146,28 +146,18 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Lieu :</span>
-                    <span class="detail-value">Avenue des Brasseries n°7666, Kingabwa, Limete, Kinshasa, RDC</span>
+                    <span class="detail-value">Bracongo - Avenue des Brasseries, numéro 7666, Quartier Kingabwa, Commune de Limete, dans la province de Kinshasa, en République Démocratique du Congo.</span>
                 </div>
             </div>
 
             <div class="highlight">
-                <h3 style="margin-top: 0; color: #92400e;">⚠️ Important</h3>
-                <ul style="margin-bottom: 0; color: #92400e; padding-left: 20px;">
-                    <li>Veuillez vous présenter 15 minutes avant l'heure prévue</li>
-                    <li>Munissez-vous d'une pièce d'identité valide</li>
-                    <li>Apportez de quoi écrire (stylo, crayon)</li>
-                </ul>
-            </div>
-
-            <div style="text-align: center;">
-                <a href="{{ url('/suivi') }}" class="cta-button">
-                    📍 Suivre ma candidature
-                </a>
+                <p style="margin: 0; color: #92400e;">
+                    Nous vous prions de vous munir d'une pièce d'identité et de vous présenter 15 minutes avant l'heure indiquée.
+                </p>
             </div>
 
             <div class="message">
-                <p>En cas d'empêchement, veuillez nous contacter dans les plus brefs délais.</p>
-                <p>Nous vous souhaitons bonne chance pour ce test !</p>
+                <p>Nous vous remercions pour l'intérêt porté à notre organisation.</p>
             </div>
         </div>
 

@@ -125,40 +125,19 @@
 
         <div class="content">
             <div class="greeting">
-                Bonjour {{ $prenom }} {{ $nom }},
-            </div>
-
-            <div class="success-box">
-                <h3>🏆 Félicitations !</h3>
-                <p>Vous avez été admis(e) au test de niveau BRACONGO</p>
+                Madame / Monsieur {{ $nom }},
             </div>
 
             <div class="message">
-                <p>Nous avons le plaisir de vous annoncer que vous avez réussi le test de niveau dans le cadre de notre programme de stages.</p>
-                <p>Votre candidature passe maintenant à l'étape suivante du processus de sélection. Nos équipes vont procéder à votre affectation dans un service correspondant à votre profil.</p>
+                <p>À l'issue du processus de sélection, nous avons le plaisir de vous informer que votre candidature a été retenue.</p>
+
+                <p>Votre stage au sein de Bracongo est donc validé.</p>
+
+                <p>Notre équipe prendra contact avec vous pour finaliser les modalités administratives.</p>
             </div>
 
-            <div class="info-box">
-                <h3>📋 Prochaines étapes</h3>
-                <ul style="color: #4b5563; line-height: 1.8; padding-left: 20px;">
-                    <li>Validation finale par la Direction des Ressources Humaines</li>
-                    <li>Affectation à un service et désignation d'un tuteur</li>
-                    <li>Confirmation des dates de stage par email</li>
-                    <li>Session d'induction RH avant le début du stage</li>
-                </ul>
-            </div>
-
-            <div class="highlight">
-                <h3 style="margin-top: 0; color: #92400e;">💡 En attendant</h3>
-                <p style="margin-bottom: 0; color: #92400e;">
-                    Vous recevrez prochainement un email de confirmation avec les dates exactes de votre stage et les informations pratiques pour votre premier jour.
-                </p>
-            </div>
-
-            <div style="text-align: center;">
-                <a href="{{ url('/suivi') }}" class="cta-button">
-                    📍 Suivre ma candidature
-                </a>
+            <div class="success-box">
+                <h3>Félicitations et bienvenue parmi nous.</h3>
             </div>
         </div>
 

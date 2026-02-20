@@ -126,11 +126,11 @@
 
         <div class="content">
             <div class="greeting">
-                Bonjour {{ $prenom }} {{ $nom }},
+                Madame / Monsieur {{ $nom }},
             </div>
 
             <div class="message">
-                <p>Nous avons le plaisir de vous confirmer les dates de votre stage au sein de BRACONGO. Veuillez trouver ci-dessous les informations pratiques :</p>
+                <p>Nous vous confirmons que votre stage au sein de Bracongo se déroulera selon les modalités suivantes :</p>
             </div>
 
             <div class="info-box">
@@ -144,41 +144,15 @@
                     <span class="detail-value">{{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Direction / Service :</span>
+                    <span class="detail-label">Direction / Service d'affectation :</span>
                     <span class="detail-value">{{ $direction_service }}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Heure de présentation :</span>
-                    <span class="detail-value">{{ $heure_presentation }}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Lieu :</span>
-                    <span class="detail-value">Avenue des Brasseries n°7666, Kingabwa, Limete, Kinshasa, RDC</span>
-                </div>
-            </div>
-
-            <div class="highlight">
-                <h3 style="margin-top: 0; color: #92400e;">📌 À prévoir pour votre premier jour</h3>
-                <ul style="margin-bottom: 0; color: #92400e; padding-left: 20px;">
-                    <li>Pièce d'identité valide (carte d'identité ou passeport)</li>
-                    <li>Lettre de recommandation originale de votre établissement</li>
-                    <li>2 photos d'identité récentes</li>
-                    <li>Tenue vestimentaire professionnelle</li>
-                </ul>
             </div>
 
             <div class="message">
-                <p>Une session d'induction sera organisée pour vous familiariser avec l'entreprise, ses règles et procédures. Les détails vous seront communiqués sur place.</p>
-            </div>
+                <p>Nous vous prions de vous présenter le premier jour à {{ $heure_presentation }} auprès de la Direction des Ressources Humaines pour les formalités d'accueil.</p>
 
-            <div style="text-align: center;">
-                <a href="{{ url('/suivi') }}" class="cta-button">
-                    📍 Suivre ma candidature
-                </a>
-            </div>
-
-            <div class="message">
-                <p>Nous sommes ravis de vous accueillir prochainement au sein de notre équipe. En cas de question, n'hésitez pas à nous contacter.</p>
+                <p>Nous vous souhaitons pleine réussite dans cette expérience professionnelle.</p>
             </div>
         </div>
 
