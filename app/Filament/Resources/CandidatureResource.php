@@ -429,6 +429,15 @@ class CandidatureResource extends Resource
                             ->label('Compétences acquises')
                             ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('chemin_evaluation')
+                            ->label('Document d\'évaluation')
+                            ->directory('documents/evaluations')
+                            ->disk('public')
+                            ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                            ->maxSize(10240)
+                            ->downloadable()
+                            ->openable()
+                            ->columnSpanFull(),
                     ])->columns(2)
                     ->collapsible()
                     ->collapsed()
@@ -440,6 +449,38 @@ class CandidatureResource extends Resource
                             ->action(function ($livewire) {
                                 $livewire->save();
                                 Notification::make()->title('Section Évaluation sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('envoyer_evaluation')
+                            ->label('📧 Envoyer l\'évaluation par email')
+                            ->color('success')
+                            ->size('sm')
+                            ->icon('heroicon-o-envelope')
+                            ->requiresConfirmation()
+                            ->modalHeading('Envoyer l\'évaluation par email')
+                            ->modalDescription(fn ($record) => 'Envoyer le document d\'évaluation de fin de stage à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->visible(fn ($record) => $record && $record->chemin_evaluation)
+                            ->action(function ($record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    $filePath = storage_path('app/public/' . $record->chemin_evaluation);
+                                    $notification = new EmailGeneriqueNotification(
+                                        'Votre évaluation de fin de stage - BRACONGO Stages',
+                                        '<p>Bonjour ' . $record->prenom . ' ' . $record->nom . ',</p>' .
+                                        '<p>Veuillez trouver ci-joint votre évaluation de fin de stage BRACONGO (réf: ' . $record->code_suivi . ').</p>' .
+                                        '<p>Note obtenue : ' . ($record->note_evaluation ?? 'N/A') . '/100</p>' .
+                                        '<p>Appréciation : ' . ($record->appreciation_tuteur ?? 'N/A') . '</p>' .
+                                        '<p>Nous vous remercions pour votre engagement durant votre période de stage.</p>' .
+                                        '<p>Cordialement,<br>L\'équipe BRACONGO Stages</p>'
+                                    );
+                                    if (file_exists($filePath)) {
+                                        $notification->attachFile($filePath);
+                                    }
+                                    NotificationFacade::route('mail', $record->email)->notify($notification);
+                                    Notification::make()->title('📧 Évaluation envoyée à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
+                                }
                             }),
                         Forms\Components\Actions\Action::make('notifier_resultat')
                             ->label('✉️ Envoyer résultat au candidat')

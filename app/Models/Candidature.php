@@ -57,6 +57,7 @@ class Candidature extends Model
         'note_evaluation',
         'commentaire_evaluation',
         'competences_acquises_evaluation',
+        'chemin_evaluation',
         'appreciation_tuteur',
         'date_evaluation',
         'attestation_generee',
