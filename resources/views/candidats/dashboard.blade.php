@@ -22,6 +22,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <a href="{{ route('candidat.messages') }}" class="text-blue-600 hover:text-blue-500">Messagerie</a>
                     <a href="{{ route('candidat.profile') }}" class="text-blue-600 hover:text-blue-500">Mon profil</a>
                     <form method="POST" action="{{ route('candidat.logout') }}" class="inline">
                         @csrf

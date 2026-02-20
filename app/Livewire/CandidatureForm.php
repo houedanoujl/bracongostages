@@ -244,11 +244,16 @@ class CandidatureForm extends Component
                         $rules['lettre_motivation'] = 'file|mimes:pdf,doc,docx|max:2048';
                     }
                     
-                    // Certificat de scolarité : OBLIGATOIRE - seulement si pas existant dans le profil
-                    if (!$this->certificat_scolarite_existant) {
-                        $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
-                    } elseif ($this->certificat_scolarite) {
+                    // Certificat de scolarité : OPTIONNEL
+                    if ($this->certificat_scolarite) {
                         $rules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    }
+
+                    // Lettres de recommandation : OBLIGATOIRE - seulement si pas existant dans le profil
+                    if (!$this->lettres_recommandation_existantes) {
+                        $rules['lettres_recommandation'] = 'required|file|mimes:pdf,doc,docx|max:5120';
+                    } elseif ($this->lettres_recommandation) {
+                        $rules['lettres_recommandation'] = 'file|mimes:pdf,doc,docx|max:5120';
                     }
                 } else {
                     // Mode upload de nouveaux documents
@@ -267,17 +272,19 @@ class CandidatureForm extends Component
                         $rules['lettre_motivation'] = 'required|file|mimes:pdf,doc,docx|max:2048';
                     }
                     
-                    // Certificat de scolarité : TOUJOURS OBLIGATOIRE sauf si existe dans le profil
-                    if ($candidat && $candidat->getDocumentByType('certificat_scolarite')) {
-                        $rules['certificat_scolarite'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    // Certificat de scolarité : OPTIONNEL
+                    $rules['certificat_scolarite'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
+
+                    // Lettres de recommandation : OBLIGATOIRE sauf si existe dans le profil
+                    if ($candidat && $candidat->getDocumentByType('lettres_recommandation')) {
+                        $rules['lettres_recommandation'] = 'nullable|file|mimes:pdf,doc,docx|max:5120';
                     } else {
-                        $rules['certificat_scolarite'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                        $rules['lettres_recommandation'] = 'required|file|mimes:pdf,doc,docx|max:5120';
                     }
                 }
-                
+
                 // Documents optionnels
                 $rules['releves_notes'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
-                $rules['lettres_recommandation'] = 'nullable|file|mimes:pdf,doc,docx|max:5120';
                 $rules['certificats_competences'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
                 
                 // Messages personnalisés
@@ -288,11 +295,12 @@ class CandidatureForm extends Component
                     'lettre_motivation.required' => 'La lettre de motivation est obligatoire.',
                     'lettre_motivation.max' => 'La lettre de motivation ne doit pas dépasser 2 MB.',
                     'lettre_motivation.mimes' => 'La lettre de motivation doit être au format PDF, DOC ou DOCX.',
-                    'certificat_scolarite.required' => 'Le certificat de scolarité est obligatoire.',
                     'certificat_scolarite.max' => 'Le certificat de scolarité ne doit pas dépasser 5 MB.',
                     'certificat_scolarite.mimes' => 'Le certificat de scolarité doit être au format PDF, JPG ou PNG.',
                     'releves_notes.max' => 'Les relevés de notes ne doivent pas dépasser 5 MB.',
+                    'lettres_recommandation.required' => 'Les lettres de recommandation sont obligatoires.',
                     'lettres_recommandation.max' => 'Les lettres de recommandation ne doivent pas dépasser 5 MB.',
+                    'lettres_recommandation.mimes' => 'Les lettres de recommandation doivent être au format PDF, DOC ou DOCX.',
                     'certificats_competences.max' => 'Les certificats de compétences ne doivent pas dépasser 5 MB.',
                 ];
                 
@@ -429,9 +437,14 @@ class CandidatureForm extends Component
             }
             
             if ($this->certificat_scolarite) {
-                $validationRules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:2048';
-            } elseif (!$candidat->getDocumentByType('certificat_scolarite')) {
-                $validationRules['certificat_scolarite'] = 'required';
+                $validationRules['certificat_scolarite'] = 'file|mimes:pdf,jpg,jpeg,png|max:5120';
+            }
+
+            // Lettres de recommandation : OBLIGATOIRE
+            if ($this->lettres_recommandation) {
+                $validationRules['lettres_recommandation'] = 'file|mimes:pdf,doc,docx|max:5120';
+            } elseif (!$candidat->getDocumentByType('lettres_recommandation')) {
+                $validationRules['lettres_recommandation'] = 'required';
             }
             
             $this->validate($validationRules);

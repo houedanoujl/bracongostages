@@ -223,7 +223,7 @@
             Postulez dès maintenant et commencez votre parcours professionnel avec BRACONGO
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/candidature?domain={{ $opportunite->slug }}" class="bg-bracongo-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-bracongo-red-700 transition duration-200">
+            <a href="/candidature?domain={{ $opportunite->slug }}" class="bg-white text-bracongo-red-600 px-8 py-3 rounded-lg font-semibold hover:bg-bracongo-red-50 transition duration-200">
                 Postuler à ce stage
             </a>
             <a href="{{ route('opportunites') }}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-bracongo-red-600 transition duration-200">

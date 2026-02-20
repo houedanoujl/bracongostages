@@ -124,6 +124,14 @@ class Candidature extends Model
     }
 
     /**
+     * Relation avec les messages
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class)->orderBy('created_at', 'asc');
+    }
+
+    /**
      * Relation avec l'évaluation
      */
     public function evaluation(): HasOne

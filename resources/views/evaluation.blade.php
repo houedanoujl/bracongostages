@@ -249,8 +249,8 @@
                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                             Retour au suivi
                         </a>
-                        <button type="submit" 
-                                class="px-8 py-3 bg-gradient-to-r from-bracongo-red-500 to-red-600 text-white rounded-lg hover:from-bracongo-red-600 hover:to-red-700 transition-all transform hover:scale-105">
+                        <button type="submit"
+                                class="px-8 py-3 bg-gradient-to-r from-bracongo-red-500 to-bracongo-red-700 text-white rounded-lg hover:from-bracongo-red-600 hover:to-bracongo-red-800 transition-all transform hover:scale-105">
                             Envoyer l'évaluation
                         </button>
                     </div>

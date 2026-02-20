@@ -24,6 +24,12 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\ActionSize;
+use App\Notifications\ConvocationTestNotification;
+use App\Notifications\ResultatAdmisNotification;
+use App\Notifications\ResultatNonAdmisNotification;
+use App\Notifications\ConfirmationDatesStageNotification;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Filament\Forms\Components\TimePicker;
 
 class CandidatureResource extends Resource
 {
@@ -850,6 +856,91 @@ class CandidatureResource extends Resource
                                 ->send();
                         }),
 
+                    // ========== ACTIONS EMAIL ==========
+                    Action::make('envoyer_convocation_test')
+                        ->label('Envoyer convocation test')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->modalHeading('Envoyer la convocation au test')
+                        ->modalDescription('Un email de convocation sera envoyé au candidat.')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::ATTENTE_TEST && $record->date_test)
+                        ->form([
+                            TextInput::make('heure_test')
+                                ->label('Heure du test')
+                                ->placeholder('Ex: 09:00')
+                                ->required()
+                                ->default('09:00'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            NotificationFacade::route('mail', $record->email)
+                                ->notify(new ConvocationTestNotification($record, $data['heure_test']));
+                            Notification::make()
+                                ->title('Convocation envoyée')
+                                ->body('Email de convocation envoyé à ' . $record->email)
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('envoyer_resultat_admis')
+                        ->label('Envoyer résultat : Admis')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Envoyer le résultat : Admis')
+                        ->modalDescription('Un email d\'admission sera envoyé au candidat.')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE && ($record->resultat_test ?? '') === 'admis')
+                        ->action(function (Candidature $record) {
+                            NotificationFacade::route('mail', $record->email)
+                                ->notify(new ResultatAdmisNotification($record));
+                            Notification::make()
+                                ->title('Résultat envoyé')
+                                ->body('Email d\'admission envoyé à ' . $record->email)
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('envoyer_resultat_non_admis')
+                        ->label('Envoyer résultat : Non admis')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Envoyer le résultat : Non admis')
+                        ->modalDescription('Un email de non-admission sera envoyé au candidat.')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::TEST_PASSE && ($record->resultat_test ?? '') !== 'admis')
+                        ->action(function (Candidature $record) {
+                            NotificationFacade::route('mail', $record->email)
+                                ->notify(new ResultatNonAdmisNotification($record));
+                            Notification::make()
+                                ->title('Résultat envoyé')
+                                ->body('Email de non-admission envoyé à ' . $record->email)
+                                ->warning()
+                                ->send();
+                        }),
+
+                    Action::make('envoyer_confirmation_dates')
+                        ->label('Envoyer confirmation dates')
+                        ->icon('heroicon-o-calendar-days')
+                        ->color('success')
+                        ->modalHeading('Envoyer la confirmation des dates de stage')
+                        ->modalDescription('Un email avec les dates de stage sera envoyé au candidat.')
+                        ->visible(fn (Candidature $record) => $record->statut === StatutCandidature::AFFECTE && $record->date_debut_stage && $record->date_fin_stage)
+                        ->form([
+                            TextInput::make('heure_presentation')
+                                ->label('Heure de présentation')
+                                ->placeholder('Ex: 08:00')
+                                ->required()
+                                ->default('08:00'),
+                        ])
+                        ->action(function (Candidature $record, array $data) {
+                            NotificationFacade::route('mail', $record->email)
+                                ->notify(new ConfirmationDatesStageNotification($record, $data['heure_presentation']));
+                            Notification::make()
+                                ->title('Confirmation envoyée')
+                                ->body('Email de confirmation des dates envoyé à ' . $record->email)
+                                ->success()
+                                ->send();
+                        }),
+
                     // ========== ACTION TRANSVERSALE : Rejet ==========
                     Action::make('rejeter')
                         ->label('Rejeter')
@@ -949,7 +1040,7 @@ class CandidatureResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // TODO: Créer DocumentsRelationManager
+            CandidatureResource\RelationManagers\MessagesRelationManager::class,
         ];
     }
 

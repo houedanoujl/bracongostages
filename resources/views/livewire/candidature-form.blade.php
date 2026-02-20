@@ -732,7 +732,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="certificat_scolarite" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Certificat de scolarité <span class="text-red-600 font-bold">* (obligatoire)</span>
+                                        Certificat de scolarité <span class="text-gray-400 text-xs">(optionnel)</span>
                                     </label>
                                     @auth('candidat')
                                         @php $certificatCandidat = auth('candidat')->user()->getDocumentByType('certificat_scolarite'); @endphp
@@ -790,34 +790,48 @@
                                 </div>
                             </div>
 
+                            <!-- Lettres de recommandation (obligatoire) -->
+                            <div class="border-t border-gray-200 pt-6">
+                                <div class="mb-6">
+                                    <label for="lettres_recommandation" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Lettres de recommandation <span class="text-red-600 font-bold">* (obligatoire)</span>
+                                    </label>
+                                    @auth('candidat')
+                                        @php $lettresRecoCandidat = auth('candidat')->user()->getDocumentByType('lettres_recommandation'); @endphp
+                                        @if($lettresRecoCandidat && $lettresRecoCandidat->fichierExiste())
+                                            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <p class="text-sm text-green-800">📋 Lettres du profil disponibles</p>
+                                                        <p class="text-xs text-green-600">{{ $lettresRecoCandidat->nom_original }} ({{ $lettresRecoCandidat->taille_formatee }})</p>
+                                                    </div>
+                                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisées automatiquement</span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                <p class="text-sm text-amber-800">⚠️ Aucune lettre dans votre profil. Veuillez en télécharger une.</p>
+                                            </div>
+                                        @endif
+                                    @endauth
+                                    <input wire:model="lettres_recommandation" type="file" id="lettres_recommandation" accept=".pdf,.doc,.docx"
+                                           class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettres_recommandation') border-red-500 @enderror">
+                                    <p class="text-xs text-gray-500 mt-1">📄 Taille max : 5 MB (formats : PDF, DOC, DOCX) - Lettres de professeurs ou employeurs</p>
+                                    @auth('candidat')
+                                        @if($lettresRecoCandidat ?? false)
+                                            <p class="text-xs text-gray-500 mt-1">Laissez vide pour utiliser vos lettres du profil, ou uploadez un nouveau fichier</p>
+                                        @endif
+                                    @endauth
+                                    @error('lettres_recommandation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
                             <!-- Documents optionnels -->
                             <div class="border-t border-gray-200 pt-6">
                                 <h4 class="text-lg font-medium text-gray-900 mb-4">Documents optionnels</h4>
                                 <p class="text-sm text-gray-600 mb-4">Ces documents peuvent renforcer votre candidature.</p>
-                                
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="lettres_recommandation" class="block text-sm font-medium text-gray-700 mb-2">Lettres de recommandation</label>
-                                        @auth('candidat')
-                                            @php $lettresRecoCandidat = auth('candidat')->user()->getDocumentByType('lettres_recommandation'); @endphp
-                                            @if($lettresRecoCandidat && $lettresRecoCandidat->fichierExiste())
-                                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                    <div class="flex items-center justify-between">
-                                                        <div>
-                                                            <p class="text-sm text-green-800">📋 Lettres du profil disponibles</p>
-                                                            <p class="text-xs text-green-600">{{ $lettresRecoCandidat->nom_original }} ({{ $lettresRecoCandidat->taille_formatee }})</p>
-                                                        </div>
-                                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Utilisées</span>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        @endauth
-                                        <input wire:model="lettres_recommandation" type="file" id="lettres_recommandation" accept=".pdf,.doc,.docx" 
-                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettres_recommandation') border-red-500 @enderror">
-                                        @error('lettres_recommandation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
-                                        <p class="text-xs text-gray-500 mt-1">Lettres de professeurs ou employeurs</p>
-                                    </div>
-                                    
                                     <div>
                                         <label for="certificats_competences" class="block text-sm font-medium text-gray-700 mb-2">Certificats de compétences</label>
                                         @auth('candidat')

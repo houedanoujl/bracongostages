@@ -57,6 +57,11 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 
+# Google API Credentials (NE JAMAIS COMMITER)
+storage/app/google-credentials.json
+google-credentials.json
+**/google-credentials.json
+
 # Docker
 docker-compose.override.yml
 .docker/

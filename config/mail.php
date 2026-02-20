@@ -71,6 +71,12 @@ return [
             'password' => null,
             'timeout' => null,
         ],
+
+        'gmail' => [
+            'transport' => 'gmail',
+            'credentials' => storage_path('app/google-credentials.json'),
+            'impersonate' => env('GMAIL_IMPERSONATE_EMAIL', 'stages@bracongo.cd'),
+        ],
     ],
 
     /*
