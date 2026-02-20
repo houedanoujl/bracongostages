@@ -137,7 +137,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="{{ asset('images/logo-bracongo-white.png') }}" alt="BRACONGO" class="logo">
+            <img src="{{ config('app.url') }}/images/logo-bracongo-white.png" alt="BRACONGO" class="logo">
             <h1>📧 Nouveau Message de Contact</h1>
             <p>BRACONGO Stages - Plateforme de gestion des stages</p>
         </div>

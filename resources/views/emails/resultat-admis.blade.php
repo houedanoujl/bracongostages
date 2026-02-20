@@ -118,7 +118,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="{{ asset('images/logo-bracongo-white.png') }}" alt="BRACONGO" class="logo">
+            <img src="{{ config('app.url') }}/images/logo-bracongo-white.png" alt="BRACONGO" class="logo">
             <h1>🎉 Résultat du Test</h1>
             <p>Programme de stages BRACONGO</p>
         </div>
