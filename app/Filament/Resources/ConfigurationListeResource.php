@@ -59,10 +59,10 @@ class ConfigurationListeResource extends Resource
                     ->maxLength(255)
                     ->helperText('Texte affiché à l\'utilisateur'),
 
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
                     ->label('Description')
-                    ->rows(2)
                     ->columnSpanFull()
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                     ->helperText('Description optionnelle pour plus de contexte'),
 
                 Grid::make(2)

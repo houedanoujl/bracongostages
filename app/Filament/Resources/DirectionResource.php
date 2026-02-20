@@ -54,10 +54,10 @@ class DirectionResource extends Resource
                             ->helperText('Nom complet de la direction'),
                     ]),
 
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
                     ->label('Description')
-                    ->rows(3)
                     ->columnSpanFull()
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                     ->helperText('Description optionnelle de la direction'),
 
                 Grid::make(2)

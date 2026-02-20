@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\KeyValue;
@@ -76,10 +76,10 @@ class ConfigurationResource extends Resource
                             ->default(Configuration::GROUPE_GENERAL)
                             ->native(false),
                         
-                        Textarea::make('description')
+                        RichEditor::make('description')
                             ->label('Description')
-                            ->rows(2)
                             ->columnSpanFull()
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->helperText('Description pour aider les administrateurs'),
                     ]),
                 
@@ -126,10 +126,10 @@ class ConfigurationResource extends Resource
                                     ->numeric()
                                     ->visible(fn (Forms\Get $get) => in_array($get('type'), ['integer', 'float']) && $get('type_champ') === 'number'),
                                 
-                                Textarea::make('valeur')
+                                RichEditor::make('valeur')
                                     ->label('Valeur')
                                     ->required()
-                                    ->rows(4)
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->visible(fn (Forms\Get $get) => $get('type') === 'text' && $get('type_champ') === 'textarea'),
                                 
                                 Toggle::make('valeur_boolean')
@@ -139,10 +139,10 @@ class ConfigurationResource extends Resource
                                         $set('valeur', $state ? 'true' : 'false');
                                     }),
                                 
-                                Textarea::make('valeur')
+                                RichEditor::make('valeur')
                                     ->label('Valeur JSON')
                                     ->required()
-                                    ->rows(6)
+                                    ->toolbarButtons([])
                                     ->visible(fn (Forms\Get $get) => $get('type') === 'json')
                                     ->helperText('Format JSON valide (ex: {"key": "value"})'),
                             ])

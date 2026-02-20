@@ -54,10 +54,10 @@ class NiveauEtudeResource extends Resource
                             ->helperText('Nom complet du niveau d\'étude'),
                     ]),
 
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
                     ->label('Description')
-                    ->rows(3)
                     ->columnSpanFull()
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                     ->helperText('Description optionnelle du niveau d\'étude'),
 
                 Grid::make(2)

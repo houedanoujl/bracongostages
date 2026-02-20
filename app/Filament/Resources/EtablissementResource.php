@@ -54,10 +54,10 @@ class EtablissementResource extends Resource
                             ->helperText('Nom complet de l\'établissement'),
                     ]),
 
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
                     ->label('Description')
-                    ->rows(3)
                     ->columnSpanFull()
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                     ->helperText('Description optionnelle de l\'établissement'),
 
                 Grid::make(2)

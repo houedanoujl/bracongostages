@@ -54,10 +54,10 @@ class PosteResource extends Resource
                             ->helperText('Nom complet du poste'),
                     ]),
 
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
                     ->label('Description')
-                    ->rows(3)
                     ->columnSpanFull()
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                     ->helperText('Description optionnelle du poste et des responsabilités'),
 
                 Grid::make(2)

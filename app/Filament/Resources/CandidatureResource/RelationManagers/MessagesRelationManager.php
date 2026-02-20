@@ -21,11 +21,10 @@ class MessagesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Textarea::make('contenu')
+                Forms\Components\RichEditor::make('contenu')
                     ->label('Message')
                     ->required()
-                    ->rows(4)
-                    ->maxLength(2000)
+                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                     ->placeholder('Tapez votre message au candidat...'),
             ]);
     }
@@ -60,11 +59,10 @@ class MessagesRelationManager extends RelationManager
                     ->icon('heroicon-o-paper-airplane')
                     ->color('primary')
                     ->form([
-                        Forms\Components\Textarea::make('contenu')
+                        Forms\Components\RichEditor::make('contenu')
                             ->label('Message')
                             ->required()
-                            ->rows(4)
-                            ->maxLength(2000)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                             ->placeholder('Tapez votre message au candidat...'),
                     ])
                     ->action(function (array $data) {

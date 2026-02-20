@@ -42,10 +42,10 @@ class EmailTemplateResource extends Resource
                             ->label('Sujet de l\'email')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('contenu')
+                        Forms\Components\RichEditor::make('contenu')
                             ->label('Contenu du message')
                             ->required()
-                            ->rows(15)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link', 'h2', 'h3'])
                             ->helperText(fn (EmailTemplate $record) => 'Placeholders disponibles : ' . collect($record->placeholders_disponibles)->map(fn ($p) => '{' . $p . '}')->implode(', ')),
                         Forms\Components\Placeholder::make('placeholders_info')
                             ->label('Placeholders disponibles')

@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
@@ -248,10 +247,10 @@ class CandidatureResource extends Resource
                                     ->label('Sujet')
                                     ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['sujet'])
                                     ->required(),
-                                Textarea::make('contenu_email')
+                                RichEditor::make('contenu_email')
                                     ->label('Contenu')
                                     ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['contenu'])
-                                    ->rows(10)
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
                             ->action(function (array $data, $record) {
@@ -307,10 +306,10 @@ class CandidatureResource extends Resource
                                     ->label('Sujet')
                                     ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['sujet'])
                                     ->required(),
-                                Textarea::make('contenu_email')
+                                RichEditor::make('contenu_email')
                                     ->label('Contenu')
                                     ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['contenu'])
-                                    ->rows(10)
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
                             ->action(function (array $data, $record) {
@@ -500,9 +499,9 @@ class CandidatureResource extends Resource
                                 TextInput::make('sujet_email')
                                     ->label('Sujet')
                                     ->required(),
-                                Textarea::make('contenu_email')
+                                RichEditor::make('contenu_email')
                                     ->label('Contenu')
-                                    ->rows(10)
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
                             ->mountUsing(function (Forms\ComponentContainer $form, $record) {
@@ -1239,10 +1238,10 @@ class CandidatureResource extends Resource
                             TextInput::make('sujet')
                                 ->label('Sujet de l\'email')
                                 ->required(),
-                            Textarea::make('contenu')
+                            RichEditor::make('contenu')
                                 ->label('Contenu du message')
                                 ->required()
-                                ->rows(12),
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
@@ -1273,10 +1272,10 @@ class CandidatureResource extends Resource
                             TextInput::make('sujet')
                                 ->label('Sujet de l\'email')
                                 ->required(),
-                            Textarea::make('contenu')
+                            RichEditor::make('contenu')
                                 ->label('Contenu du message')
                                 ->required()
-                                ->rows(12),
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
@@ -1307,10 +1306,10 @@ class CandidatureResource extends Resource
                             TextInput::make('sujet')
                                 ->label('Sujet de l\'email')
                                 ->required(),
-                            Textarea::make('contenu')
+                            RichEditor::make('contenu')
                                 ->label('Contenu du message')
                                 ->required()
-                                ->rows(12),
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)
@@ -1353,10 +1352,10 @@ class CandidatureResource extends Resource
                             TextInput::make('sujet')
                                 ->label('Sujet de l\'email')
                                 ->required(),
-                            Textarea::make('contenu')
+                            RichEditor::make('contenu')
                                 ->label('Contenu du message')
                                 ->required()
-                                ->rows(12),
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                         ])
                         ->action(function (Candidature $record, array $data) {
                             NotificationFacade::route('mail', $record->email)

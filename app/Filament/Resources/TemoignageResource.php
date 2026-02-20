@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DatePicker;
@@ -122,10 +121,10 @@ class TemoignageResource extends Resource
                                 'blockquote',
                             ]),
                         
-                        Textarea::make('citation_courte')
+                        RichEditor::make('citation_courte')
                             ->label('Citation courte (mise en avant)')
-                            ->rows(3)
                             ->columnSpanFull()
+                            ->toolbarButtons(['bold', 'italic', 'underline'])
                             ->helperText('Phrase courte qui sera mise en valeur sur la homepage'),
                     ]),
                 

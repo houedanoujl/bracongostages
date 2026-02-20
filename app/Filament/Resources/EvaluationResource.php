@@ -16,7 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 
@@ -130,26 +130,26 @@ class EvaluationResource extends Resource
 
                 Section::make('Apprentissages')
                     ->schema([
-                        Textarea::make('competences_developpees')
+                        RichEditor::make('competences_developpees')
                             ->label('Compétences développées')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->placeholder('Décrivez les compétences techniques, relationnelles, organisationnelles...'),
-                        Textarea::make('reponse_attentes')
+                        RichEditor::make('reponse_attentes')
                             ->label('Réponse aux attentes')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->placeholder('En quoi ce stage a-t-il répondu ou non à vos attentes initiales ?'),
-                        Textarea::make('aspects_enrichissants')
+                        RichEditor::make('aspects_enrichissants')
                             ->label('Aspects enrichissants')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->placeholder('Projets, missions, rencontres, découvertes...'),
                     ])
                     ->collapsible(),
 
                 Section::make('Suggestions et Contact')
                     ->schema([
-                        Textarea::make('suggestions_amelioration')
+                        RichEditor::make('suggestions_amelioration')
                             ->label('Suggestions d\'amélioration')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->placeholder('Vos suggestions pour améliorer l\'expérience des futurs stagiaires...'),
                         Select::make('contact_futur')
                             ->label('Contact futur')
@@ -158,9 +158,9 @@ class EvaluationResource extends Resource
                                 'non' => 'Non',
                             ])
                             ->required(),
-                        Textarea::make('commentaire_libre')
+                        RichEditor::make('commentaire_libre')
                             ->label('Commentaire libre')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                             ->placeholder('Tout autre commentaire que vous souhaitez partager...'),
                     ])
                     ->collapsible(),
