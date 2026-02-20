@@ -62,7 +62,11 @@ else
     composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 fi
 
-# 4b. Découverte explicite des packages (inclut MailtrapSdkProvider)
+# 4b. Regénérer le classmap pour inclure tous les composants
+echo "📦 Régénération du classmap Composer..."
+composer dump-autoload --optimize 2>/dev/null || true
+
+# 4c. Découverte explicite des packages (inclut MailtrapSdkProvider)
 echo "📦 Découverte des packages Laravel..."
 php artisan package:discover --ansi || true
 
@@ -103,6 +107,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan optimize
+
+# 11b. Cache des composants Filament (RelationManagers, Resources, Pages, Widgets)
+echo "⚙️ Optimisation des composants Filament..."
+php artisan filament:optimize 2>/dev/null || true
 
 # 12. Permissions finales
 echo "🔧 Permissions finales..."
