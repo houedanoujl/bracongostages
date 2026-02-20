@@ -105,6 +105,52 @@ class Candidature extends Model
                 $candidature->statut = StatutCandidature::DOSSIER_RECU;
             }
         });
+
+        // Envoi automatique d'email lors du changement de statut
+        static::updating(function ($candidature) {
+            if ($candidature->isDirty('statut')) {
+                $ancienStatut = $candidature->getOriginal('statut');
+                $nouveauStatut = $candidature->statut;
+                
+                // Convertir en enum si nécessaire
+                if (is_string($ancienStatut)) {
+                    $ancienStatut = StatutCandidature::tryFrom($ancienStatut);
+                }
+                if (is_string($nouveauStatut)) {
+                    $nouveauStatut = StatutCandidature::tryFrom($nouveauStatut);
+                }
+
+                // Sauvegarder l'ancien statut pour l'utiliser après le save
+                $candidature->_ancien_statut_pour_email = $ancienStatut;
+                $candidature->_nouveau_statut_pour_email = $nouveauStatut;
+            }
+        });
+
+        static::updated(function ($candidature) {
+            if (isset($candidature->_ancien_statut_pour_email) && isset($candidature->_nouveau_statut_pour_email)) {
+                $ancienStatut = $candidature->_ancien_statut_pour_email;
+                $nouveauStatut = $candidature->_nouveau_statut_pour_email;
+                
+                // Nettoyer les attributs temporaires
+                unset($candidature->_ancien_statut_pour_email, $candidature->_nouveau_statut_pour_email);
+                
+                try {
+                    // Envoyer la notification CandidatureStatusChanged
+                    $candidat = Candidat::where('email', $candidature->email)->first();
+                    if ($candidat) {
+                        $candidat->notify(new \App\Notifications\CandidatureStatusChanged($candidature, $ancienStatut, $nouveauStatut));
+                        \Illuminate\Support\Facades\Log::info("Email changement statut envoyé à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
+                    } else {
+                        // Pas de compte candidat, envoyer directement à l'adresse email
+                        \Illuminate\Support\Facades\Notification::route('mail', $candidature->email)
+                            ->notify(new \App\Notifications\CandidatureStatusChanged($candidature, $ancienStatut, $nouveauStatut));
+                        \Illuminate\Support\Facades\Log::info("Email changement statut envoyé (sans compte) à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Erreur envoi email changement statut: " . $e->getMessage());
+                }
+            }
+        });
     }
 
     /**
@@ -275,26 +321,13 @@ class Candidature extends Model
      */
     public function valider(\Carbon\Carbon $dateDebut, \Carbon\Carbon $dateFin): bool
     {
-        $ancienStatut = $this->statut;
         $this->statut = StatutCandidature::DECISION_POSITIVE;
         $this->date_debut_stage = $dateDebut;
         $this->date_fin_stage = $dateFin;
         $this->motif_rejet = null;
 
-        $saved = $this->save();
-
-        if ($saved && $ancienStatut !== StatutCandidature::DECISION_POSITIVE) {
-            // Envoyer une notification asynchrone
-            \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::DECISION_POSITIVE);
-            
-            // Envoyer une notification email si le candidat a un compte
-            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
-            if ($candidat) {
-                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::DECISION_POSITIVE));
-            }
-        }
-
-        return $saved;
+        // L'email est envoyé automatiquement via le listener boot() updated
+        return $this->save();
     }
 
     /**
@@ -302,26 +335,13 @@ class Candidature extends Model
      */
     public function rejeter(string $motif): bool
     {
-        $ancienStatut = $this->statut;
         $this->statut = StatutCandidature::REJETE;
         $this->motif_rejet = $motif;
         $this->date_debut_stage = null;
         $this->date_fin_stage = null;
 
-        $saved = $this->save();
-
-        if ($saved && $ancienStatut !== StatutCandidature::REJETE) {
-            // Envoyer une notification asynchrone
-            \App\Jobs\SendCandidatureNotification::dispatch($this, $ancienStatut, StatutCandidature::REJETE);
-            
-            // Envoyer une notification email si le candidat a un compte
-            $candidat = \App\Models\Candidat::where('email', $this->email)->first();
-            if ($candidat) {
-                $candidat->notify(new \App\Notifications\CandidatureStatusChanged($this, $ancienStatut, StatutCandidature::REJETE));
-            }
-        }
-
-        return $saved;
+        // L'email est envoyé automatiquement via le listener boot() updated
+        return $this->save();
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Candidature;
 use App\Enums\StatutCandidature;
+use App\Notifications\EmailGeneriqueNotification;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
 use Livewire\WithFileUploads;
@@ -431,6 +433,9 @@ class CandidatureForm extends Component
             $this->showSuccess = true;
             $this->reset(['currentStep']);
             
+            // Envoyer email de confirmation au candidat
+            $this->envoyerEmailConfirmation($candidature);
+            
             Log::info('Candidature finalisée avec code: ' . $this->candidatureCode);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -537,6 +542,9 @@ class CandidatureForm extends Component
             $this->showSuccess = true;
             $this->reset(['currentStep']);
             
+            // Envoyer email de confirmation au candidat
+            $this->envoyerEmailConfirmation($candidature);
+            
             Log::info('Candidature finalisée avec code: ' . $this->candidatureCode);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -547,6 +555,31 @@ class CandidatureForm extends Component
             Log::error('Erreur générale soumission candidature: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             session()->flash('error', 'Une erreur est survenue lors de la soumission de votre candidature. Veuillez réessayer.');
+        }
+    }
+
+    /**
+     * Envoyer un email de confirmation au candidat après soumission
+     */
+    private function envoyerEmailConfirmation(Candidature $candidature): void
+    {
+        try {
+            $sujet = 'Confirmation de réception - Candidature BRACONGO Stages';
+            $contenu = "Madame / Monsieur {$candidature->nom},\n\n"
+                . "Nous accusons réception de votre candidature pour le programme de stages BRACONGO.\n\n"
+                . "Votre dossier a bien été enregistré avec le code de suivi suivant :\n"
+                . "Code de suivi : {$candidature->code_suivi}\n\n"
+                . "Conservez ce code précieusement, il vous permettra de suivre l'avancement de votre candidature.\n\n"
+                . "Notre équipe va procéder à l'analyse de votre dossier. Vous serez informé(e) par email des prochaines étapes.\n\n"
+                . "Cordialement,\nL'équipe BRACONGO Stages";
+
+            NotificationFacade::route('mail', $candidature->email)
+                ->notify(new EmailGeneriqueNotification($sujet, $contenu));
+
+            Log::info('Email de confirmation envoyé à: ' . $candidature->email);
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi email confirmation candidature: ' . $e->getMessage());
+            // Ne pas bloquer la soumission si l'email échoue
         }
     }
 
