@@ -34,7 +34,7 @@
 .env.staging
 
 # Composer
-composer.lock
+# composer.lock doit être commité pour les applications (bonne pratique Laravel)
 
 # NPM
 npm-debug.log*
