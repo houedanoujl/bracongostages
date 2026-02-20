@@ -15,6 +15,11 @@ class Candidature extends Model
 {
     use HasFactory;
 
+    /**
+     * Stockage temporaire pour le changement de statut (hors Eloquent pour ne pas être inclus dans le SQL)
+     */
+    protected static array $pendingStatusChanges = [];
+
     protected $fillable = [
         'nom',
         'prenom', 
@@ -120,19 +125,21 @@ class Candidature extends Model
                     $nouveauStatut = StatutCandidature::tryFrom($nouveauStatut);
                 }
 
-                // Sauvegarder l'ancien statut pour l'utiliser après le save
-                $candidature->_ancien_statut_pour_email = $ancienStatut;
-                $candidature->_nouveau_statut_pour_email = $nouveauStatut;
+                // Sauvegarder dans une propriété statique (PAS dans les attributs du modèle)
+                static::$pendingStatusChanges[$candidature->id] = [
+                    'ancien' => $ancienStatut,
+                    'nouveau' => $nouveauStatut,
+                ];
             }
         });
 
         static::updated(function ($candidature) {
-            if (isset($candidature->_ancien_statut_pour_email) && isset($candidature->_nouveau_statut_pour_email)) {
-                $ancienStatut = $candidature->_ancien_statut_pour_email;
-                $nouveauStatut = $candidature->_nouveau_statut_pour_email;
-                
-                // Nettoyer les attributs temporaires
-                unset($candidature->_ancien_statut_pour_email, $candidature->_nouveau_statut_pour_email);
+            if (isset(static::$pendingStatusChanges[$candidature->id])) {
+                $change = static::$pendingStatusChanges[$candidature->id];
+                unset(static::$pendingStatusChanges[$candidature->id]);
+
+                $ancienStatut = $change['ancien'];
+                $nouveauStatut = $change['nouveau'];
                 
                 try {
                     // Envoyer la notification CandidatureStatusChanged
