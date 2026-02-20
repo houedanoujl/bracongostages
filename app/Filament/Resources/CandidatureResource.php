@@ -348,9 +348,16 @@ class CandidatureResource extends Resource
                             ->label('Réponse envoyée'),
                         DatePicker::make('date_reponse_lettre')
                             ->label('Date d\'envoi'),
-                        TextInput::make('chemin_reponse_lettre')
-                            ->label('Fichier de réponse'),
-                    ])->columns(3)
+                        Forms\Components\FileUpload::make('chemin_reponse_lettre')
+                            ->label('Fichier de réponse')
+                            ->directory('documents/reponses-lettres')
+                            ->disk('public')
+                            ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                            ->maxSize(10240)
+                            ->downloadable()
+                            ->openable()
+                            ->columnSpanFull(),
+                    ])->columns(2)
                     ->collapsible()
                     ->collapsed()
                     ->footerActions([
@@ -361,6 +368,36 @@ class CandidatureResource extends Resource
                             ->action(function ($livewire) {
                                 $livewire->save();
                                 Notification::make()->title('Section Réponse lettre sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('envoyer_reponse_lettre')
+                            ->label('📧 Envoyer par email')
+                            ->color('success')
+                            ->size('sm')
+                            ->icon('heroicon-o-envelope')
+                            ->requiresConfirmation()
+                            ->modalHeading('Envoyer la réponse par email')
+                            ->modalDescription(fn ($record) => 'Envoyer la réponse à la lettre de recommandation à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->visible(fn ($record) => $record && $record->chemin_reponse_lettre)
+                            ->action(function ($record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    $filePath = storage_path('app/public/' . $record->chemin_reponse_lettre);
+                                    $notification = new EmailGeneriqueNotification(
+                                        'Réponse à votre lettre de recommandation - BRACONGO Stages',
+                                        '<p>Bonjour ' . $record->prenom . ' ' . $record->nom . ',</p>' .
+                                        '<p>Veuillez trouver ci-joint la réponse à votre lettre de recommandation concernant votre candidature (réf: ' . $record->code_suivi . ').</p>' .
+                                        '<p>Cordialement,<br>L\'équipe BRACONGO Stages</p>'
+                                    );
+                                    if (file_exists($filePath)) {
+                                        $notification->attachFile($filePath);
+                                    }
+                                    NotificationFacade::route('mail', $record->email)->notify($notification);
+                                    $record->update(['reponse_lettre_envoyee' => true, 'date_reponse_lettre' => now()]);
+                                    Notification::make()->title('📧 Réponse envoyée à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
+                                }
                             }),
                     ]),
 
@@ -450,9 +487,16 @@ class CandidatureResource extends Resource
                             ->label('Attestation générée'),
                         DatePicker::make('date_attestation')
                             ->label('Date de l\'attestation'),
-                        TextInput::make('chemin_attestation')
-                            ->label('Fichier attestation'),
-                    ])->columns(3)
+                        Forms\Components\FileUpload::make('chemin_attestation')
+                            ->label('Fichier attestation')
+                            ->directory('documents/attestations')
+                            ->disk('public')
+                            ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                            ->maxSize(10240)
+                            ->downloadable()
+                            ->openable()
+                            ->columnSpanFull(),
+                    ])->columns(2)
                     ->collapsible()
                     ->collapsed()
                     ->footerActions([
@@ -463,6 +507,37 @@ class CandidatureResource extends Resource
                             ->action(function ($livewire) {
                                 $livewire->save();
                                 Notification::make()->title('Section Attestation sauvegardée')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('envoyer_attestation')
+                            ->label('📧 Envoyer par email')
+                            ->color('success')
+                            ->size('sm')
+                            ->icon('heroicon-o-envelope')
+                            ->requiresConfirmation()
+                            ->modalHeading('Envoyer l\'attestation par email')
+                            ->modalDescription(fn ($record) => 'Envoyer l\'attestation de stage à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->visible(fn ($record) => $record && $record->chemin_attestation)
+                            ->action(function ($record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    $filePath = storage_path('app/public/' . $record->chemin_attestation);
+                                    $notification = new EmailGeneriqueNotification(
+                                        'Votre attestation de stage - BRACONGO Stages',
+                                        '<p>Bonjour ' . $record->prenom . ' ' . $record->nom . ',</p>' .
+                                        '<p>Nous avons le plaisir de vous transmettre ci-joint votre attestation de stage BRACONGO (réf: ' . $record->code_suivi . ').</p>' .
+                                        '<p>Nous vous remercions pour votre engagement durant votre période de stage.</p>' .
+                                        '<p>Cordialement,<br>L\'équipe BRACONGO Stages</p>'
+                                    );
+                                    if (file_exists($filePath)) {
+                                        $notification->attachFile($filePath);
+                                    }
+                                    NotificationFacade::route('mail', $record->email)->notify($notification);
+                                    $record->update(['attestation_generee' => true, 'date_attestation' => now()]);
+                                    Notification::make()->title('📧 Attestation envoyée à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
+                                }
                             }),
                     ]),
 
