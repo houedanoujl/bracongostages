@@ -39,10 +39,16 @@ mkdir -p public/storage
 mkdir -p public/css/filament
 mkdir -p public/js/filament
 
-# 3. CONFIGURATION DES PERMISSIONS AVANT COMPOSER
+# 3. Nettoyage des fichiers temporaires (peuvent appartenir à root)
+echo "🧹 Nettoyage des fichiers temporaires..."
+rm -rf storage/app/livewire-tmp/* 2>/dev/null || true
+rm -rf storage/framework/cache/data/* 2>/dev/null || true
+
+# 3b. CONFIGURATION DES PERMISSIONS AVANT COMPOSER
+# Note: || true car certains fichiers peuvent appartenir à root
 echo "🔧 Configuration des permissions..."
-chmod -R 775 storage bootstrap/cache
-chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache 2>/dev/null || true
 
 # 4. Installation Composer (composer.lock est commité dans le repo)
 echo "📦 Installation des dépendances Composer..."
@@ -96,9 +102,9 @@ php artisan optimize
 
 # 12. Permissions finales
 echo "🔧 Permissions finales..."
-chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache public/css public/js
-chmod -R 775 storage bootstrap/cache
-chmod -R 755 public/css public/js
+chown -R $FORGE_SITE_USER:$FORGE_SITE_USER storage bootstrap/cache public/css public/js 2>/dev/null || true
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+chmod -R 755 public/css public/js 2>/dev/null || true
 
 # 13. Redémarrage services
 echo "🔄 Redémarrage des services..."

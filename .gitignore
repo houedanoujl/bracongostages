@@ -26,6 +26,12 @@
 !storage/logs/.gitignore
 !bootstrap/cache/.gitignore
 
+# Fichiers temporaires Livewire (uploads)
+storage/app/livewire-tmp/
+
+# Documents demo
+storage/app/documents/demo/
+
 # Fichiers d'environnement
 .env
 .env.backup
