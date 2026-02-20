@@ -17,6 +17,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DatePicker;
@@ -63,14 +64,16 @@ class OpportuniteResource extends Resource
                                 ->helperText('URL de l\'opportunité (généré automatiquement)'),
                         ]),
 
-                        Textarea::make('description')
+                        RichEditor::make('description')
                             ->required()
-                            ->rows(3)
-                            ->helperText('Description courte pour les cartes d\'opportunité'),
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                            ->helperText('Description courte pour les cartes d\'opportunité')
+                            ->columnSpanFull(),
 
-                        Textarea::make('description_longue')
-                            ->rows(6)
-                            ->helperText('Description détaillée avec les missions et objectifs'),
+                        RichEditor::make('description_longue')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'strike', 'bulletList', 'orderedList', 'link', 'h2', 'h3', 'blockquote', 'codeBlock'])
+                            ->helperText('Description détaillée avec les missions et objectifs')
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Catégorisation')
