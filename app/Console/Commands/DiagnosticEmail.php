@@ -15,7 +15,7 @@ class DiagnosticEmail extends Command
         $this->newLine();
 
         // 1. Config mail
-        $this->info('📧 Configuration Mail:');
+        $this->info('Configuration Mail:');
         $this->table(['Paramètre', 'Valeur'], [
             ['MAIL_MAILER (config)', config('mail.default')],
             ['MAIL_MAILER (env)', env('MAIL_MAILER', 'NON DÉFINI')],
@@ -28,46 +28,46 @@ class DiagnosticEmail extends Command
 
         // 2. Mailers définis
         $mailers = array_keys(config('mail.mailers', []));
-        $this->info('📋 Mailers définis: ' . implode(', ', $mailers));
+        $this->info('Mailers définis: ' . implode(', ', $mailers));
 
         // 3. Config mailtrap
         $mailtrapConfig = config('mail.mailers.mailtrap');
         if ($mailtrapConfig) {
-            $this->info('✅ Mailer "mailtrap" trouvé:');
+            $this->info('[OK] Mailer "mailtrap" trouvé:');
             $this->table(['Clé', 'Valeur'], collect($mailtrapConfig)->map(function ($v, $k) {
                 if ($k === 'apiKey' && $v) return [$k, substr($v, 0, 8) . '...'];
                 return [$k, is_string($v) ? $v : json_encode($v)];
             })->values()->toArray());
         } else {
-            $this->error('❌ Mailer "mailtrap" NON TROUVÉ dans config/mail.php !');
+            $this->error('[ERREUR] Mailer "mailtrap" NON TROUVÉ dans config/mail.php !');
         }
 
         // 4. Services mailtrap-sdk
         $services = config('services.mailtrap-sdk');
         if ($services) {
-            $this->info('✅ services.mailtrap-sdk trouvé:');
+            $this->info('[OK] services.mailtrap-sdk trouvé:');
             $this->line(json_encode($services, JSON_PRETTY_PRINT));
         } else {
-            $this->warn('⚠️ services.mailtrap-sdk non défini (peut être normal si le provider n\'est pas chargé)');
+            $this->warn('[ATTENTION] services.mailtrap-sdk non défini (peut être normal si le provider n\'est pas chargé)');
         }
 
         // 5. Provider check
         $providerExists = class_exists(\Mailtrap\Bridge\Laravel\MailtrapSdkProvider::class);
-        $this->info('📦 Provider Mailtrap: ' . ($providerExists ? '✅ Classe trouvée' : '❌ Classe NON TROUVÉE'));
+        $this->info('Provider Mailtrap: ' . ($providerExists ? '[OK] Classe trouvée' : '[ERREUR] Classe NON TROUVÉE'));
 
         // 6. Vérifier config/app.php
         $appContent = file_get_contents(base_path('config/app.php'));
         $hasProvider = str_contains($appContent, 'MailtrapSdkProvider');
-        $this->info('📄 config/app.php contient MailtrapSdkProvider: ' . ($hasProvider ? '✅ OUI' : '❌ NON'));
+        $this->info('Config/app.php contient MailtrapSdkProvider: ' . ($hasProvider ? '[OK] OUI' : '[ERREUR] NON'));
 
         // 7. Vérifier config/mail.php
         $mailContent = file_get_contents(base_path('config/mail.php'));
         $hasMailtrapSdk = str_contains($mailContent, 'mailtrap-sdk');
-        $this->info('📄 config/mail.php contient "mailtrap-sdk": ' . ($hasMailtrapSdk ? '✅ OUI' : '❌ NON'));
+        $this->info('Config/mail.php contient "mailtrap-sdk": ' . ($hasMailtrapSdk ? '[OK] OUI' : '[ERREUR] NON'));
 
         // 8. Variables .env liées au mail
         $this->newLine();
-        $this->info('📄 Variables .env (mail):');
+        $this->info('Variables .env (mail):');
         $envFile = base_path('.env');
         if (file_exists($envFile)) {
             $lines = file($envFile);
@@ -86,25 +86,25 @@ class DiagnosticEmail extends Command
             $defaultMailer = config('mail.default');
             $mailer = app('mail.manager')->mailer($defaultMailer);
             $transport = $mailer->getSymfonyTransport();
-            $this->info('✅ Transport OK: ' . get_class($transport));
+            $this->info('[OK] Transport OK: ' . get_class($transport));
         } catch (\Exception $e) {
-            $this->error('❌ Transport ERREUR: ' . $e->getMessage());
+            $this->error('[ERREUR] Transport ERREUR: ' . $e->getMessage());
             $this->error('   Exception: ' . get_class($e));
         }
 
         // 10. Test envoi
         if ($testEmail = $this->option('test')) {
             $this->newLine();
-            $this->info("📤 Test d'envoi vers: {$testEmail}");
+            $this->info("Test d'envoi vers: {$testEmail}");
             try {
                 \Illuminate\Support\Facades\Notification::route('mail', $testEmail)
                     ->notify(new \App\Notifications\EmailGeneriqueNotification(
                         'Test diagnostic BRACONGO - ' . now()->format('d/m/Y H:i:s'),
                         'Ceci est un email de test envoyé depuis la commande de diagnostic sur Forge.'
                     ));
-                $this->info('✅ Email envoyé avec succès à ' . $testEmail);
+                $this->info('[OK] Email envoyé avec succès à ' . $testEmail);
             } catch (\Exception $e) {
-                $this->error('❌ Envoi ÉCHOUÉ: ' . $e->getMessage());
+                $this->error('[ERREUR] Envoi ÉCHOUÉ: ' . $e->getMessage());
                 $this->error('   Exception: ' . get_class($e));
                 $this->line(collect(explode("\n", $e->getTraceAsString()))->take(5)->implode("\n"));
             }
@@ -112,7 +112,7 @@ class DiagnosticEmail extends Command
 
         // 11. Dernières erreurs
         $this->newLine();
-        $this->info('📋 Dernières erreurs mail dans les logs:');
+        $this->info('Dernières erreurs mail dans les logs:');
         $logFile = storage_path('logs/laravel.log');
         if (file_exists($logFile)) {
             $lines = array_slice(file($logFile), -100);

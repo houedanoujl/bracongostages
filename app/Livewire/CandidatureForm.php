@@ -45,6 +45,7 @@ class CandidatureForm extends Component
     // Paramètres de l'opportunité
     public $opportunite_id = '';
     public $opportunite_titre = '';
+    public bool $vientDuneOffre = false;
     
     // Champ établissement personnalisé
     public $etablissement_autre = '';
@@ -128,7 +129,8 @@ class CandidatureForm extends Component
             $this->opportunite_titre = $this->getOpportuniteTitle($this->opportunite_id);
             $this->opportunite_selectionnee = $this->opportunite_id;
             $this->afficher_selection_opportunite = false;
-            
+            $this->vientDuneOffre = true;
+
             // Pré-remplir les directions souhaitées avec celles de l'opportunité
             $this->preRemplirDirections($this->opportunite_id);
         } else {

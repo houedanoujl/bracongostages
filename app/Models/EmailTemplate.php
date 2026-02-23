@@ -31,6 +31,14 @@ class EmailTemplate extends Model
         $serviceAffecte = $candidature->service_affecte;
         $directionLabel = $directions[$serviceAffecte] ?? $serviceAffecte ?? '';
 
+        $appreciations = [
+            'excellent' => 'Excellent',
+            'tres_bien' => 'Très bien',
+            'bien' => 'Bien',
+            'satisfaisant' => 'Satisfaisant',
+            'insuffisant' => 'Insuffisant',
+        ];
+
         $replacements = [
             '{nom}' => $candidature->nom,
             '{prenom}' => $candidature->prenom,
@@ -41,6 +49,8 @@ class EmailTemplate extends Model
             '{direction_service}' => $directionLabel,
             '{etablissement}' => $candidature->etablissement ?? '',
             '{code_suivi}' => $candidature->code_suivi ?? '',
+            '{note_evaluation}' => $candidature->note_evaluation ?? 'N/A',
+            '{appreciation_tuteur}' => $appreciations[$candidature->appreciation_tuteur ?? ''] ?? ($candidature->appreciation_tuteur ?? 'N/A'),
         ];
 
         // Merge extras (e.g. heure_test, heure_presentation)

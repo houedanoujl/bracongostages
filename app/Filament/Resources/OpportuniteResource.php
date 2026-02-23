@@ -97,7 +97,7 @@ class OpportuniteResource extends Resource
                         ]),
 
                         TextInput::make('icone')
-                            ->default('💼')
+                            ->default('briefcase')
                             ->helperText('Emoji ou classe CSS pour l\'icône'),
 
                         Select::make('directions_associees')

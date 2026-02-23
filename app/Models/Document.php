@@ -66,13 +66,13 @@ class Document extends Model
     public function getIconeAttribute(): string
     {
         return match ($this->type_document) {
-            'cv' => '📄',
-            'lettre_motivation' => '📝',
-            'lettre_recommandation' => '📋',
-            'piece_identite' => '🆔',
-            'diplome' => '🎓',
-            'autre' => '📎',
-            default => '📄',
+            'cv' => 'document',
+            'lettre_motivation' => 'edit',
+            'lettre_recommandation' => 'clipboard',
+            'piece_identite' => 'id-card',
+            'diplome' => 'academic-cap',
+            'autre' => 'paper-clip',
+            default => 'document',
         };
     }
 

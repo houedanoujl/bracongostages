@@ -14,12 +14,12 @@ class TestSuiviPage extends Command
 
     public function handle()
     {
-        $this->info('🔧 DIAGNOSTIC COMPLET - BRACONGO Stages');
+        $this->info('DIAGNOSTIC COMPLET - BRACONGO Stages');
         $this->info('=====================================');
 
         // Test 1: Page de suivi
         $this->info('');
-        $this->info('📋 TEST 1: Page de suivi');
+        $this->info('TEST 1: Page de suivi');
         $this->info('------------------------');
 
         // Créer une candidature de test
@@ -41,29 +41,29 @@ class TestSuiviPage extends Command
             ]
         );
 
-        $this->info("✅ Candidature test: {$candidature->code_suivi}");
+        $this->info("[OK] Candidature test: {$candidature->code_suivi}");
         $this->info("🔗 URL directe: http://localhost:8000/suivi/{$candidature->code_suivi}");
         $this->info("🔗 URL recherche: http://localhost:8000/suivi");
 
         // Test 2: Permissions Filament
         $this->info('');
-        $this->info('👤 TEST 2: Permissions Filament');
+        $this->info('TEST 2: Permissions Filament');
         $this->info('-------------------------------');
 
         $user = User::first();
         if ($user) {
-            $this->info("✅ Utilisateur admin trouvé: {$user->name}");
-            $this->info("📧 Email: {$user->email}");
+            $this->info("[OK] Utilisateur admin trouvé: {$user->name}");
+            $this->info("Email: {$user->email}");
             $this->info("🔓 Actif: " . ($user->is_active ? 'Oui' : 'Non'));
             
             try {
                 $canAccess = $user->canAccessPanel(app('filament')->getPanel('admin'));
-                $this->info("🔑 Accès Filament: " . ($canAccess ? 'Autorisé' : 'Refusé'));
+                $this->info("Accès Filament: " . ($canAccess ? 'Autorisé' : 'Refusé'));
             } catch (\Exception $e) {
-                $this->error("❌ Erreur test Filament: " . $e->getMessage());
+                $this->error("[ERREUR] Erreur test Filament: " . $e->getMessage());
             }
         } else {
-            $this->error("❌ Aucun utilisateur trouvé");
+            $this->error("[ERREUR] Aucun utilisateur trouvé");
         }
 
         // Test 3: Ressources Filament
@@ -83,12 +83,12 @@ class TestSuiviPage extends Command
             if (class_exists($class)) {
                 try {
                     $shouldRegister = $class::shouldRegisterNavigation() ?? true;
-                    $this->info("✅ {$name}: " . ($shouldRegister ? 'Visible' : 'Masquée'));
+                    $this->info("[OK] {$name}: " . ($shouldRegister ? 'Visible' : 'Masquée'));
                 } catch (\Exception $e) {
-                    $this->info("⚠️  {$name}: Erreur - " . $e->getMessage());
+                    $this->info("[ATTENTION] {$name}: Erreur - " . $e->getMessage());
                 }
             } else {
-                $this->error("❌ {$name}: Classe non trouvée");
+                $this->error("[ERREUR] {$name}: Classe non trouvée");
             }
         }
 
@@ -101,7 +101,7 @@ class TestSuiviPage extends Command
 
         // Instructions
         $this->info('');
-        $this->info('🔧 INSTRUCTIONS DE TEST');
+        $this->info('INSTRUCTIONS DE TEST');
         $this->info('======================');
         $this->info('1. Testez la page de suivi avec le code: ' . $candidature->code_suivi);
         $this->info('2. Connectez-vous à l\'admin avec: admin@bracongo.com');

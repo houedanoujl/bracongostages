@@ -57,7 +57,7 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
                 break;
 
             case StatutCandidature::VALIDE:
-                $message->line("🎉 Félicitations ! Votre candidature a été acceptée !")
+                $message->line("Félicitations ! Votre candidature a été acceptée !")
                     ->line("Détails de votre stage :")
                     ->line("• Début : " . $candidature->date_debut_stage->format('d/m/Y'))
                     ->line("• Fin : " . $candidature->date_fin_stage->format('d/m/Y'))

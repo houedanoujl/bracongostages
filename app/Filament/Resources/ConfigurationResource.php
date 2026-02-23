@@ -215,7 +215,7 @@ class ConfigurationResource extends Resource
                     ->tooltip(fn ($record) => $record->valeur)
                     ->formatStateUsing(function ($record) {
                         if ($record->type === 'boolean') {
-                            return $record->valeur === 'true' ? '✅ Oui' : '❌ Non';
+                            return $record->valeur === 'true' ? 'Oui' : 'Non';
                         }
                         
                         if ($record->type === 'json') {

@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Candidature;
 use App\Models\Message;
+use App\Models\User;
+use App\Notifications\NouveauMessageCandidatNotification;
 use Livewire\Component;
 
 class Messagerie extends Component
@@ -75,12 +77,23 @@ class Messagerie extends Component
 
         $candidat = auth('candidat')->user();
 
-        Message::create([
+        $message = Message::create([
             'candidature_id' => $this->candidatureId,
             'sender_type' => 'candidat',
             'sender_id' => $candidat->id,
             'contenu' => $this->newMessage,
         ]);
+
+        // Notifier les admins par email
+        try {
+            $candidature = Candidature::find($this->candidatureId);
+            $admins = User::where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new NouveauMessageCandidatNotification($message, $candidature));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur notification admin nouveau message: ' . $e->getMessage());
+        }
 
         $this->newMessage = '';
         $this->loadMessages();

@@ -34,7 +34,7 @@ return new class extends Migration
             $table->date('date_fin_publication')->nullable();
             
             // Informations supplémentaires
-            $table->string('icone')->default('💼'); // Emoji ou classe CSS
+            $table->string('icone')->default('briefcase'); // Emoji ou classe CSS
             $table->integer('ordre_affichage')->default(0);
             $table->json('directions_associees')->nullable(); // Array des directions concernées
             

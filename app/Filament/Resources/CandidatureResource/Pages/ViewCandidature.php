@@ -116,12 +116,12 @@ class ViewCandidature extends ViewRecord
                                     ->label('Type')
                                     ->formatStateUsing(function ($state) {
                                         $types = [
-                                            'cv' => '📄 CV',
-                                            'lettre_motivation' => '📝 Lettre de motivation',
-                                            'certificat_scolarite' => '🎓 Certificat de scolarité',
-                                            'releves_notes' => '📊 Relevés de notes',
-                                            'lettres_recommandation' => '📋 Lettres de recommandation',
-                                            'certificats_competences' => '🏆 Certificats de compétences',
+                                            'cv' => 'CV',
+                                            'lettre_motivation' => 'Lettre de motivation',
+                                            'certificat_scolarite' => 'Certificat de scolarité',
+                                            'releves_notes' => 'Relevés de notes',
+                                            'lettres_recommandation' => 'Lettres de recommandation',
+                                            'certificats_competences' => 'Certificats de compétences',
                                         ];
                                         return $types[$state] ?? $state;
                                     }),

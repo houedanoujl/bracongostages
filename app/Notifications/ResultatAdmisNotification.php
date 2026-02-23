@@ -26,7 +26,7 @@ class ResultatAdmisNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('🎉 Félicitations - Admis au Test - BRACONGO Stages')
+            ->subject('Félicitations - Admis au Test - BRACONGO Stages')
             ->view('emails.resultat-admis', [
                 'nom' => $this->candidature->nom,
                 'prenom' => $this->candidature->prenom,

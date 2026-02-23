@@ -180,11 +180,11 @@ class TemoignageResource extends Resource
                                 Select::make('note_experience')
                                     ->label('Note de l\'expérience')
                                     ->options([
-                                        1 => '⭐ (1/5)',
-                                        2 => '⭐⭐ (2/5)',
-                                        3 => '⭐⭐⭐ (3/5)',
-                                        4 => '⭐⭐⭐⭐ (4/5)',
-                                        5 => '⭐⭐⭐⭐⭐ (5/5)',
+                                        1 => '★ (1/5)',
+                                        2 => '★★ (2/5)',
+                                        3 => '★★★ (3/5)',
+                                        4 => '★★★★ (4/5)',
+                                        5 => '★★★★★ (5/5)',
                                     ])
                                     ->default(5)
                                     ->required()
@@ -245,7 +245,7 @@ class TemoignageResource extends Resource
                 
                 TextColumn::make('note_experience')
                     ->label('Note')
-                    ->getStateUsing(fn ($record) => str_repeat('⭐', $record->note_experience))
+                    ->getStateUsing(fn ($record) => str_repeat('star', $record->note_experience))
                     ->alignCenter(),
                 
                 BooleanColumn::make('mis_en_avant')
@@ -296,11 +296,11 @@ class TemoignageResource extends Resource
                 SelectFilter::make('note_experience')
                     ->label('Note d\'expérience')
                     ->options([
-                        5 => '⭐⭐⭐⭐⭐ (5/5)',
-                        4 => '⭐⭐⭐⭐ (4/5)',
-                        3 => '⭐⭐⭐ (3/5)',
-                        2 => '⭐⭐ (2/5)',
-                        1 => '⭐ (1/5)',
+                        5 => '★★★★★ (5/5)',
+                        4 => '★★★★ (4/5)',
+                        3 => '★★★ (3/5)',
+                        2 => '★★ (2/5)',
+                        1 => '★ (1/5)',
                     ])
                     ->multiple(),
             ])

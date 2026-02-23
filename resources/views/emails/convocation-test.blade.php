@@ -120,7 +120,7 @@
     <div class="container">
         <div class="header">
             <img src="{{ config('app.url') }}/images/logo-bracongo-white.png" alt="BRACONGO" class="logo">
-            <h1>📝 Convocation au Test</h1>
+            <h1>Convocation au Test</h1>
             <p>Programme de stages BRACONGO</p>
         </div>
 
@@ -135,7 +135,7 @@
             </div>
 
             <div class="info-box">
-                <h3>📋 Détails de la convocation</h3>
+                <h3>Détails de la convocation</h3>
                 <div class="detail-row">
                     <span class="detail-label">Date :</span>
                     <span class="detail-value">{{ \Carbon\Carbon::parse($date_test)->format('d/m/Y') }}</span>

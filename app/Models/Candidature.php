@@ -70,6 +70,7 @@ class Candidature extends Model
         'remboursement_effectue',
         'date_remboursement',
         'reference_paiement',
+        'chemin_justificatif_remboursement',
         'reponse_lettre_envoyee',
         'date_reponse_recommandation',
         'date_reponse_lettre',

@@ -164,7 +164,7 @@
 
             <!-- Informations de sécurité -->
             <div class="security-info">
-                <h3>🛡️ Informations importantes :</h3>
+                <h3>Informations importantes :</h3>
                 <p>• Ce lien est valide pendant <strong>24 heures</strong></p>
                 <p>• Si vous n'avez pas demandé cette réinitialisation, ignorez cet email</p>
                 <p>• Votre mot de passe actuel reste inchangé tant que vous n'en créez pas un nouveau</p>
@@ -194,7 +194,7 @@
             <p>Plateforme de Gestion des Stages</p>
             
             <div class="social-links">
-                <a href="mailto:stages@bracongo.cg">📧 Email</a>
+                <a href="mailto:stages@bracongo.cg">Email</a>
                 <a href="tel:+243">📞 Contact</a>
                 <a href="https://bracongo.cg">🌐 Site Web</a>
             </div>

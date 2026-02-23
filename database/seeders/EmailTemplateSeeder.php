@@ -38,6 +38,27 @@ class EmailTemplateSeeder extends Seeder
                 'contenu' => "Madame / Monsieur {nom},\n\nNous vous confirmons que votre stage au sein de Bracongo se déroulera selon les modalités suivantes :\n\nDate de début : {date_debut}\nDate de fin : {date_fin}\nDirection / Service d'affectation : {direction_service}\n\nNous vous prions de vous présenter le premier jour à {heure_presentation} auprès de la Direction des Ressources Humaines pour les formalités d'accueil.\n\nNous vous souhaitons pleine réussite dans cette expérience professionnelle.",
                 'placeholders_disponibles' => ['nom', 'prenom', 'email', 'date_debut', 'date_fin', 'direction_service', 'heure_presentation', 'code_suivi'],
             ],
+            [
+                'slug' => 'envoi_attestation',
+                'nom' => 'Envoi de l\'attestation de stage',
+                'sujet' => 'Votre attestation de stage - BRACONGO Stages',
+                'contenu' => "Bonjour {prenom} {nom},\n\nNous avons le plaisir de vous transmettre ci-joint votre attestation de stage BRACONGO (réf: {code_suivi}).\n\nNous vous remercions pour votre engagement durant votre période de stage.\n\nCordialement,\nL'équipe BRACONGO Stages",
+                'placeholders_disponibles' => ['nom', 'prenom', 'email', 'code_suivi'],
+            ],
+            [
+                'slug' => 'envoi_evaluation',
+                'nom' => 'Envoi de l\'évaluation de fin de stage',
+                'sujet' => 'Votre évaluation de fin de stage - BRACONGO Stages',
+                'contenu' => "Bonjour {prenom} {nom},\n\nVeuillez trouver ci-joint votre évaluation de fin de stage BRACONGO (réf: {code_suivi}).\n\nNote obtenue : {note_evaluation}/100\nAppréciation : {appreciation_tuteur}\n\nNous vous remercions pour votre engagement durant votre période de stage.\n\nCordialement,\nL'équipe BRACONGO Stages",
+                'placeholders_disponibles' => ['nom', 'prenom', 'email', 'code_suivi', 'note_evaluation', 'appreciation_tuteur'],
+            ],
+            [
+                'slug' => 'reponse_lettre_recommandation',
+                'nom' => 'Réponse à la lettre de recommandation',
+                'sujet' => 'Réponse à votre lettre de recommandation - BRACONGO Stages',
+                'contenu' => "Bonjour {prenom} {nom},\n\nVeuillez trouver ci-joint la réponse à votre lettre de recommandation concernant votre candidature (réf: {code_suivi}).\n\nCordialement,\nL'équipe BRACONGO Stages",
+                'placeholders_disponibles' => ['nom', 'prenom', 'email', 'code_suivi'],
+            ],
         ];
 
         foreach ($templates as $template) {

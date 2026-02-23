@@ -121,7 +121,7 @@ class Temoignage extends Model
      */
     public function getEtoilesAttribute(): string
     {
-        return str_repeat('⭐', $this->note_experience);
+        return str_repeat('star', $this->note_experience);
     }
 
     /**

@@ -188,7 +188,7 @@ class UserSeeder extends Seeder
         $this->command->info('16 utilisateurs BRACONGO créés avec succès.');
         $this->command->info('🍺 Équipe BRACONGO prête pour la gestion des stages !');
         $this->command->info('');
-        $this->command->info('📧 Comptes principaux :');
+        $this->command->info('Comptes principaux :');
         $this->command->info('   Admin RH: admin@bracongo.com / BracongoAdmin2024!');
         $this->command->info('   DG: dg@bracongo.com / BracongoDG2024!');
         $this->command->info('   Autres: password123');

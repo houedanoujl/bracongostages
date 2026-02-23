@@ -8,7 +8,7 @@
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <div class="text-center mb-8">
                     <h1 class="text-3xl font-bold text-bracongo-red-600 mb-4">
-                        🔍 Suivi de Candidature
+                        Suivi de Candidature
                     </h1>
                     <p class="text-gray-600">
                         Entrez votre code de suivi pour consulter l'état de votre candidature
@@ -97,25 +97,25 @@
                         <div class="flex items-start">
                             <div class="flex-shrink-0 text-2xl mr-3">
                                 {!! match($candidature->statut->value) {
-                                    'dossier_recu', 'non_traite' => '📥',
-                                    'analyse_dossier' => '🔍',
-                                    'dossier_incomplet' => '⚠️',
-                                    'attente_test', 'test_planifie' => '📝',
-                                    'test_passe', 'attente_resultats' => '✍️',
-                                    'attente_decision' => '⏳',
-                                    'accepte', 'valide' => '✅',
-                                    'planification', 'attente_affectation' => '📅',
+                                    'dossier_recu', 'non_traite' => 'inbox',
+                                    'analyse_dossier' => 'magnifying-glass',
+                                    'dossier_incomplet' => 'warning',
+                                    'attente_test', 'test_planifie' => 'edit',
+                                    'test_passe', 'attente_resultats' => 'pencil',
+                                    'attente_decision' => 'clock',
+                                    'accepte', 'valide' => 'check',
+                                    'planification', 'attente_affectation' => 'calendar',
                                     'affecte' => '🏢',
-                                    'reponse_lettre_envoyee' => '📨',
-                                    'induction_planifiee', 'induction_terminee' => '🎓',
-                                    'accueil_service' => '👋',
-                                    'stage_en_cours' => '💼',
-                                    'en_evaluation', 'evaluation_terminee' => '⭐',
-                                    'attestation_generee' => '📜',
-                                    'remboursement_en_cours' => '💰',
-                                    'termine' => '🎉',
-                                    'rejete' => '❌',
-                                    default => '📋'
+                                    'reponse_lettre_envoyee' => 'envelope',
+                                    'induction_planifiee', 'induction_terminee' => 'academic-cap',
+                                    'accueil_service' => 'hand-raised',
+                                    'stage_en_cours' => 'briefcase',
+                                    'en_evaluation', 'evaluation_terminee' => 'star',
+                                    'attestation_generee' => 'scroll',
+                                    'remboursement_en_cours' => 'banknotes',
+                                    'termine' => 'trophy',
+                                    'rejete' => 'x-mark',
+                                    default => 'clipboard'
                                 } !!}
                             </div>
                             <div>
@@ -164,39 +164,39 @@
                             [
                                 'name' => 'Réception & Analyse',
                                 'steps' => [
-                                    ['etape' => 1, 'label' => 'Dossier reçu', 'icon' => '📥'],
-                                    ['etape' => 2, 'label' => 'Analyse DRH', 'icon' => '🔍'],
+                                    ['etape' => 1, 'label' => 'Dossier reçu', 'icon' => 'inbox'],
+                                    ['etape' => 2, 'label' => 'Analyse DRH', 'icon' => 'magnifying-glass'],
                                 ]
                             ],
                             [
                                 'name' => 'Tests & Décision',
                                 'steps' => [
-                                    ['etape' => 3, 'label' => 'Test de niveau', 'icon' => '📝'],
-                                    ['etape' => 4, 'label' => 'Décision finale', 'icon' => '⚖️'],
-                                    ['etape' => 5, 'label' => 'Candidature acceptée', 'icon' => '✅'],
+                                    ['etape' => 3, 'label' => 'Test de niveau', 'icon' => 'edit'],
+                                    ['etape' => 4, 'label' => 'Décision finale', 'icon' => 'scale'],
+                                    ['etape' => 5, 'label' => 'Candidature acceptée', 'icon' => 'check'],
                                 ]
                             ],
                             [
                                 'name' => 'Intégration',
                                 'steps' => [
                                     ['etape' => 6, 'label' => 'Affectation service', 'icon' => '🏢'],
-                                    ['etape' => 7, 'label' => 'Réponse établissement', 'icon' => '📨'],
-                                    ['etape' => 8, 'label' => 'Induction RH', 'icon' => '🎓'],
+                                    ['etape' => 7, 'label' => 'Réponse établissement', 'icon' => 'envelope'],
+                                    ['etape' => 8, 'label' => 'Induction RH', 'icon' => 'academic-cap'],
                                 ]
                             ],
                             [
                                 'name' => 'Stage',
                                 'steps' => [
-                                    ['etape' => 9, 'label' => 'Accueil service', 'icon' => '👋'],
-                                    ['etape' => 10, 'label' => 'Stage en cours', 'icon' => '💼'],
-                                    ['etape' => 11, 'label' => 'Évaluation', 'icon' => '⭐'],
+                                    ['etape' => 9, 'label' => 'Accueil service', 'icon' => 'hand-raised'],
+                                    ['etape' => 10, 'label' => 'Stage en cours', 'icon' => 'briefcase'],
+                                    ['etape' => 11, 'label' => 'Évaluation', 'icon' => 'star'],
                                 ]
                             ],
                             [
                                 'name' => 'Clôture',
                                 'steps' => [
-                                    ['etape' => 12, 'label' => 'Attestation', 'icon' => '📜'],
-                                    ['etape' => 13, 'label' => 'Stage terminé', 'icon' => '🎉'],
+                                    ['etape' => 12, 'label' => 'Attestation', 'icon' => 'scroll'],
+                                    ['etape' => 13, 'label' => 'Stage terminé', 'icon' => 'trophy'],
                                 ]
                             ],
                         ];
@@ -208,22 +208,24 @@
                                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
                                     {{ $phase['name'] }}
                                 </h3>
-                                <div class="space-y-4">
+                                {{-- Sous-étapes en ligne --}}
+                                <div class="flex items-start">
                                     @foreach($phase['steps'] as $step)
                                         @php
                                             $isCompleted = $currentStep > $step['etape'] || ($currentStep == 13 && $step['etape'] == 13);
-                                            $isCurrent = $currentStep == $step['etape'] && !$isRejected;
-                                            $isPending = $currentStep < $step['etape'];
+                                            $isCurrent   = $currentStep == $step['etape'] && !$isRejected;
                                         @endphp
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg
-                                                @if($isRejected && $step['etape'] >= $currentStep) 
+
+                                        {{-- Colonne : cercle + label --}}
+                                        <div class="flex flex-col items-center flex-1 min-w-0">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
+                                                @if($isRejected && $step['etape'] >= $currentStep)
                                                     bg-red-100 text-red-500
-                                                @elseif($isCompleted) 
+                                                @elseif($isCompleted)
                                                     bg-green-100 text-green-600
-                                                @elseif($isCurrent) 
+                                                @elseif($isCurrent)
                                                     bg-blue-100 text-blue-600 ring-2 ring-blue-400 ring-offset-2
-                                                @else 
+                                                @else
                                                     bg-gray-100 text-gray-400
                                                 @endif">
                                                 @if($isCompleted && !$isRejected)
@@ -234,32 +236,43 @@
                                                     {{ $step['icon'] }}
                                                 @endif
                                             </div>
-                                            <div class="ml-4 flex-1">
-                                                <p class="text-sm font-medium @if($isCompleted && !$isRejected) text-green-700 @elseif($isCurrent) text-blue-700 @elseif($isRejected && $step['etape'] >= $currentStep) text-red-400 @else text-gray-500 @endif">
-                                                    {{ $step['label'] }}
-                                                </p>
-                                                @if($isCurrent)
-                                                    <p class="text-xs text-blue-500 mt-1">← Vous êtes ici</p>
-                                                @endif
-                                            </div>
+                                            <p class="text-xs text-center mt-2 px-1 leading-tight
+                                                @if($isCompleted && !$isRejected) text-green-700 font-medium
+                                                @elseif($isCurrent) text-blue-700 font-semibold
+                                                @elseif($isRejected && $step['etape'] >= $currentStep) text-red-400
+                                                @else text-gray-400
+                                                @endif">
+                                                {{ $step['label'] }}
+                                            </p>
+                                            @if($isCurrent)
+                                                <p class="text-xs text-blue-500 mt-1 text-center">▲ Vous êtes ici</p>
+                                            @endif
                                         </div>
+
+                                        {{-- Ligne de connexion entre étapes --}}
+                                        @if(!$loop->last)
+                                            <div class="flex-shrink-0 w-6 h-0.5 mt-5
+                                                @if($isCompleted && !$isRejected) bg-green-400
+                                                @elseif($isRejected) bg-red-200
+                                                @else bg-gray-200
+                                                @endif">
+                                            </div>
+                                        @endif
                                     @endforeach
                                 </div>
                             </div>
                         @endforeach
 
                         @if($isRejected)
-                            <div class="border-t border-red-200 pt-4">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-red-500 text-white text-lg">
-                                        ❌
-                                    </div>
-                                    <div class="ml-4 flex-1">
-                                        <p class="text-sm font-medium text-red-700">Candidature rejetée</p>
-                                        @if($candidature->motif_rejet)
-                                            <p class="text-xs text-red-500 mt-1">{{ $candidature->motif_rejet }}</p>
-                                        @endif
-                                    </div>
+                            <div class="border-t border-red-200 pt-4 flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-red-500 text-white text-lg flex-shrink-0">
+                                    ❌
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-red-700">Candidature rejetée</p>
+                                    @if($candidature->motif_rejet)
+                                        <p class="text-xs text-red-500 mt-1">{{ $candidature->motif_rejet }}</p>
+                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -269,7 +282,7 @@
                 <!-- Informations détaillées selon l'étape -->
                 @if(in_array($candidature->statut->value, ['attente_test', 'test_planifie']) && $candidature->date_test)
                     <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-yellow-800 mb-4">📝 Informations sur votre test</h3>
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-4">Informations sur votre test</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-sm text-yellow-700 font-medium">Date du test</p>
@@ -296,7 +309,7 @@
                                 <p class="text-sm text-blue-700 font-medium">Résultat</p>
                                 <p class="text-blue-800 font-semibold">
                                     @if($candidature->resultat_test === 'admis')
-                                        ✅ Admis
+                                        Admis
                                     @elseif($candidature->resultat_test === 'ajourne')
                                         ⏳ Ajourné
                                     @else
@@ -310,7 +323,7 @@
 
                 @if(in_array($candidature->statut->value, ['affecte', 'reponse_lettre_envoyee', 'induction_planifiee', 'induction_terminee', 'accueil_service', 'stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']))
                     <div class="bg-green-50 border border-green-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-green-800 mb-4">🏢 Informations d'affectation</h3>
+                        <h3 class="text-lg font-semibold text-green-800 mb-4">Informations d'affectation</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             @if($candidature->service_affecte)
                                 <div>
@@ -360,7 +373,7 @@
 
                 @if(in_array($candidature->statut->value, ['induction_terminee', 'accueil_service', 'stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']) && $candidature->date_induction)
                     <div class="bg-purple-50 border border-purple-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-purple-800 mb-4">🎓 Dates clés de votre intégration</h3>
+                        <h3 class="text-lg font-semibold text-purple-800 mb-4">Dates clés de votre intégration</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             @if($candidature->date_induction)
                                 <div class="text-center p-3 bg-purple-100 rounded-lg">
@@ -386,7 +399,7 @@
 
                 @if(in_array($candidature->statut->value, ['evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']) && $candidature->note_evaluation)
                     <div class="bg-orange-50 border border-orange-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-orange-800 mb-4">⭐ Évaluation de fin de stage</h3>
+                        <h3 class="text-lg font-semibold text-orange-800 mb-4">Évaluation de fin de stage</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-sm text-orange-700 font-medium">Note finale</p>
@@ -404,7 +417,7 @@
 
                 @if(in_array($candidature->statut->value, ['attestation_generee', 'remboursement_en_cours', 'termine']) && $candidature->attestation_generee)
                     <div class="bg-teal-50 border border-teal-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-teal-800 mb-4">📜 Attestation de stage</h3>
+                        <h3 class="text-lg font-semibold text-teal-800 mb-4">Attestation de stage</h3>
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-teal-700">Votre attestation a été générée le {{ $candidature->date_attestation ? \Carbon\Carbon::parse($candidature->date_attestation)->format('d/m/Y') : '' }}</p>
@@ -417,7 +430,7 @@
 
                 @if($candidature->statut->value === 'termine' && $candidature->remboursement_effectue)
                     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-emerald-800 mb-4">💰 Remboursement transport</h3>
+                        <h3 class="text-lg font-semibold text-emerald-800 mb-4">Remboursement transport</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-sm text-emerald-700 font-medium">Montant remboursé</p>
@@ -457,7 +470,7 @@
                 <!-- Rejection reason (if rejected) -->
                 @if($candidature->statut->value === 'rejete' && $candidature->motif_rejet)
                     <div class="bg-red-50 border border-red-200 rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-red-800 mb-4">❌ Motif du rejet</h3>
+                        <h3 class="text-lg font-semibold text-red-800 mb-4">Motif du rejet</h3>
                         <p class="text-red-700">{{ $candidature->motif_rejet }}</p>
                         <div class="mt-4 p-3 bg-red-100 rounded-lg">
                             <p class="text-sm text-red-800">
@@ -470,7 +483,7 @@
                 <!-- Documents -->
                 @if($candidature->documents->count() > 0)
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📎 Documents soumis</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Documents soumis</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             @foreach($candidature->documents as $document)
                                 <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">

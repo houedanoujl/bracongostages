@@ -27,7 +27,7 @@ class ConvocationTestNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('📝 Convocation au Test - BRACONGO Stages')
+            ->subject('Convocation au Test - BRACONGO Stages')
             ->view('emails.convocation-test', [
                 'nom' => $this->candidature->nom,
                 'prenom' => $this->candidature->prenom,

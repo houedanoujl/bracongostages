@@ -26,7 +26,7 @@ class ResultatNonAdmisNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('📋 Résultat du Test - BRACONGO Stages')
+            ->subject('Résultat du Test - BRACONGO Stages')
             ->view('emails.resultat-non-admis', [
                 'nom' => $this->candidature->nom,
                 'prenom' => $this->candidature->prenom,

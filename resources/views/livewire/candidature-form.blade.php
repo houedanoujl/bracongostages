@@ -282,7 +282,7 @@
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-medium text-red-800 mb-2">⚠️ Action requise</h3>
+                                <h3 class="text-sm font-medium text-red-800 mb-2">[ATTENTION] Action requise</h3>
                                 @if(session()->has('validation_error'))
                                     <p class="text-sm text-red-700 font-medium">{{ session('validation_error') }}</p>
                                 @endif
@@ -425,9 +425,17 @@
                             </div>
 
                             <div>
-                                <label for="poste_souhaite" class="block text-sm font-medium text-gray-700 mb-2">Poste souhaité *</label>
-                                <select wire:model="poste_souhaite" id="poste_souhaite" 
-                                        class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('poste_souhaite') border-red-500 @enderror">
+                                <label for="poste_souhaite" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Poste souhaité *
+                                    @if($vientDuneOffre)
+                                        <span class="ml-2 text-xs font-normal text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">Prédéfini par l'offre</span>
+                                    @endif
+                                </label>
+                                <select wire:model="poste_souhaite" id="poste_souhaite"
+                                        {{ $vientDuneOffre ? 'disabled' : '' }}
+                                        class="w-full rounded-lg border px-4 py-3
+                                               {{ $vientDuneOffre ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : 'border-gray-300 focus:border-red-600 focus:ring-red-600' }}
+                                               @error('poste_souhaite') border-red-500 @enderror">
                                     <option value="">Sélectionner un poste</option>
                                     @foreach(\App\Models\Candidature::getPostesDisponibles() as $poste_key => $poste_label)
                                         <option value="{{ $poste_key }}">{{ $poste_label }}</option>
@@ -437,13 +445,28 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Directions souhaitées *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Directions souhaitées *
+                                    @if($vientDuneOffre)
+                                        <span class="ml-2 text-xs font-normal text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">Prédéfinies par l'offre</span>
+                                    @endif
+                                </label>
+                                @if($vientDuneOffre)
+                                    <p class="text-xs text-amber-700 mb-3 flex items-center gap-1">
+                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Ces directions sont automatiquement associées à l'offre que vous avez sélectionnée.
+                                    </p>
+                                @endif
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     @foreach($directions_disponibles as $direction_key => $direction_label)
-                                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                                            <input wire:model="directions_souhaitees" type="checkbox" value="{{ $direction_key }}" 
-                                                   class="rounded border-gray-300 text-red-600 focus:ring-red-600">
-                                            <span class="ml-3 text-sm text-gray-700">{{ $direction_label }}</span>
+                                        <label class="flex items-center p-3 rounded-lg border
+                                                      {{ $vientDuneOffre ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-70' : 'border-gray-200 hover:bg-gray-50 cursor-pointer' }}">
+                                            <input wire:model="directions_souhaitees" type="checkbox" value="{{ $direction_key }}"
+                                                   {{ $vientDuneOffre ? 'disabled' : '' }}
+                                                   class="rounded border-gray-300 text-red-600 focus:ring-red-600 {{ $vientDuneOffre ? 'cursor-not-allowed' : '' }}">
+                                            <span class="ml-3 text-sm {{ $vientDuneOffre ? 'text-gray-500' : 'text-gray-700' }}">{{ $direction_label }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -628,7 +651,7 @@
                                                 <div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                                     <div class="flex items-center justify-between">
                                                         <div>
-                                                            <p class="text-sm text-yellow-800">📄 CV du profil disponible mais non utilisé</p>
+                                                            <p class="text-sm text-yellow-800">CV du profil disponible mais non utilisé</p>
                                                             <p class="text-xs text-yellow-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
                                                         </div>
                                                         <a href="{{ asset('storage/' . $cvCandidat->chemin_fichier) }}" target="_blank" 
@@ -645,7 +668,7 @@
                                                 <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                                                     <div class="flex items-center justify-between">
                                                         <div>
-                                                            <p class="text-sm text-green-800">📄 CV du profil disponible</p>
+                                                            <p class="text-sm text-green-800">CV du profil disponible</p>
                                                             <p class="text-xs text-green-600">{{ $cvCandidat->nom_original }} ({{ $cvCandidat->taille_formatee }})</p>
                                                         </div>
                                                         <div class="flex items-center space-x-2">
@@ -748,7 +771,7 @@
                                             </div>
                                         @else
                                             <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                                <p class="text-sm text-amber-800">⚠️ Aucun certificat dans votre profil. Veuillez en télécharger un.</p>
+                                                <p class="text-sm text-amber-800">[ATTENTION] Aucun certificat dans votre profil. Veuillez en télécharger un.</p>
                                             </div>
                                         @endif
                                     @endauth
@@ -810,7 +833,7 @@
                                             </div>
                                         @else
                                             <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                                <p class="text-sm text-amber-800">⚠️ Aucune lettre dans votre profil. Veuillez en télécharger une.</p>
+                                                <p class="text-sm text-amber-800">[ATTENTION] Aucune lettre dans votre profil. Veuillez en télécharger une.</p>
                                             </div>
                                         @endif
                                     @endauth

@@ -29,14 +29,14 @@ while ($attempt < $maxAttempts) {
         // Test simple de connexion
         $pdo->query('SELECT 1');
         
-        echo "✅ Base de données MySQL prête !\n";
+        echo "[OK] Base de données MySQL prête !\n";
         exit(0);
         
     } catch (PDOException $e) {
         echo "Tentative {$attempt}/{$maxAttempts} : {$e->getMessage()}\n";
         
         if ($attempt >= $maxAttempts) {
-            echo "❌ Impossible de se connecter à MySQL après {$maxAttempts} tentatives.\n";
+            echo "[ERREUR] Impossible de se connecter à MySQL après {$maxAttempts} tentatives.\n";
             exit(1);
         }
         

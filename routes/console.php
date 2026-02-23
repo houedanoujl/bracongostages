@@ -28,9 +28,9 @@ Artisan::command('send-mail', function () {
         )->send($email);
 
         $result = ResponseHelper::toArray($response);
-        $this->info('✅ Email envoyé avec succès!');
+        $this->info('[OK] Email envoyé avec succès!');
         $this->table(['Clé', 'Valeur'], collect($result)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray());
     } catch (\Exception $e) {
-        $this->error('❌ Erreur: ' . $e->getMessage());
+        $this->error('[ERREUR] Erreur: ' . $e->getMessage());
     }
 })->purpose('Envoyer un email de test via Mailtrap');

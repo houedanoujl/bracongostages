@@ -121,7 +121,7 @@
 <body>
     <header class="header">
         <div class="container">
-            <div class="logo">🏭 BRACONGO</div>
+            <div class="logo">BRACONGO</div>
         </div>
     </header>
     
@@ -131,29 +131,29 @@
             <p>Postulez pour un stage chez BRACONGO - Brasseries du Congo</p>
             
             <div class="buttons">
-                <a href="/candidature" class="btn">📝 Nouvelle Candidature</a>
-                <a href="/suivi" class="btn secondary">🔍 Suivi de Candidature</a>
-                <a href="/admin" class="btn secondary">👤 Administration</a>
-                <a href="/test" class="btn secondary">🔧 Test Technique</a>
+                <a href="/candidature" class="btn">Nouvelle Candidature</a>
+                <a href="/suivi" class="btn secondary">Suivi de Candidature</a>
+                <a href="/admin" class="btn secondary">Administration</a>
+                <a href="/test" class="btn secondary">Test Technique</a>
             </div>
             
             <div class="features">
                 <div class="feature">
-                    <h3>🎯 Candidature Simplifiée</h3>
+                    <h3>Candidature Simplifiée</h3>
                     <p>Formulaire intuitif en plusieurs étapes pour soumettre votre candidature facilement</p>
                 </div>
                 <div class="feature">
-                    <h3>📊 Suivi en Temps Réel</h3>
+                    <h3>Suivi en Temps Réel</h3>
                     <p>Suivez l'évolution de votre dossier avec un code de suivi personnalisé</p>
                 </div>
                 <div class="feature">
-                    <h3>⚡ Traitement Rapide</h3>
+                    <h3>Traitement Rapide</h3>
                     <p>Notifications automatiques à chaque étape de validation de votre candidature</p>
                 </div>
             </div>
             
             <div class="status">
-                ✅ Application BRACONGO Stages déployée avec succès<br>
+                [OK] Application BRACONGO Stages déployée avec succès<br>
                 🚀 Interface candidat opérationnelle<br>
                 🔧 Configuration Docker avec extension PHP intl installée
             </div>

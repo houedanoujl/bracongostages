@@ -17,6 +17,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('09:00')
             ->appendOutputTo(storage_path('logs/stages-notifications.log'));
 
+        // Digest quotidien des messages non lus à 8h
+        $schedule->command('messages:digest')
+            ->dailyAt('08:00')
+            ->appendOutputTo(storage_path('logs/messages-digest.log'));
+
         // Nettoyer les fichiers temporaires Livewire chaque semaine
         $schedule->command('livewire:discover')
             ->weekly()

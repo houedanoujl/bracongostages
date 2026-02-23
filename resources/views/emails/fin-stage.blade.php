@@ -129,7 +129,7 @@
     <div class="container">
         <div class="header">
             <img src="{{ config('app.url') }}/images/logo-bracongo-white.png" alt="BRACONGO" class="logo">
-            <h1>🎓 Fin de Stage</h1>
+            <h1>Fin de Stage</h1>
             <p>Votre expérience chez BRACONGO</p>
         </div>
 
@@ -145,7 +145,7 @@
             </div>
 
             <div class="stage-details">
-                <h3>📋 Récapitulatif de votre stage</h3>
+                <h3>Récapitulatif de votre stage</h3>
                 <div class="detail-row">
                     <span class="detail-label">Code de suivi :</span>
                     <span class="detail-value">{{ $candidature->code_suivi }}</span>
@@ -169,7 +169,7 @@
             </div>
 
             <div class="highlight">
-                <h3 style="margin-top: 0; color: #92400e;">💡 Partagez votre expérience</h3>
+                <h3 style="margin-top: 0; color: #92400e;">Partagez votre expérience</h3>
                 <p style="margin-bottom: 0; color: #92400e;">
                     Votre retour est précieux pour nous ! En quelques minutes, vous pouvez nous aider à améliorer l'expérience des futurs stagiaires en évaluant votre stage.
                 </p>
@@ -177,7 +177,7 @@
 
             <div style="text-align: center;">
                 <a href="{{ route('candidature.evaluation', $candidature) }}" class="cta-button">
-                    📝 Évaluer mon stage
+                    Évaluer mon stage
                 </a>
             </div>
 
@@ -202,8 +202,8 @@
             
             <div class="social-links">
                 <a href="https://www.bracongo.cg" target="_blank">🌐 Site web</a>
-                <a href="mailto:stages@bracongo.cg">📧 Contact</a>
-                <a href="tel:+242012345678">📞 Téléphone</a>
+                <a href="mailto:stages@bracongo.cg">Contact</a>
+                <a href="tel:+242012345678">Téléphone</a>
             </div>
             
             <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
