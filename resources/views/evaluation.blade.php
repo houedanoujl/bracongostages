@@ -111,7 +111,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Accueil et intégration
                                 </label>
-                                <select name="accueil_integration" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
+                                <select name="accueil_integration" class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -124,7 +124,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Encadrement et suivi
                                 </label>
-                                <select name="encadrement_suivi" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
+                                <select name="encadrement_suivi" class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -137,7 +137,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Conditions de travail
                                 </label>
-                                <select name="conditions_travail" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
+                                <select name="conditions_travail" class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -150,7 +150,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Ambiance de travail
                                 </label>
-                                <select name="ambiance_travail" class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
+                                <select name="ambiance_travail" class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500" required>
                                     <option value="">Sélectionnez...</option>
                                     <option value="excellent">Excellent</option>
                                     <option value="bon">Bon</option>
@@ -171,7 +171,7 @@
                                     Quelles compétences avez-vous développées pendant ce stage ?
                                 </label>
                                 <textarea name="competences_developpees" rows="4" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
+                                          class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Décrivez les compétences techniques, relationnelles, organisationnelles..."></textarea>
                             </div>
 
@@ -180,7 +180,7 @@
                                     Ce stage a-t-il répondu à vos attentes ?
                                 </label>
                                 <textarea name="reponse_attentes" rows="3" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
+                                          class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="En quoi ce stage a-t-il répondu ou non à vos attentes initiales ?"></textarea>
                             </div>
 
@@ -189,7 +189,7 @@
                                     Quels aspects du stage ont été les plus enrichissants ?
                                 </label>
                                 <textarea name="aspects_enrichissants" rows="3" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
+                                          class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Projets, missions, rencontres, découvertes..."></textarea>
                             </div>
                         </div>
@@ -205,7 +205,7 @@
                                     Que pourrions-nous améliorer pour les futurs stagiaires ?
                                 </label>
                                 <textarea name="suggestions_amelioration" rows="4" 
-                                          class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
+                                          class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                           placeholder="Vos suggestions pour améliorer l'expérience des futurs stagiaires..."></textarea>
                             </div>
 
@@ -238,7 +238,7 @@
                                 Avez-vous d'autres commentaires ou suggestions ?
                             </label>
                             <textarea name="commentaire_libre" rows="4" 
-                                      class="w-full border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
+                                      class="w-full border border-gray-300 rounded-lg focus:ring-bracongo-red-500 focus:border-bracongo-red-500"
                                       placeholder="Tout autre commentaire que vous souhaitez partager..."></textarea>
                         </div>
                     </div>

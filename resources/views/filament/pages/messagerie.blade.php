@@ -508,7 +508,7 @@
                                 <div class="msg-bubble {{ $msg['sender_type'] === 'admin' ? 'admin' : 'candidat' }}">
                                     <div class="bubble-text">
                                         @if($msg['sender_type'] === 'admin')
-                                            {!! $msg['contenu'] !!}
+                                            {!! \Illuminate\Support\Str::of($msg['contenu'])->stripTags('<p><br><b><strong><i><em><u><ul><ol><li><a>') !!}
                                         @else
                                             <p>{{ $msg['contenu'] }}</p>
                                         @endif

@@ -96,7 +96,7 @@
                     <div class="p-4 rounded-lg {{ $candidature->statut->value === 'rejete' ? 'bg-red-50' : 'bg-blue-50' }}">
                         <div class="flex items-start">
                             <div class="flex-shrink-0 text-2xl mr-3">
-                                {!! match($candidature->statut->value) {
+                                {{ match($candidature->statut->value) {
                                     'dossier_recu', 'non_traite' => 'inbox',
                                     'analyse_dossier' => 'magnifying-glass',
                                     'dossier_incomplet' => 'warning',
@@ -116,14 +116,14 @@
                                     'termine' => 'trophy',
                                     'rejete' => 'x-mark',
                                     default => 'clipboard'
-                                } !!}
+                                } }}
                             </div>
                             <div>
                                 <h3 class="font-semibold {{ $candidature->statut->value === 'rejete' ? 'text-red-800' : 'text-blue-800' }}">
                                     {{ $candidature->statut->getLabel() }}
                                 </h3>
                                 <p class="text-sm {{ $candidature->statut->value === 'rejete' ? 'text-red-700' : 'text-blue-700' }} mt-1">
-                                    {!! match($candidature->statut->value) {
+                                    {{ match($candidature->statut->value) {
                                         'dossier_recu', 'non_traite' => 'Votre candidature a été reçue et sera bientôt examinée par notre équipe RH.',
                                         'analyse_dossier' => 'Votre dossier est actuellement en cours d\'analyse par notre équipe RH.',
                                         'dossier_incomplet' => 'Des informations complémentaires sont requises. Veuillez vérifier votre email.',
@@ -145,7 +145,7 @@
                                         'termine' => 'Votre stage est officiellement terminé. Merci pour votre contribution !',
                                         'rejete' => $candidature->motif_rejet ?? 'Votre candidature n\'a pas été retenue.',
                                         default => 'Votre candidature est en cours de traitement.'
-                                    } !!}
+                                    } }}
                                 </p>
                             </div>
                         </div>

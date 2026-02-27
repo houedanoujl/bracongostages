@@ -54,16 +54,18 @@ class CandidatController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        // Traitement du CV
+        // Traitement du CV (nom de fichier sécurisé avec UUID)
         $cvPath = null;
         if ($request->hasFile('cv')) {
-            $cvPath = $request->file('cv')->store('cvs', 'public');
+            $ext = $request->file('cv')->getClientOriginalExtension();
+            $cvPath = $request->file('cv')->storeAs('cvs', Str::uuid() . '.' . $ext, 'public');
         }
 
-        // Traitement de la photo
+        // Traitement de la photo (nom de fichier sécurisé avec UUID)
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('photos', 'public');
+            $ext = $request->file('photo')->getClientOriginalExtension();
+            $photoPath = $request->file('photo')->storeAs('photos', Str::uuid() . '.' . $ext, 'public');
         }
 
         // Création du candidat
@@ -277,25 +279,23 @@ class CandidatController extends Controller
             'nom', 'prenom', 'telephone', 'etablissement', 'niveau_etude', 'faculte'
         ]));
 
-        // Mise à jour du CV
+        // Mise à jour du CV (nom de fichier sécurisé avec UUID)
         if ($request->hasFile('cv')) {
-            // Supprimer l'ancien CV
             if ($candidat->cv_path) {
                 Storage::disk('public')->delete($candidat->cv_path);
             }
-            
-            $cvPath = $request->file('cv')->store('cvs', 'public');
+            $ext = $request->file('cv')->getClientOriginalExtension();
+            $cvPath = $request->file('cv')->storeAs('cvs', Str::uuid() . '.' . $ext, 'public');
             $candidat->update(['cv_path' => $cvPath]);
         }
 
-        // Mise à jour de la photo
+        // Mise à jour de la photo (nom de fichier sécurisé avec UUID)
         if ($request->hasFile('photo')) {
-            // Supprimer l'ancienne photo
             if ($candidat->photo_path) {
                 Storage::disk('public')->delete($candidat->photo_path);
             }
-            
-            $photoPath = $request->file('photo')->store('photos', 'public');
+            $ext = $request->file('photo')->getClientOriginalExtension();
+            $photoPath = $request->file('photo')->storeAs('photos', Str::uuid() . '.' . $ext, 'public');
             $candidat->update(['photo_path' => $photoPath]);
         }
 
@@ -413,8 +413,9 @@ class CandidatController extends Controller
                         $ancienDocument->delete(); // Le hook supprimera automatiquement le fichier
                     }
 
-                    // Stocker le nouveau document
-                    $path = $file->store('documents_candidat', 'public');
+                    // Stocker le nouveau document (nom sécurisé avec UUID)
+                    $ext = $file->getClientOriginalExtension();
+                    $path = $file->storeAs('documents_candidat', Str::uuid() . '.' . $ext, 'public');
 
                     // Créer l'enregistrement en base
                     \App\Models\DocumentCandidat::create([

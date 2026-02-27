@@ -53,63 +53,7 @@ Route::post('/suivi/search', function (\Illuminate\Http\Request $request) {
     return redirect('/suivi/' . $candidature->code_suivi);
 })->name('candidature.suivi.search');
 
-// Route de diagnostic email (protégée par secret) - à supprimer après debug
-Route::get('/debug-mail/{secret}', function ($secret) {
-    if ($secret !== 'bracongo2026diag') {
-        abort(404);
-    }
-
-    $results = [];
-
-    // 1. Config mail
-    $results['mail_default'] = config('mail.default');
-    $results['mail_from'] = config('mail.from');
-    $results['mailers_defined'] = array_keys(config('mail.mailers', []));
-    $results['mailtrap_config'] = config('mail.mailers.mailtrap', 'NOT DEFINED');
-    $results['mailtrap_api_key_set'] = !empty(config('mail.mailers.mailtrap.apiKey', config('services.mailtrap-sdk.apiKey')));
-    $results['services_mailtrap'] = config('services.mailtrap-sdk', 'NOT DEFINED');
-    $results['env_mail_mailer'] = env('MAIL_MAILER', 'NOT SET');
-    $results['env_mailtrap_key'] = env('MAILTRAP_API_KEY') ? 'SET (' . substr(env('MAILTRAP_API_KEY'), 0, 8) . '...)' : 'NOT SET';
-    $results['config_cached'] = file_exists(base_path('bootstrap/cache/config.php')) ? 'YES' : 'NO';
-
-    // 2. Provider check
-    $results['mailtrap_provider_loaded'] = class_exists(\Mailtrap\Bridge\Laravel\MailtrapSdkProvider::class) ? 'YES' : 'NO';
-
-    // 3. Test transport
-    try {
-        $mailer = app('mail.manager')->mailer('mailtrap');
-        $results['transport_class'] = get_class($mailer->getSymfonyTransport());
-        $results['transport_status'] = 'OK';
-    } catch (\Exception $e) {
-        $results['transport_error'] = $e->getMessage();
-        $results['transport_class'] = get_class($e);
-    }
-
-    // 4. Test envoi
-    if (request()->has('test')) {
-        try {
-            \Illuminate\Support\Facades\Notification::route('mail', request('test'))
-                ->notify(new \App\Notifications\EmailGeneriqueNotification(
-                    'Test diagnostic BRACONGO - ' . now()->format('H:i:s'),
-                    'Ceci est un email de test envoyé depuis la route de diagnostic.'
-                ));
-            $results['send_test'] = 'SUCCESS - envoyé à ' . request('test');
-        } catch (\Exception $e) {
-            $results['send_test'] = 'FAILED: ' . $e->getMessage();
-            $results['send_trace'] = collect(explode("\n", $e->getTraceAsString()))->take(5)->implode("\n");
-        }
-    }
-
-    // 5. Dernières erreurs log
-    $logFile = storage_path('logs/laravel.log');
-    if (file_exists($logFile)) {
-        $lines = array_slice(file($logFile), -30);
-        $errorLines = array_filter($lines, fn($l) => str_contains($l, 'ERROR') || str_contains($l, 'mail') || str_contains($l, 'Mailtrap'));
-        $results['recent_errors'] = array_values(array_slice($errorLines, -10));
-    }
-
-    return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-});
+// Route de diagnostic email supprimée pour raisons de sécurité
 
 // Routes pour les évaluations
 Route::get('/evaluation/{candidature}', [App\Http\Controllers\EvaluationController::class, 'show'])
@@ -141,33 +85,14 @@ Route::get('/opportunites/{slug}', function ($slug) {
 Route::get('/contact', [App\Http\Controllers\ContactController::class, 'show'])
     ->name('contact');
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
     ->name('contact.store');
 
-// API pour tests et monitoring
+// Health check minimaliste (ne pas exposer de détails techniques en production)
 Route::get('/api/health', function () {
     return response()->json([
         'status' => 'healthy',
         'timestamp' => now()->format('Y-m-d H:i:s'),
-        'database' => \DB::connection()->getPdo() ? 'connected' : 'disconnected',
-        'cache' => \Cache::get('test') !== null ? 'working' : 'not working',
-        'queue' => 'redis',
-        'version' => app()->version(),
-    ]);
-});
-
-// Test simple pour vérifier que l'application fonctionne
-Route::get('/test', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'BRACONGO Stages - Application fonctionnelle !',
-        'timestamp' => now()->format('Y-m-d H:i:s'),
-        'extensions' => [
-            'intl' => extension_loaded('intl'),
-            'redis' => extension_loaded('redis'),
-            'pdo_mysql' => extension_loaded('pdo_mysql')
-        ],
-        'php_version' => PHP_VERSION,
-        'laravel_version' => app()->version()
     ]);
 });
 
@@ -179,69 +104,77 @@ Route::get('/login', function () {
 // Route pour servir les images uploadées (workaround Nginx)
 Route::get('/uploads/{path}', function ($path) {
     try {
-        $file = storage_path('app/public/' . $path);
-        
-        \Log::info('Trying to serve file: ' . $file);
-        
-        if (!file_exists($file)) {
-            \Log::error('File not found: ' . $file);
+        // Sécurité: empêcher le path traversal en interdisant ".." et chemins absolus
+        if (str_contains($path, '..') || str_starts_with($path, '/') || str_starts_with($path, '\\')) {
+            abort(403, 'Accès interdit.');
+        }
+
+        // Vérifier que le fichier existe via le disque Storage (évite manipulation directe du chemin)
+        if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
             abort(404);
         }
-        
-        $mimeType = mime_content_type($file);
-        \Log::info('Serving file with mime type: ' . $mimeType);
-        
-        return response()->file($file, ['Content-Type' => $mimeType]);
+
+        // Limiter aux types MIME autorisés (images, PDF, documents)
+        $allowedMimes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+            'application/pdf',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
+        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($path);
+        if (!in_array($mimeType, $allowedMimes)) {
+            abort(403, 'Type de fichier non autorisé.');
+        }
+
+        $file = storage_path('app/public/' . $path);
+        return response()->file($file, [
+            'Content-Type' => $mimeType,
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        throw $e;
     } catch (\Exception $e) {
         \Log::error('Error serving file: ' . $e->getMessage());
         abort(500);
     }
 })->where('path', '.*')->name('uploads.serve');
 
-// Test route
-Route::get('/test-uploads', function () {
-    return 'Uploads route is working!';
-});
-
-// Route pour télécharger les documents depuis l'admin
+// Route pour télécharger les documents depuis l'admin (protégée par auth)
 Route::get('/admin/documents/{document}/download', function ($documentId) {
     try {
-        \Log::info('Tentative de téléchargement document ID: ' . $documentId);
-        
         $document = \App\Models\Document::findOrFail($documentId);
-        \Log::info('Document trouvé: ' . $document->nom_original . ', Chemin: ' . $document->chemin_fichier);
-        
+
         // Utiliser la méthode getCheminReel() pour trouver le bon chemin
         $cheminReel = $document->getCheminReel();
-        
+
         if ($cheminReel) {
-            \Log::info('Téléchargement du fichier: ' . $cheminReel);
-            
             // Essayer d'abord avec le disque public
             if (\Illuminate\Support\Facades\Storage::disk('public')->exists($cheminReel)) {
                 return \Illuminate\Support\Facades\Storage::disk('public')->download(
-                    $cheminReel, 
+                    $cheminReel,
                     $document->nom_original
                 );
             }
-            
+
             // Sinon essayer avec le disque par défaut
             if (\Illuminate\Support\Facades\Storage::exists($cheminReel)) {
                 return \Illuminate\Support\Facades\Storage::download(
-                    $cheminReel, 
+                    $cheminReel,
                     $document->nom_original
                 );
             }
         }
-        
-        \Log::error('Fichier non trouvé pour le document ID: ' . $documentId . ', chemin: ' . $document->chemin_fichier);
+
+        \Log::error('Fichier non trouvé pour le document ID: ' . $documentId);
         abort(404, 'Fichier non trouvé sur le serveur.');
-        
+
+    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        throw $e;
     } catch (\Exception $e) {
         \Log::error('Erreur téléchargement document: ' . $e->getMessage());
-        abort(500, 'Erreur lors du téléchargement: ' . $e->getMessage());
+        abort(500, 'Erreur lors du téléchargement.');
     }
-})->name('admin.document.download');
+})->middleware('auth')->name('admin.document.download');
 
 // Routes pour les candidats
 Route::prefix('candidat')->name('candidat.')->group(function () {
@@ -250,13 +183,13 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
         Route::get('/register', [App\Http\Controllers\CandidatController::class, 'create'])->name('create');
         Route::post('/register', [App\Http\Controllers\CandidatController::class, 'store'])->name('store');
         Route::get('/login', [App\Http\Controllers\CandidatController::class, 'login'])->name('login');
-        Route::post('/login', [App\Http\Controllers\CandidatController::class, 'authenticate'])->name('authenticate');
+        Route::post('/login', [App\Http\Controllers\CandidatController::class, 'authenticate'])->middleware('throttle:10,1')->name('authenticate');
         
         // Routes de réinitialisation de mot de passe
         Route::get('/forgot-password', [App\Http\Controllers\CandidatController::class, 'showForgotPasswordForm'])->name('password.request');
-        Route::post('/forgot-password', [App\Http\Controllers\CandidatController::class, 'sendResetLink'])->name('password.email');
+        Route::post('/forgot-password', [App\Http\Controllers\CandidatController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
         Route::get('/reset-password/{token}', [App\Http\Controllers\CandidatController::class, 'showResetPasswordForm'])->name('password.reset');
-        Route::post('/reset-password', [App\Http\Controllers\CandidatController::class, 'resetPassword'])->name('password.update');
+        Route::post('/reset-password', [App\Http\Controllers\CandidatController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
     });
     
     // Routes protégées (pour les candidats connectés)

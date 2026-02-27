@@ -14,7 +14,14 @@
       "Bash(git push:*)",
       "Bash(docker compose run:*)",
       "Bash(docker compose restart:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git remote:*)",
+      "Bash(php artisan:*)",
+      "Bash(git log:*)",
+      "WebSearch",
+      "Bash(node --version:*)",
+      "Bash(composer outdated:*)",
+      "Bash(xargs grep -l \"authorize\")"
     ]
   }
 }

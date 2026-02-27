@@ -73,7 +73,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             @foreach($stats as $stat)
                 <div class="rounded-xl bg-bracongo-gray-50 shadow p-6 flex flex-col items-center">
-                    <div class="text-3xl mb-2">{!! $stat->icone !!}</div>
+                    <div class="text-3xl mb-2">{{ $stat->icone }}</div>
                     <div class="text-3xl font-bold text-bracongo-red">{{ $stat->valeur }}</div>
                     <div class="text-sm text-bracongo-gray-600 mt-1">{{ $stat->label }}</div>
                 </div>
