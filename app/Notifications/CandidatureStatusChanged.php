@@ -11,15 +11,20 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 
-class CandidatureStatusChanged extends Notification implements ShouldQueue
+class CandidatureStatusChanged extends Notification
 {
     use Queueable;
+
+    public array $extras;
 
     public function __construct(
         public Candidature $candidature,
         public StatutCandidature $ancienStatut,
-        public StatutCandidature $nouveauStatut
-    ) {}
+        public StatutCandidature $nouveauStatut,
+        array $extras = []
+    ) {
+        $this->extras = $extras;
+    }
 
     public function via($notifiable): array
     {
@@ -59,7 +64,7 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
         if ($templateSlug) {
             try {
                 $template = EmailTemplate::getTemplate($templateSlug);
-                $rendered = $template->remplacerPlaceholders($candidature);
+                $rendered = $template->remplacerPlaceholders($candidature, $this->extras);
 
                 Log::info("Email template '{$templateSlug}' utilisé pour candidature {$candidature->code_suivi} (statut: {$nouveauStatut->value})");
 

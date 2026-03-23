@@ -123,8 +123,7 @@ class CandidatureResource extends Resource
                                         ->options(Candidature::getPostesDisponibles())
                                         ->required()
                                         ->searchable()
-                                        ->disabled($isLocked)
-                                        ->dehydrated($canDehydrate),
+                                        ->helperText('Géré par le backoffice — toujours modifiable'),
                                     Select::make('opportunite_id')
                                         ->label('Opportunité')
                                         ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())

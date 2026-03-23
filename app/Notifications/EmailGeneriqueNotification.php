@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class EmailGeneriqueNotification extends Notification implements ShouldQueue
+class EmailGeneriqueNotification extends Notification
 {
     use Queueable;
 
@@ -16,9 +16,7 @@ class EmailGeneriqueNotification extends Notification implements ShouldQueue
     public function __construct(
         public string $sujet,
         public string $contenuHtml
-    ) {
-        $this->onQueue('notifications');
-    }
+    ) {}
 
     /**
      * Ajouter un fichier en pièce jointe

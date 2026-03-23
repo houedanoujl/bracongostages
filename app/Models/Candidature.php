@@ -21,6 +21,20 @@ class Candidature extends Model
      */
     protected static array $pendingStatusChanges = [];
 
+    /**
+     * Stockage temporaire des extras pour les placeholders email (ex: heure_test, heure_presentation)
+     */
+    protected static array $pendingEmailExtras = [];
+
+    /**
+     * Définir des extras pour le prochain email de changement de statut
+     */
+    public function setEmailExtras(array $extras): self
+    {
+        static::$pendingEmailExtras[$this->id] = $extras;
+        return $this;
+    }
+
     protected $fillable = [
         'nom',
         'prenom', 
@@ -165,6 +179,7 @@ class Candidature extends Model
                 static::$pendingStatusChanges[$candidature->id] = [
                     'ancien' => $ancienStatut,
                     'nouveau' => $nouveauStatut,
+                    'extras' => static::$pendingEmailExtras[$candidature->id] ?? [],
                 ];
             }
         });
@@ -176,18 +191,23 @@ class Candidature extends Model
 
                 $ancienStatut = $change['ancien'];
                 $nouveauStatut = $change['nouveau'];
+                $extras = $change['extras'] ?? [];
+                
+                // Nettoyer les extras temporaires
+                unset(static::$pendingEmailExtras[$candidature->id]);
                 
                 try {
-                    // Envoyer la notification CandidatureStatusChanged
+                    // Envoyer la notification CandidatureStatusChanged avec les extras
+                    $notification = new \App\Notifications\CandidatureStatusChanged($candidature, $ancienStatut, $nouveauStatut, $extras);
                     $candidat = Candidat::where('email', $candidature->email)->first();
                     if ($candidat) {
-                        $candidat->notify(new \App\Notifications\CandidatureStatusChanged($candidature, $ancienStatut, $nouveauStatut));
-                        \Illuminate\Support\Facades\Log::info("Email changement statut envoyé à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
+                        $candidat->notify($notification);
+                        \Illuminate\Support\Facades\Log::info("Email template envoyé à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
                     } else {
                         // Pas de compte candidat, envoyer directement à l'adresse email
                         \Illuminate\Support\Facades\Notification::route('mail', $candidature->email)
-                            ->notify(new \App\Notifications\CandidatureStatusChanged($candidature, $ancienStatut, $nouveauStatut));
-                        \Illuminate\Support\Facades\Log::info("Email changement statut envoyé (sans compte) à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
+                            ->notify($notification);
+                        \Illuminate\Support\Facades\Log::info("Email template envoyé (sans compte) à {$candidature->email}: {$ancienStatut->value} → {$nouveauStatut->value}");
                     }
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error("Erreur envoi email changement statut: " . $e->getMessage());
