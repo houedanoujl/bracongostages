@@ -273,7 +273,6 @@ class CandidatureForm extends Component
                 // Validation des dates plus flexible
                 $rules = [
                     'objectif_stage' => 'required|string',
-                    'poste_souhaite' => 'required|string',
                     'directions_souhaitees' => 'required|array|min:1',
                     'periode_debut_souhaitee' => 'required|date',
                     'periode_fin_souhaitee' => 'required|date|after:periode_debut_souhaitee',
@@ -415,7 +414,6 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -526,7 +524,6 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite,
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,

@@ -424,25 +424,7 @@
                                 @error('objectif_stage') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
-                            <div>
-                                <label for="poste_souhaite" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Poste souhaité *
-                                    @if($vientDuneOffre)
-                                        <span class="ml-2 text-xs font-normal text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">Prédéfini par l'offre</span>
-                                    @endif
-                                </label>
-                                <select wire:model="poste_souhaite" id="poste_souhaite"
-                                        {{ $vientDuneOffre ? 'disabled' : '' }}
-                                        class="w-full rounded-lg border px-4 py-3
-                                               {{ $vientDuneOffre ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : 'border-gray-300 focus:border-red-600 focus:ring-red-600' }}
-                                               @error('poste_souhaite') border-red-500 @enderror">
-                                    <option value="">Sélectionner un poste</option>
-                                    @foreach(\App\Models\Candidature::getPostesDisponibles() as $poste_key => $poste_label)
-                                        <option value="{{ $poste_key }}">{{ $poste_label }}</option>
-                                    @endforeach
-                                </select>
-                                @error('poste_souhaite') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
-                            </div>
+                            {{-- Poste souhaité retiré : l'affectation des postes est gérée par Bracongo via le Backoffice --}}
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">

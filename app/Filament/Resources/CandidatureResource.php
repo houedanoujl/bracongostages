@@ -54,36 +54,47 @@ class CandidatureResource extends Resource
                                 Forms\Components\Grid::make(2)->schema([
                                     TextInput::make('nom')
                                         ->required()
-                                        ->maxLength(255),
+                                        ->maxLength(255)
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     TextInput::make('prenom')
                                         ->required()
-                                        ->maxLength(255),
+                                        ->maxLength(255)
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     TextInput::make('email')
                                         ->email()
                                         ->required()
-                                        ->maxLength(255),
+                                        ->maxLength(255)
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     TextInput::make('telephone')
                                         ->tel()
                                         ->required()
-                                        ->maxLength(255),
+                                        ->maxLength(255)
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                 ]),
                                 Forms\Components\Fieldset::make('Formation')->schema([
                                     Select::make('etablissement')
                                         ->options(Candidature::getEtablissements())
                                         ->required()
-                                        ->searchable(),
+                                        ->searchable()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     TextInput::make('etablissement_autre')
                                         ->label('Autre établissement')
                                         ->maxLength(255)
-                                        ->visible(fn (Forms\Get $get) => $get('etablissement') === 'Autres'),
+                                        ->visible(fn (Forms\Get $get) => $get('etablissement') === 'Autres')
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     Select::make('niveau_etude')
                                         ->options(Candidature::getNiveauxEtude())
                                         ->required()
-                                        ->searchable(),
+                                        ->searchable()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     TextInput::make('faculte')
                                         ->label('Faculté/Département')
-                                        ->maxLength(255),
+                                        ->maxLength(255)
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                 ])->columns(2),
+                                Forms\Components\Placeholder::make('candidat_locked_notice')
+                                    ->content('\u26d4 Les informations du candidat sont verrouillées une fois le dossier en traitement.')
+                                    ->visible(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                             ]),
 
                         // ==================== ONGLET 2 : STAGE SOUHAITÉ ====================
@@ -95,26 +106,35 @@ class CandidatureResource extends Resource
                                         ->label('Poste souhaité')
                                         ->options(Candidature::getPostesDisponibles())
                                         ->required()
-                                        ->searchable(),
+                                        ->searchable()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     Select::make('opportunite_id')
                                         ->label('Opportunité')
                                         ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())
                                         ->searchable()
-                                        ->placeholder('Sélectionner une opportunité'),
+                                        ->placeholder('Sélectionner une opportunité')
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     Select::make('directions_souhaitees')
                                         ->multiple()
                                         ->options(Candidature::getDirectionsDisponibles())
                                         ->required()
-                                        ->searchable(),
+                                        ->searchable()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     DatePicker::make('periode_debut_souhaitee')
-                                        ->required(),
+                                        ->required()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                     DatePicker::make('periode_fin_souhaitee')
-                                        ->required(),
+                                        ->required()
+                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                                 ]),
                                 RichEditor::make('objectif_stage')
                                     ->required()
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                Forms\Components\Placeholder::make('stage_locked_notice')
+                                    ->content('\u26d4 Les informations du stage souhaité sont verrouillées une fois le dossier en traitement.')
+                                    ->visible(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
                             ]),
 
                         // ==================== ONGLET 3 : DOCUMENTS ====================
@@ -189,9 +209,21 @@ class CandidatureResource extends Resource
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Select::make('statut')
-                                        ->options(StatutCandidature::getOptions())
+                                        ->options(function ($record) {
+                                            if (!$record || !$record->statut) {
+                                                return StatutCandidature::getOptions();
+                                            }
+                                            // Proposer uniquement le statut actuel + les prochains statuts autorisés
+                                            $currentStatut = $record->statut;
+                                            $options = [$currentStatut->value => $currentStatut->getLabel()];
+                                            foreach ($currentStatut->getNextStatuts() as $next) {
+                                                $options[$next->value] = $next->getLabel();
+                                            }
+                                            return $options;
+                                        })
                                         ->required()
-                                        ->default(StatutCandidature::DOSSIER_RECU->value),
+                                        ->default(StatutCandidature::DOSSIER_RECU->value)
+                                        ->helperText(fn ($record) => $record && $record->statut ? 'Étape actuelle : ' . $record->statut->getEtape() . '/13 — ' . $record->statut->getLabel() : ''),
                                     TextInput::make('code_suivi')
                                         ->disabled()
                                         ->dehydrated(false),
@@ -220,8 +252,9 @@ class CandidatureResource extends Resource
                                         ->label('Note obtenue')
                                         ->numeric()
                                         ->minValue(0)
-                                        ->maxValue(100)
-                                        ->suffix('/100'),
+                                        ->maxValue(20)
+                                        ->suffix('/20')
+                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
                                 ]),
                                 RichEditor::make('commentaire_test')
                                     ->label('Commentaires sur le test')
@@ -284,7 +317,7 @@ class CandidatureResource extends Resource
                                                         ->required(),
                                                 ])
                                                 ->mountUsing(function (Forms\ComponentContainer $form, $record) {
-                                                    $slug = ($record->note_test >= 50) ? 'resultat_admis' : 'resultat_non_admis';
+                                                    $slug = ($record->note_test >= 10) ? 'resultat_admis' : 'resultat_non_admis';
                                                     $rendered = self::renderTemplate($slug, $record);
                                                     $form->fill([
                                                         'type_resultat' => $slug,
@@ -382,9 +415,12 @@ class CandidatureResource extends Resource
 
                                 Forms\Components\Fieldset::make('Réponse à la lettre de recommandation')->schema([
                                     Forms\Components\Toggle::make('reponse_lettre_envoyee')
-                                        ->label('Réponse envoyée'),
+                                        ->label('Réponse envoyée')
+                                        ->live(),
                                     DatePicker::make('date_reponse_lettre')
-                                        ->label('Date d\'envoi'),
+                                        ->label('Date d\'envoi')
+                                        ->visible(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true)
+                                        ->required(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true),
                                     Forms\Components\FileUpload::make('chemin_reponse_lettre')
                                         ->label('Fichier de réponse')
                                         ->directory('documents/reponses-lettres')
@@ -526,9 +562,12 @@ class CandidatureResource extends Resource
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\Toggle::make('attestation_generee')
-                                        ->label('Attestation générée'),
+                                        ->label('Attestation générée')
+                                        ->live(),
                                     DatePicker::make('date_attestation')
-                                        ->label('Date de l\'attestation'),
+                                        ->label('Date de l\'attestation')
+                                        ->visible(fn (Forms\Get $get) => $get('attestation_generee') == true)
+                                        ->required(fn (Forms\Get $get) => $get('attestation_generee') == true),
                                 ]),
                                 Forms\Components\FileUpload::make('chemin_attestation')
                                     ->label('Fichier attestation')

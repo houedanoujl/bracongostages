@@ -15,14 +15,25 @@ class EvaluationController extends Controller
      */
     public function show(Candidature $candidature)
     {
-        // Vérifier que la candidature est validée et terminée
-        if ($candidature->statut->value !== 'valide') {
+        // Vérifier que la candidature a atteint au minimum le stade d'évaluation
+        $statutsAutorises = [
+            'valide',
+            'stage_en_cours',
+            'en_evaluation',
+            'evaluation_terminee',
+            'attestation_generee',
+            'remboursement_en_cours',
+            'termine',
+        ];
+        
+        if (!in_array($candidature->statut->value, $statutsAutorises)) {
             return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
-                ->with('error', 'Cette candidature n\'est pas encore validée.');
+                ->with('error', 'Cette candidature n\'est pas encore éligible pour une évaluation.');
         }
 
-        // Vérifier que le stage est terminé
-        if ($candidature->date_fin_stage && $candidature->date_fin_stage->isFuture()) {
+        // Vérifier que le stage est terminé (si date de fin renseignée)
+        $dateFin = $candidature->date_fin_stage_reel ?? $candidature->date_fin_stage;
+        if ($dateFin && $dateFin->isFuture()) {
             return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
                 ->with('error', 'Votre stage n\'est pas encore terminé. Vous pourrez évaluer votre expérience après la fin du stage.');
         }
@@ -41,10 +52,20 @@ class EvaluationController extends Controller
      */
     public function store(Request $request, Candidature $candidature)
     {
-        // Vérifier que la candidature est validée
-        if ($candidature->statut->value !== 'valide') {
+        // Vérifier que la candidature est éligible pour évaluation
+        $statutsAutorises = [
+            'valide',
+            'stage_en_cours',
+            'en_evaluation',
+            'evaluation_terminee',
+            'attestation_generee',
+            'remboursement_en_cours',
+            'termine',
+        ];
+        
+        if (!in_array($candidature->statut->value, $statutsAutorises)) {
             return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
-                ->with('error', 'Cette candidature n\'est pas encore validée.');
+                ->with('error', 'Cette candidature n\'est pas encore éligible pour une évaluation.');
         }
 
         // Vérifier qu'aucune évaluation n'existe déjà

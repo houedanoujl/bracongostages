@@ -208,6 +208,35 @@
                     </div>
                 </div>
                 @endif
+
+                {{-- Bouton retour d'expérience --}}
+                @php
+                    $statutsEvaluation = ['valide', 'stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine'];
+                @endphp
+                @if(in_array($candidature->statut->value, $statutsEvaluation) && !$candidature->evaluation)
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <h3 class="text-lg font-semibold text-green-800">Partagez votre retour d'expérience</h3>
+                            <p class="text-sm text-green-700 mt-1 mb-4">
+                                Votre stage est terminé ou en cours ? Évaluez votre expérience pour aider BRACONGO à améliorer son programme de stages.
+                            </p>
+                            <a href="{{ route('candidature.evaluation', $candidature->id) }}" 
+                               class="inline-flex items-center px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition shadow-sm">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                Donner mon retour d'expérience
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- Sidebar -->

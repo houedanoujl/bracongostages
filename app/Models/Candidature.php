@@ -106,6 +106,11 @@ class Candidature extends Model
         'montant_transport' => 'decimal:2',
     ];
 
+    /**
+     * Note maximale autorisée pour les évaluations et tests
+     */
+    const NOTE_MAX = 20;
+
     protected static function boot()
     {
         parent::boot();
@@ -117,10 +122,25 @@ class Candidature extends Model
             if (empty($candidature->statut)) {
                 $candidature->statut = StatutCandidature::DOSSIER_RECU;
             }
+            // Plafonner les notes à la valeur maximale
+            if ($candidature->note_test !== null && $candidature->note_test > self::NOTE_MAX) {
+                $candidature->note_test = self::NOTE_MAX;
+            }
+            if ($candidature->note_evaluation !== null && $candidature->note_evaluation > self::NOTE_MAX) {
+                $candidature->note_evaluation = self::NOTE_MAX;
+            }
         });
 
         // Envoi automatique d'email lors du changement de statut
         static::updating(function ($candidature) {
+            // Plafonner les notes à la valeur maximale
+            if ($candidature->note_test !== null && $candidature->note_test > self::NOTE_MAX) {
+                $candidature->note_test = self::NOTE_MAX;
+            }
+            if ($candidature->note_evaluation !== null && $candidature->note_evaluation > self::NOTE_MAX) {
+                $candidature->note_evaluation = self::NOTE_MAX;
+            }
+
             if ($candidature->isDirty('statut')) {
                 $ancienStatut = $candidature->getOriginal('statut');
                 $nouveauStatut = $candidature->statut;
