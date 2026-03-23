@@ -10,12 +10,13 @@ class TemoignagesSection extends Component
     public function render()
     {
         $temoignages = Temoignage::actif()
+            ->misEnAvant()
             ->ordonne()
-            ->limit(3)
+            ->limit(6)
             ->get();
 
         return view('livewire.temoignages-section', [
-            'temoignages' => $temoignages
+            'temoignages' => $temoignages,
         ]);
     }
 }

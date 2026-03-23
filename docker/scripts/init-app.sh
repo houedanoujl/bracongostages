@@ -57,10 +57,18 @@ echo "⏳ Tentative de connexion à la base de données (non-bloquante)..."
             php artisan db:seed --no-interaction --force
         else
             echo "✅ Base de données déjà initialisée"
-            
+
             # Exécuter les nouvelles migrations s'il y en a
             echo "🔄 Vérification des nouvelles migrations..."
             php artisan migrate --no-interaction --force
+
+            # S'assurer que les templates email existent
+            TEMPLATE_COUNT=$(php artisan tinker --execute="echo \App\Models\EmailTemplate::count();" 2>/dev/null | tail -1)
+            TEMPLATE_COUNT="${TEMPLATE_COUNT:-0}"
+            if [ "$TEMPLATE_COUNT" = "0" ]; then
+                echo "📧 Insertion des templates email..."
+                php artisan db:seed --class=EmailTemplateSeeder --no-interaction --force
+            fi
         fi
 
         # Créer le lien symbolique pour le storage

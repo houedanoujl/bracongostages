@@ -60,7 +60,9 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
             try {
                 $template = EmailTemplate::getTemplate($templateSlug);
                 $rendered = $template->remplacerPlaceholders($candidature);
-                
+
+                Log::info("Email template '{$templateSlug}' utilisé pour candidature {$candidature->code_suivi} (statut: {$nouveauStatut->value})");
+
                 return (new MailMessage)
                     ->subject($rendered['sujet'])
                     ->greeting("Bonjour {$candidature->prenom},")
@@ -69,10 +71,13 @@ class CandidatureStatusChanged extends Notification implements ShouldQueue
                     ->action('Suivre ma candidature', url("/suivi/{$candidature->code_suivi}"))
                     ->salutation("Cordialement,\nL'équipe BRACONGO Stages");
             } catch (\Exception $e) {
-                Log::warning("Template email '{$templateSlug}' non trouvé, utilisation du contenu par défaut: " . $e->getMessage());
+                Log::warning("Template email '{$templateSlug}' non trouvé pour candidature {$candidature->code_suivi}, utilisation du fallback. Erreur: " . $e->getMessage());
+                Log::warning("Vérifiez que le seeder EmailTemplateSeeder a été exécuté (php artisan db:seed --class=EmailTemplateSeeder)");
             }
+        } else {
+            Log::info("Aucun template configuré pour le statut '{$nouveauStatut->value}' (candidature {$candidature->code_suivi}), utilisation du fallback.");
         }
-        
+
         // Fallback : contenu par défaut si pas de template trouvé
         $message = (new MailMessage)
             ->subject("Mise à jour de votre candidature - {$nouveauStatut->getLabel()}")

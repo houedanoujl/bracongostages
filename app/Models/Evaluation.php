@@ -172,4 +172,5 @@ class Evaluation extends Model
     {
         return $query->where('satisfaction_generale', $niveau);
     }
+
 } 

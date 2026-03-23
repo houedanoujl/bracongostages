@@ -46,6 +46,25 @@
                     Retour au tableau de bord
                 </a>
             </div>
+        @elseif($stageNonTermine)
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
+                <div class="flex justify-center mb-4">
+                    <svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-blue-800 mb-2">Votre stage n’est pas encore terminé</h2>
+                <p class="text-blue-700 mb-4">
+                    Vous pourrez soumettre votre témoignage une fois que votre stage sera officiellement terminé et que votre évaluation aura été complétée.
+                </p>
+                <p class="text-blue-600 text-sm mb-6">
+                    Votre candidature doit avoir atteint au minimum l'étape « Évaluation terminée ».
+                </p>
+                <a href="{{ route('candidat.dashboard') }}" 
+                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Retour au tableau de bord
+                </a>
+            </div>
         @else
             {{-- Formulaire --}}
             <form wire:submit="submit" class="space-y-8">

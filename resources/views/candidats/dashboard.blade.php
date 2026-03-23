@@ -123,10 +123,14 @@
                                             </div>
                                         </div>
                                         <div class="mt-3 flex space-x-2">
-                                            <a href="{{ route('candidat.candidature', $candidature->id) }}" 
+                                            <a href="{{ route('candidat.candidature', $candidature->id) }}"
                                                 class="text-sm text-blue-600 hover:text-blue-500">Voir les détails</a>
-                                            <a href="{{ route('candidature.suivi.code', $candidature->code_suivi) }}" 
+                                            <a href="{{ route('candidature.suivi.code', $candidature->code_suivi) }}"
                                                 class="text-sm text-gray-600 hover:text-gray-500">Suivre en ligne</a>
+                                            @if(in_array($candidature->statut->value, ['stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']) && !$candidature->evaluation)
+                                                <a href="{{ route('candidature.evaluation', $candidature->id) }}?code={{ $candidature->code_suivi }}"
+                                                    class="text-sm text-green-600 hover:text-green-500 font-medium">Donner mon retour</a>
+                                            @endif
                                         </div>
                                     </div>
                                 @endforeach

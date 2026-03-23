@@ -29,6 +29,17 @@ class TemoignageForm extends Component
 
     public bool $showSuccess = false;
     public bool $hasExistingTemoignage = false;
+    public bool $stageNonTermine = false;
+
+    /**
+     * Statuts de candidature qui correspondent à un stage terminé
+     */
+    private const STATUTS_STAGE_TERMINE = [
+        'evaluation_terminee',
+        'attestation_generee',
+        'remboursement_en_cours',
+        'termine',
+    ];
 
     public function mount()
     {
@@ -39,17 +50,22 @@ class TemoignageForm extends Component
             $this->prenom = $candidat->prenom ?? '';
             $this->etablissement_origine = $candidat->etablissement ?? '';
 
-            // Pré-remplir la direction depuis la dernière candidature terminée
+            // Vérifier si le candidat a une candidature avec un stage terminé
             $derniereCandidature = Candidature::where('email', $candidat->email)
-                ->whereIn('statut', ['evaluation_terminee', 'attestation_generee', 'termine'])
+                ->whereIn('statut', self::STATUTS_STAGE_TERMINE)
                 ->latest()
                 ->first();
 
-            if ($derniereCandidature) {
-                $this->poste_occupe = $derniereCandidature->poste_souhaite ?? '';
-                if (is_array($derniereCandidature->directions_souhaitees) && count($derniereCandidature->directions_souhaitees) > 0) {
-                    $this->direction_stage = $derniereCandidature->directions_souhaitees[0];
-                }
+            if (!$derniereCandidature) {
+                // Aucun stage terminé : bloquer l'accès au formulaire
+                $this->stageNonTermine = true;
+                return;
+            }
+
+            // Pré-remplir depuis la candidature terminée
+            $this->poste_occupe = $derniereCandidature->poste_souhaite ?? '';
+            if (is_array($derniereCandidature->directions_souhaitees) && count($derniereCandidature->directions_souhaitees) > 0) {
+                $this->direction_stage = $derniereCandidature->directions_souhaitees[0];
             }
 
             // Vérifier si le candidat a déjà soumis un témoignage
@@ -82,6 +98,12 @@ class TemoignageForm extends Component
 
     public function submit()
     {
+        // Double vérification côté serveur
+        if ($this->stageNonTermine) {
+            session()->flash('error', 'Vous ne pouvez soumettre un témoignage que lorsque votre stage est terminé.');
+            return;
+        }
+
         $this->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',

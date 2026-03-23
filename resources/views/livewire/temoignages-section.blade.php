@@ -2,12 +2,13 @@
     <div class="section-header animate-on-scroll">
         <h2 class="section-title">Ce que disent nos stagiaires</h2>
         <p class="section-subtitle">
-            Découvrez les expériences de ceux qui ont déjà vécu l'aventure BRACONGO
+            Decouvrez les experiences de ceux qui ont deja vecu l'aventure BRACONGO
         </p>
     </div>
 
     @if($temoignages->count() > 0)
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
             @foreach($temoignages as $temoignage)
                 <div class="bg-white rounded-2xl p-8 shadow-soft animate-on-scroll" style="animation-delay: {{ $loop->index * 0.1 }}s;">
                     <div class="flex items-center mb-4">
@@ -26,11 +27,11 @@
                             @endif
                         </div>
                     </div>
-                    
+
                     <p class="text-bracongo-gray-600 leading-relaxed mb-4">
-                        "{{ $temoignage->citation_courte ?: Str::limit($temoignage->temoignage, 150) }}"
+                        "{{ $temoignage->citation_courte ?: Str::limit(strip_tags($temoignage->temoignage), 150) }}"
                     </p>
-                    
+
                     <div class="flex items-center justify-between">
                         <div class="flex text-yellow-400">
                             @for($i = 1; $i <= 5; $i++)
@@ -45,12 +46,13 @@
                     </div>
                 </div>
             @endforeach
+
         </div>
     @else
         <div class="text-center py-12">
-            <p class="text-bracongo-gray-500">Aucun témoignage disponible pour le moment.</p>
+            <p class="text-bracongo-gray-500">Aucun temoignage disponible pour le moment.</p>
             <a href="/candidature" class="inline-block mt-4 bg-bracongo-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                Soyez le premier à témoigner !
+                Soyez le premier a temoigner !
             </a>
         </div>
     @endif

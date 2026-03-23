@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Candidature extends Model
 {
@@ -144,13 +145,20 @@ class Candidature extends Model
             if ($candidature->isDirty('statut')) {
                 $ancienStatut = $candidature->getOriginal('statut');
                 $nouveauStatut = $candidature->statut;
-                
+
                 // Convertir en enum si nécessaire
                 if (is_string($ancienStatut)) {
                     $ancienStatut = StatutCandidature::tryFrom($ancienStatut);
                 }
                 if (is_string($nouveauStatut)) {
                     $nouveauStatut = StatutCandidature::tryFrom($nouveauStatut);
+                }
+
+                // Valider que la transition est autorisée
+                if ($ancienStatut && $nouveauStatut && !$ancienStatut->canTransitionTo($nouveauStatut)) {
+                    throw ValidationException::withMessages([
+                        'statut' => "Transition non autorisée : {$ancienStatut->getLabel()} vers {$nouveauStatut->getLabel()}.",
+                    ]);
                 }
 
                 // Sauvegarder dans une propriété statique (PAS dans les attributs du modèle)
@@ -290,6 +298,22 @@ class Candidature extends Model
             StatutCandidature::TERMINE,
             StatutCandidature::REJETE,
         ]);
+    }
+
+    /**
+     * Mutator pour plafonner note_test à NOTE_MAX
+     */
+    public function setNoteTestAttribute($value): void
+    {
+        $this->attributes['note_test'] = $value !== null ? min((float) $value, self::NOTE_MAX) : null;
+    }
+
+    /**
+     * Mutator pour plafonner note_evaluation à NOTE_MAX
+     */
+    public function setNoteEvaluationAttribute($value): void
+    {
+        $this->attributes['note_evaluation'] = $value !== null ? min((float) $value, self::NOTE_MAX) : null;
     }
 
     /**

@@ -54,8 +54,9 @@
                     </div>
                 @endif
 
-                <form action="{{ route('evaluation.store', $candidature) }}" method="POST" class="space-y-8">
+                <form action="{{ route('evaluation.store', $candidature) }}?code={{ $candidature->code_suivi }}" method="POST" class="space-y-8">
                     @csrf
+                    <input type="hidden" name="code_suivi" value="{{ $candidature->code_suivi }}">
                     
                     <!-- Section 1: Satisfaction générale -->
                     <div class="border-b border-gray-200 pb-6">

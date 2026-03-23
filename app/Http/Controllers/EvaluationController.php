@@ -13,8 +13,25 @@ class EvaluationController extends Controller
     /**
      * Afficher le formulaire d'évaluation
      */
-    public function show(Candidature $candidature)
+    public function show(Request $request, Candidature $candidature)
     {
+        // Vérifier l'accès : le candidat doit être authentifié et propriétaire,
+        // ou fournir le bon code_suivi en paramètre
+        $candidat = auth('candidat')->user();
+        $codeSuivi = $request->query('code');
+
+        $autorise = false;
+        if ($candidat && $candidat->email === $candidature->email) {
+            $autorise = true;
+        } elseif ($codeSuivi && $codeSuivi === $candidature->code_suivi) {
+            $autorise = true;
+        }
+
+        if (!$autorise) {
+            return redirect()->route('candidature.suivi')
+                ->with('error', 'Accès non autorisé. Veuillez utiliser votre code de suivi.');
+        }
+
         // Vérifier que la candidature a atteint au minimum le stade d'évaluation
         $statutsAutorises = [
             'valide',
@@ -25,7 +42,7 @@ class EvaluationController extends Controller
             'remboursement_en_cours',
             'termine',
         ];
-        
+
         if (!in_array($candidature->statut->value, $statutsAutorises)) {
             return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
                 ->with('error', 'Cette candidature n\'est pas encore éligible pour une évaluation.');
@@ -52,6 +69,22 @@ class EvaluationController extends Controller
      */
     public function store(Request $request, Candidature $candidature)
     {
+        // Vérifier l'accès
+        $candidat = auth('candidat')->user();
+        $codeSuivi = $request->query('code') ?? $request->input('code_suivi');
+
+        $autorise = false;
+        if ($candidat && $candidat->email === $candidature->email) {
+            $autorise = true;
+        } elseif ($codeSuivi && $codeSuivi === $candidature->code_suivi) {
+            $autorise = true;
+        }
+
+        if (!$autorise) {
+            return redirect()->route('candidature.suivi')
+                ->with('error', 'Accès non autorisé.');
+        }
+
         // Vérifier que la candidature est éligible pour évaluation
         $statutsAutorises = [
             'valide',
@@ -62,7 +95,7 @@ class EvaluationController extends Controller
             'remboursement_en_cours',
             'termine',
         ];
-        
+
         if (!in_array($candidature->statut->value, $statutsAutorises)) {
             return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
                 ->with('error', 'Cette candidature n\'est pas encore éligible pour une évaluation.');

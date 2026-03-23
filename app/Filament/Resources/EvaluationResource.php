@@ -40,22 +40,18 @@ class EvaluationResource extends Resource
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                TextInput::make('candidature.nom_complet')
+                                Forms\Components\Placeholder::make('candidat_nom')
                                     ->label('Candidat')
-                                    ->disabled()
-                                    ->dehydrated(false),
-                                TextInput::make('candidature.code_suivi')
+                                    ->content(fn ($record) => $record?->candidature?->nom_complet ?? '—'),
+                                Forms\Components\Placeholder::make('candidat_code')
                                     ->label('Code de suivi')
-                                    ->disabled()
-                                    ->dehydrated(false),
-                                TextInput::make('candidature.email')
+                                    ->content(fn ($record) => $record?->candidature?->code_suivi ?? '—'),
+                                Forms\Components\Placeholder::make('candidat_email')
                                     ->label('Email')
-                                    ->disabled()
-                                    ->dehydrated(false),
-                                TextInput::make('candidature.etablissement')
+                                    ->content(fn ($record) => $record?->candidature?->email ?? '—'),
+                                Forms\Components\Placeholder::make('candidat_etablissement')
                                     ->label('Établissement')
-                                    ->disabled()
-                                    ->dehydrated(false),
+                                    ->content(fn ($record) => $record?->candidature?->etablissement ?? '—'),
                             ]),
                     ])
                     ->collapsible(),

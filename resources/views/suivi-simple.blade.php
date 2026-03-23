@@ -452,6 +452,39 @@
                     </div>
                 @endif
 
+                <!-- Lien retour d'expérience -->
+                @if(in_array($candidature->statut->value, ['stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']) && !$candidature->evaluation)
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+                        <div class="flex items-start">
+                            <div class="text-3xl mr-4 flex-shrink-0">📝</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-green-800">Partagez votre retour d'expérience</h3>
+                                <p class="text-sm text-green-700 mt-1 mb-4">
+                                    Votre avis compte ! Évaluez votre expérience de stage pour aider BRACONGO a ameliorer son programme.
+                                </p>
+                                <a href="{{ route('candidature.evaluation', $candidature->id) }}?code={{ $candidature->code_suivi }}"
+                                   class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition shadow-sm text-sm">
+                                    Donner mon retour d'expérience
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                @if($candidature->evaluation)
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+                        <div class="flex items-center">
+                            <div class="text-3xl mr-4 flex-shrink-0">✅</div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-green-800">Retour d'expérience enregistré</h3>
+                                <p class="text-sm text-green-700 mt-1">
+                                    Merci pour votre évaluation ! Votre retour aide à améliorer le programme de stages.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Message de fin de stage -->
                 @if($candidature->statut->value === 'termine')
                     <div class="bg-gradient-to-r from-bracongo-red-500 to-bracongo-red-600 rounded-xl p-6 text-white">

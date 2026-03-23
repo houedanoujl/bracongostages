@@ -154,7 +154,7 @@ class CandidatController extends Controller
     public function dashboard()
     {
         $candidat = Auth::guard('candidat')->user();
-        $candidatures = $candidat->candidatures()->with('opportunite')->latest()->get();
+        $candidatures = $candidat->candidatures()->with(['opportunite', 'evaluation'])->latest()->get();
         $opportunites = Opportunite::where('actif', true)->latest()->take(5)->get();
 
         return view('candidats.dashboard', compact('candidat', 'candidatures', 'opportunites'));

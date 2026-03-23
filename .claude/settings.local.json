@@ -21,7 +21,9 @@
       "WebSearch",
       "Bash(node --version:*)",
       "Bash(composer outdated:*)",
-      "Bash(xargs grep -l \"authorize\")"
+      "Bash(xargs grep -l \"authorize\")",
+      "Bash(php -l:*)",
+      "Bash(ls:*)"
     ]
   }
 }

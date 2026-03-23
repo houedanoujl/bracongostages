@@ -41,8 +41,16 @@ class CandidatureResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    /**
+     * Statuts autorisant la modification des onglets Candidat et Stage souhaite
+     */
+    private static array $statutsModifiables = ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'];
+
     public static function form(Form $form): Form
     {
+        $isLocked = fn ($record) => $record && !in_array($record->statut->value, self::$statutsModifiables);
+        $canDehydrate = fn ($record) => !$record || in_array($record->statut->value, self::$statutsModifiables);
+
         return $form
             ->schema([
                 Forms\Components\Tabs::make('Candidature')
@@ -55,46 +63,54 @@ class CandidatureResource extends Resource
                                     TextInput::make('nom')
                                         ->required()
                                         ->maxLength(255)
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     TextInput::make('prenom')
                                         ->required()
                                         ->maxLength(255)
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     TextInput::make('email')
                                         ->email()
                                         ->required()
                                         ->maxLength(255)
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     TextInput::make('telephone')
                                         ->tel()
                                         ->required()
                                         ->maxLength(255)
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                 ]),
                                 Forms\Components\Fieldset::make('Formation')->schema([
                                     Select::make('etablissement')
                                         ->options(Candidature::getEtablissements())
                                         ->required()
                                         ->searchable()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     TextInput::make('etablissement_autre')
                                         ->label('Autre établissement')
                                         ->maxLength(255)
                                         ->visible(fn (Forms\Get $get) => $get('etablissement') === 'Autres')
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     Select::make('niveau_etude')
                                         ->options(Candidature::getNiveauxEtude())
                                         ->required()
                                         ->searchable()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     TextInput::make('faculte')
                                         ->label('Faculté/Département')
                                         ->maxLength(255)
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                 ])->columns(2),
                                 Forms\Components\Placeholder::make('candidat_locked_notice')
                                     ->content('\u26d4 Les informations du candidat sont verrouillées une fois le dossier en traitement.')
-                                    ->visible(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                    ->visible($isLocked),
                             ]),
 
                         // ==================== ONGLET 2 : STAGE SOUHAITÉ ====================
@@ -107,34 +123,40 @@ class CandidatureResource extends Resource
                                         ->options(Candidature::getPostesDisponibles())
                                         ->required()
                                         ->searchable()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     Select::make('opportunite_id')
                                         ->label('Opportunité')
                                         ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())
                                         ->searchable()
                                         ->placeholder('Sélectionner une opportunité')
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     Select::make('directions_souhaitees')
                                         ->multiple()
                                         ->options(Candidature::getDirectionsDisponibles())
                                         ->required()
                                         ->searchable()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     DatePicker::make('periode_debut_souhaitee')
                                         ->required()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     DatePicker::make('periode_fin_souhaitee')
                                         ->required()
-                                        ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                 ]),
                                 RichEditor::make('objectif_stage')
                                     ->required()
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->columnSpanFull()
-                                    ->disabled(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                    ->disabled($isLocked)
+                                    ->dehydrated($canDehydrate),
                                 Forms\Components\Placeholder::make('stage_locked_notice')
                                     ->content('\u26d4 Les informations du stage souhaité sont verrouillées une fois le dossier en traitement.')
-                                    ->visible(fn ($record) => $record && !in_array($record->statut->value, ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'])),
+                                    ->visible($isLocked),
                             ]),
 
                         // ==================== ONGLET 3 : DOCUMENTS ====================
@@ -253,6 +275,7 @@ class CandidatureResource extends Resource
                                         ->numeric()
                                         ->minValue(0)
                                         ->maxValue(20)
+                                        ->step(0.01)
                                         ->suffix('/20')
                                         ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
                                 ]),
@@ -485,8 +508,10 @@ class CandidatureResource extends Resource
                                         ->label('Note finale')
                                         ->numeric()
                                         ->minValue(0)
-                                        ->maxValue(100)
-                                        ->suffix('/100'),
+                                        ->maxValue(20)
+                                        ->step(0.01)
+                                        ->suffix('/20')
+                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
                                     Select::make('appreciation_tuteur')
                                         ->label('Appréciation du tuteur')
                                         ->options([
@@ -920,7 +945,9 @@ class CandidatureResource extends Resource
                                 ->numeric()
                                 ->minValue(0)
                                 ->maxValue(20)
+                                ->step(0.01)
                                 ->suffix('/20')
+                                ->rules(['required', 'numeric', 'min:0', 'max:20'])
                                 ->required(),
                             Select::make('resultat_test')
                                 ->label('Résultat')
@@ -1160,7 +1187,9 @@ class CandidatureResource extends Resource
                                 ->numeric()
                                 ->minValue(0)
                                 ->maxValue(20)
+                                ->step(0.01)
                                 ->suffix('/20')
+                                ->rules(['required', 'numeric', 'min:0', 'max:20'])
                                 ->required(),
                             Select::make('appreciation')
                                 ->label('Appréciation globale')
