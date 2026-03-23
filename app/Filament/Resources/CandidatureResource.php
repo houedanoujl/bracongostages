@@ -41,15 +41,11 @@ class CandidatureResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    /**
-     * Statuts autorisant la modification des onglets Candidat et Stage souhaite
-     */
-    private static array $statutsModifiables = ['dossier_recu', 'non_traite', 'analyse_dossier', 'dossier_incomplet'];
-
     public static function form(Form $form): Form
     {
-        $isLocked = fn ($record) => $record && !in_array($record->statut->value, self::$statutsModifiables);
-        $canDehydrate = fn ($record) => !$record || in_array($record->statut->value, self::$statutsModifiables);
+        // Onglets Candidat & Stage souhaité : toujours verrouillés en mode édition
+        $isLocked = fn ($record) => $record !== null;
+        $canDehydrate = fn ($record) => $record === null;
 
         return $form
             ->schema([
@@ -109,7 +105,7 @@ class CandidatureResource extends Resource
                                         ->dehydrated($canDehydrate),
                                 ])->columns(2),
                                 Forms\Components\Placeholder::make('candidat_locked_notice')
-                                    ->content('\u26d4 Les informations du candidat sont verrouillées une fois le dossier en traitement.')
+                                    ->content('🔒 Les informations du candidat ne sont pas modifiables depuis le backoffice. Elles sont renseignées par le candidat lors de sa candidature.')
                                     ->visible($isLocked),
                             ]),
 
@@ -123,7 +119,8 @@ class CandidatureResource extends Resource
                                         ->options(Candidature::getPostesDisponibles())
                                         ->required()
                                         ->searchable()
-                                        ->helperText('Géré par le backoffice — toujours modifiable'),
+                                        ->disabled($isLocked)
+                                        ->dehydrated($canDehydrate),
                                     Select::make('opportunite_id')
                                         ->label('Opportunité')
                                         ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())
@@ -137,7 +134,19 @@ class CandidatureResource extends Resource
                                         ->required()
                                         ->searchable()
                                         ->disabled($isLocked)
-                                        ->dehydrated($canDehydrate),
+                                        ->dehydrated($canDehydrate)
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                            // Auto-déduire le poste depuis la première direction sélectionnée
+                                            if (!empty($state)) {
+                                                $posteActuel = $get('poste_souhaite');
+                                                $posteDeduit = Candidature::deduirePosteDepuisDirections((array) $state);
+                                                // Ne remplacer que si le poste est vide ou correspond à un ancien poste déduit
+                                                if (empty($posteActuel) && $posteDeduit) {
+                                                    $set('poste_souhaite', $posteDeduit);
+                                                }
+                                            }
+                                        }),
                                     DatePicker::make('periode_debut_souhaitee')
                                         ->required()
                                         ->disabled($isLocked)
@@ -154,7 +163,7 @@ class CandidatureResource extends Resource
                                     ->disabled($isLocked)
                                     ->dehydrated($canDehydrate),
                                 Forms\Components\Placeholder::make('stage_locked_notice')
-                                    ->content('\u26d4 Les informations du stage souhaité sont verrouillées une fois le dossier en traitement.')
+                                    ->content('🔒 Les informations du stage souhaité ne sont pas modifiables depuis le backoffice. Elles sont renseignées par le candidat lors de sa candidature.')
                                     ->visible($isLocked),
                             ]),
 
@@ -236,15 +245,45 @@ class CandidatureResource extends Resource
                                             }
                                             // Proposer uniquement le statut actuel + les prochains statuts autorisés
                                             $currentStatut = $record->statut;
-                                            $options = [$currentStatut->value => $currentStatut->getLabel()];
+                                            $options = [$currentStatut->value => '✅ ' . $currentStatut->getLabel() . ' (actuel)'];
                                             foreach ($currentStatut->getNextStatuts() as $next) {
-                                                $options[$next->value] = $next->getLabel();
+                                                $options[$next->value] = '➡️ ' . $next->getLabel();
                                             }
                                             return $options;
                                         })
                                         ->required()
+                                        ->live()
                                         ->default(StatutCandidature::DOSSIER_RECU->value)
-                                        ->helperText(fn ($record) => $record && $record->statut ? 'Étape actuelle : ' . $record->statut->getEtape() . '/13 — ' . $record->statut->getLabel() : ''),
+                                        ->helperText(function ($record, Forms\Get $get) {
+                                            if (!$record || !$record->statut) return '';
+                                            $currentStatut = $record->statut;
+                                            $etape = $currentStatut->getEtape();
+                                            $nextStatuts = $currentStatut->getNextStatuts();
+                                            $nextLabels = collect($nextStatuts)->map(fn ($s) => $s->getLabel())->implode(', ');
+                                            $info = "📍 Étape {$etape}/13 — {$currentStatut->getLabel()}";
+                                            if ($currentStatut->isTerminal()) {
+                                                $info .= ' | 🏁 Statut terminal — aucune transition possible';
+                                            } elseif (!empty($nextLabels)) {
+                                                $info .= " | Prochaine(s) étape(s) : {$nextLabels}";
+                                            }
+                                            return $info;
+                                        })
+                                        ->afterStateUpdated(function ($state, $record, Forms\Set $set) {
+                                            // Validation en temps réel : empêcher le saut d'étapes
+                                            if ($record && $record->statut && $state) {
+                                                $newStatut = StatutCandidature::tryFrom($state);
+                                                if ($newStatut && !$record->statut->canTransitionTo($newStatut) && $state !== $record->statut->value) {
+                                                    Notification::make()
+                                                        ->title('⛔ Transition interdite')
+                                                        ->body("Impossible de passer de \"{$record->statut->getLabel()}\" à \"{$newStatut->getLabel()}\". Veuillez respecter l'ordre du workflow.")
+                                                        ->danger()
+                                                        ->persistent()
+                                                        ->send();
+                                                    // Remettre le statut actuel
+                                                    $set('statut', $record->statut->value);
+                                                }
+                                            }
+                                        }),
                                     TextInput::make('code_suivi')
                                         ->disabled()
                                         ->dehydrated(false),
@@ -909,24 +948,12 @@ class CandidatureResource extends Resource
                                 'date_test' => $data['date_test'],
                                 'lieu_test' => $data['lieu_test'] ?? null,
                             ]);
+                            $record->setEmailExtras(['heure_test' => $data['heure_test'] ?? '09:00']);
                             $record->changerStatut(StatutCandidature::ATTENTE_TEST);
-
-                            // Envoi automatique de la convocation au test
-                            try {
-                                $rendered = self::renderTemplate('convocation_test', $record->fresh(), [
-                                    'heure_test' => $data['heure_test'] ?? '09:00',
-                                ]);
-                                if ($rendered['sujet'] && $record->email) {
-                                    NotificationFacade::route('mail', $record->email)
-                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
-                                }
-                            } catch (\Exception $e) {
-                                // Log silencieux si template manquant
-                            }
 
                             Notification::make()
                                 ->title('Test programmé pour le ' . \Carbon\Carbon::parse($data['date_test'])->format('d/m/Y'))
-                                ->body('Email de convocation envoyée à ' . $record->email)
+                                ->body('Email de convocation envoyé automatiquement à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -992,18 +1019,9 @@ class CandidatureResource extends Resource
                             ]);
                             $record->changerStatut(StatutCandidature::ACCEPTE);
 
-                            // Envoi automatique email acceptation
-                            try {
-                                $rendered = self::renderTemplate('resultat_admis', $record->fresh());
-                                if ($rendered['sujet'] && $record->email) {
-                                    NotificationFacade::route('mail', $record->email)
-                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
-                                }
-                            } catch (\Exception $e) {}
-
                             Notification::make()
                                 ->title('Candidature acceptée')
-                                ->body('Email d\'acceptation envoyé à ' . $record->email)
+                                ->body('Email d\'acceptation envoyé automatiquement à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -1047,22 +1065,12 @@ class CandidatureResource extends Resource
                                 'date_fin_stage' => $data['date_fin_stage'],
                                 'date_affectation' => $data['date_affectation'],
                             ]);
+                            $record->setEmailExtras(['heure_presentation' => '08:00']);
                             $record->changerStatut(StatutCandidature::AFFECTE);
-
-                            // Envoi automatique email confirmation dates de stage
-                            try {
-                                $rendered = self::renderTemplate('confirmation_dates', $record->fresh(), [
-                                    'heure_presentation' => '08:00',
-                                ]);
-                                if ($rendered['sujet'] && $record->email) {
-                                    NotificationFacade::route('mail', $record->email)
-                                        ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
-                                }
-                            } catch (\Exception $e) {}
 
                             Notification::make()
                                 ->title('Stagiaire affecté avec succès')
-                                ->body('Email de confirmation des dates envoyée à ' . $record->email)
+                                ->body('Email de confirmation des dates envoyé automatiquement à ' . $record->email)
                                 ->success()
                                 ->send();
                         }),
@@ -1455,18 +1463,9 @@ class CandidatureResource extends Resource
                             try {
                                 $record->rejeter($data['motif_rejet']);
 
-                                // Envoi automatique email de rejet
-                                try {
-                                    $rendered = self::renderTemplate('resultat_non_admis', $record->fresh());
-                                    if ($rendered['sujet'] && $record->email) {
-                                        NotificationFacade::route('mail', $record->email)
-                                            ->notify(new EmailGeneriqueNotification($rendered['sujet'], $rendered['contenu']));
-                                    }
-                                } catch (\Exception $emailException) {}
-
                                 Notification::make()
                                     ->title('Candidature rejetée')
-                                    ->body('Email de notification envoyé à ' . $record->email)
+                                    ->body('Email de notification envoyé automatiquement à ' . $record->email)
                                     ->warning()
                                     ->send();
                             } catch (\Exception $e) {

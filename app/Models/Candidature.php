@@ -258,14 +258,31 @@ class Candidature extends Model
 
     /**
      * Changer le statut avec historique
+     *
+     * @throws \InvalidArgumentException si la transition n'est pas autorisée
      */
     public function changerStatut(StatutCandidature $nouveauStatut, ?string $commentaire = null): bool
     {
         $ancienStatut = $this->statut;
         
-        // Vérifier si la transition est autorisée
+        // Vérifier si la transition est autorisée (dépendance entre étapes)
         if (!$ancienStatut->canTransitionTo($nouveauStatut)) {
-            return false;
+            $nextLabels = collect($ancienStatut->getNextStatuts())
+                ->map(fn ($s) => $s->getLabel())
+                ->implode(', ');
+            $message = "Transition interdite : impossible de passer de \"{$ancienStatut->getLabel()}\" (étape {$ancienStatut->getEtape()}) à \"{$nouveauStatut->getLabel()}\" (étape {$nouveauStatut->getEtape()}).";
+            if (!empty($nextLabels)) {
+                $message .= " Prochaine(s) étape(s) autorisée(s) : {$nextLabels}.";
+            } else {
+                $message .= " Ce statut est terminal, aucune transition n'est possible.";
+            }
+            \Illuminate\Support\Facades\Log::warning('Tentative de saut d\'étape bloquée', [
+                'candidature_id' => $this->id,
+                'de' => $ancienStatut->value,
+                'vers' => $nouveauStatut->value,
+                'utilisateur' => auth()->user()?->name ?? 'Système',
+            ]);
+            throw new \InvalidArgumentException($message);
         }
         
         // Ajouter à l'historique
@@ -502,6 +519,45 @@ class Candidature extends Model
             'bac_5' => 'Master (Bac+5)',
             'doctorat' => 'Doctorat/PhD',
         ];
+    }
+
+    /**
+     * Déduire automatiquement le poste souhaité depuis la première direction choisie
+     */
+    public static function deduirePosteDepuisDirection(?string $direction): ?string
+    {
+        if (empty($direction)) {
+            return null;
+        }
+
+        $mapping = [
+            'direction_generale'    => 'assistant_direction',
+            'direction_financiere'  => 'assistant_financier',
+            'direction_rh'          => 'assistant_rh',
+            'direction_marketing'   => 'assistant_marketing',
+            'direction_commerciale' => 'assistant_commercial',
+            'direction_production'  => 'assistant_production',
+            'direction_technique'   => 'assistant_technique',
+            'direction_qualite'     => 'assistant_qualite',
+            'direction_logistique'  => 'assistant_logistique',
+            'direction_informatique'=> 'assistant_informatique',
+            'direction_juridique'   => 'assistant_juridique',
+            'direction_audit'       => 'assistant_audit',
+        ];
+
+        return $mapping[$direction] ?? null;
+    }
+
+    /**
+     * Déduire le poste depuis un tableau de directions (prend la première)
+     */
+    public static function deduirePosteDepuisDirections(array $directions): ?string
+    {
+        if (empty($directions)) {
+            return null;
+        }
+
+        return static::deduirePosteDepuisDirection($directions[0]);
     }
 
     /**

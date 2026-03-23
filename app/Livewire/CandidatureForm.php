@@ -403,6 +403,11 @@ class CandidatureForm extends Component
             $this->validate($validationRules);
             Log::info('Validation réussie pour submitSimple');
             
+            // Auto-déduire le poste souhaité depuis la direction choisie
+            if (empty($this->poste_souhaite) && !empty($this->directions_souhaitees)) {
+                $this->poste_souhaite = Candidature::deduirePosteDepuisDirections($this->directions_souhaitees);
+            }
+
             // Créer la candidature
             $candidature = Candidature::create([
                 'nom' => $this->nom,
@@ -513,6 +518,11 @@ class CandidatureForm extends Component
             
             $this->validate($validationRules);
             Log::info('Validation réussie');
+
+            // Auto-déduire le poste souhaité depuis la direction choisie
+            if (empty($this->poste_souhaite) && !empty($this->directions_souhaitees)) {
+                $this->poste_souhaite = Candidature::deduirePosteDepuisDirections($this->directions_souhaitees);
+            }
 
             // Créer la candidature
             $candidature = Candidature::create([
