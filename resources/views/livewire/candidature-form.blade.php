@@ -556,6 +556,24 @@
                                                     </div>
                                                 @endif
                                             </div>
+                                        @else
+                                            <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <svg class="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                                    </svg>
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-yellow-800">CV requis</p>
+                                                        <p class="text-xs text-yellow-600">Vous devez uploader un CV</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <input wire:model="cv" type="file" id="cv_upload" accept=".pdf,.doc,.docx" 
+                                                       class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('cv') border-red-500 @enderror">
+                                                <p class="text-xs text-amber-600 mt-1">📄 Taille maximale : 5 MB (formats acceptés : PDF, DOC, DOCX)</p>
+                                                @error('cv') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                            </div>
                                         @endif
                                     </div>
                                     
@@ -609,19 +627,15 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="mt-3">
+                                                <input wire:model="lettre_motivation" type="file" id="lettre_motivation_upload" accept=".pdf,.doc,.docx" 
+                                                       class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
+                                                <p class="text-xs text-amber-600 mt-1">📄 Taille maximale : 2 MB (formats acceptés : PDF, DOC, DOCX)</p>
+                                                @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
-                                
-                                <!-- Si pas de lettre existante, afficher le champ d'upload -->
-                                @if(!$lettre_motivation_existante)
-                                    <div class="mt-4">
-                                        <label for="lettre_motivation" class="block text-sm font-medium text-gray-700 mb-2">Lettre de motivation * (requise)</label>
-                                        <input wire:model="lettre_motivation" type="file" id="lettre_motivation" accept=".pdf,.doc,.docx" 
-                                               class="w-full rounded-lg border-gray-300 border px-4 py-3 focus:border-red-600 focus:ring-red-600 @error('lettre_motivation') border-red-500 @enderror">
-                                        @error('lettre_motivation') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
-                                    </div>
-                                @endif
                             @else
                                 <!-- Champs d'upload pour nouveaux documents -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -864,7 +878,7 @@
                             <div class="bg-gradient-to-r from-yellow-50 to-green-50 border-2 border-yellow-400 rounded-lg p-4 shadow-md">
                                 <p class="text-sm text-red-700">
                                     <strong>Note :</strong> Formats acceptés : PDF, DOC, DOCX (CV et lettres) et PDF, JPG, PNG (certificats). 
-                                    Taille max : 2 MB par fichier. Les documents optionnels peuvent améliorer vos chances de sélection.
+                                    Taille max : 5 MB par fichier (2 MB pour la lettre de motivation). Les documents optionnels peuvent améliorer vos chances de sélection.
                                 </p>
                             </div>
                         </div>

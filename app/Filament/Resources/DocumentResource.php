@@ -25,12 +25,9 @@ class DocumentResource extends Resource
 
     protected static ?string $navigationLabel = 'Documents';
 
-    protected static ?string $navigationGroup = 'Gestion des Stages';
+    protected static ?string $navigationGroup = 'Gestion des Candidatures';
 
-    protected static ?int $navigationSort = 3;
-    
-    // Temporairement désactivé - pages manquantes
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
@@ -49,6 +46,8 @@ class DocumentResource extends Resource
                                 'lettre_motivation' => 'Lettre de motivation',
                                 'certificat_scolarite' => 'Certificat de scolarité',
                                 'releves_notes' => 'Relevés de notes',
+                                'lettres_recommandation' => 'Lettres de recommandation',
+                                'certificats_competences' => 'Certificats de compétences',
                                 'carte_identite' => 'Carte d\'identité',
                                 'autres' => 'Autres',
                             ])
@@ -79,32 +78,59 @@ class DocumentResource extends Resource
                     ->label('Code candidature')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('candidature.nom_complet')
+                TextColumn::make('candidat_nom')
                     ->label('Candidat')
-                    ->getStateUsing(fn (Document $record) => $record->candidature->nom_complet)
-                    ->searchable(['candidature.nom', 'candidature.prenom']),
+                    ->getStateUsing(fn (Document $record) => $record->candidature ? "{$record->candidature->prenom} {$record->candidature->nom}" : 'N/A')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('candidature', function ($q) use ($search) {
+                            $q->where('nom', 'like', "%{$search}%")
+                              ->orWhere('prenom', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                        });
+                    }),
+                TextColumn::make('candidature.email')
+                    ->label('Email')
+                    ->searchable()
+                    ->toggleable()
+                    ->copyable()
+                    ->icon('heroicon-o-envelope'),
                 TextColumn::make('type_document')
                     ->label('Type')
                     ->badge()
+                    ->formatStateUsing(fn (string $state) => match($state) {
+                        'cv' => 'CV',
+                        'lettre_motivation' => 'Lettre de motivation',
+                        'certificat_scolarite' => 'Certificat de scolarité',
+                        'releves_notes' => 'Relevés de notes',
+                        'lettres_recommandation' => 'Lettres de recommandation',
+                        'certificats_competences' => 'Certificats de compétences',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->colors([
                         'primary' => 'cv',
                         'success' => 'lettre_motivation',
                         'warning' => 'certificat_scolarite',
                         'info' => 'releves_notes',
-                        'secondary' => 'carte_identite',
-                        'gray' => 'autres',
+                        'danger' => 'lettres_recommandation',
+                        'gray' => fn ($state) => in_array($state, ['certificats_competences', 'carte_identite', 'autres']),
                     ]),
                 TextColumn::make('nom_original')
                     ->label('Nom du fichier')
                     ->searchable()
-                    ->limit(30),
+                    ->limit(30)
+                    ->tooltip(fn (Document $record) => $record->nom_original),
                 TextColumn::make('taille_fichier')
                     ->label('Taille')
-                    ->formatStateUsing(fn (int $state) => number_format($state / 1024, 2) . ' KB')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state || $state == 0) return '—';
+                        if ($state < 1024) return $state . ' B';
+                        if ($state < 1048576) return round($state / 1024, 1) . ' KB';
+                        return round($state / 1048576, 2) . ' MB';
+                    })
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Date d\'ajout')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(),
             ])
@@ -115,6 +141,8 @@ class DocumentResource extends Resource
                         'lettre_motivation' => 'Lettre de motivation',
                         'certificat_scolarite' => 'Certificat de scolarité',
                         'releves_notes' => 'Relevés de notes',
+                        'lettres_recommandation' => 'Lettres de recommandation',
+                        'certificats_competences' => 'Certificats de compétences',
                         'carte_identite' => 'Carte d\'identité',
                         'autres' => 'Autres',
                     ]),
@@ -143,8 +171,6 @@ class DocumentResource extends Resource
         ];
     }
 
-    // Temporairement commenté - pages manquantes
-    /*
     public static function getPages(): array
     {
         return [
@@ -154,5 +180,4 @@ class DocumentResource extends Resource
             'edit' => Pages\EditDocument::route('/{record}/edit'),
         ];
     }
-    */
 } 

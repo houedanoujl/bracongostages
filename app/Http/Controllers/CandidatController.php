@@ -98,6 +98,34 @@ class CandidatController extends Controller
         // Connexion automatique
         Auth::guard('candidat')->login($candidat);
 
+        // Envoyer un email de bienvenue au candidat
+        try {
+            $sujet = 'Bienvenue sur BRACONGO Stages — Votre compte a été créé';
+            $contenu = "Bonjour <strong>{$candidat->prenom} {$candidat->nom}</strong>,<br><br>"
+                . "Nous avons le plaisir de vous confirmer que votre compte sur la plateforme de stages BRACONGO a été créé avec succès.<br><br>"
+                . "<strong>Récapitulatif :</strong><br>"
+                . "• Nom : {$candidat->prenom} {$candidat->nom}<br>"
+                . "• Email : {$candidat->email}<br>"
+                . ($candidat->telephone ? "• Téléphone : {$candidat->telephone}<br>" : '')
+                . ($candidat->etablissement ? "• Établissement : {$candidat->etablissement}<br>" : '')
+                . ($candidat->niveau_etude ? "• Niveau d'étude : {$candidat->niveau_etude}<br>" : '')
+                . "<br>Vous pouvez dès maintenant :<br>"
+                . "• <strong>Compléter votre profil</strong> (documents, photo, informations complémentaires)<br>"
+                . "• <strong>Postuler aux opportunités de stage</strong> disponibles<br>"
+                . "• <strong>Suivre l'avancement</strong> de vos candidatures depuis votre tableau de bord<br><br>"
+                . "Nous vous souhaitons bonne chance dans vos démarches.<br><br>"
+                . "Cordialement,<br>"
+                . "<strong>L'équipe BRACONGO Stages</strong>";
+
+            NotificationFacade::route('mail', $candidat->email)
+                ->notify(new \App\Notifications\EmailGeneriqueNotification($sujet, $contenu));
+
+            \Log::info('Email de bienvenue envoyé à : ' . $candidat->email);
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi email de bienvenue : ' . $e->getMessage());
+            // Ne pas bloquer l'inscription si l'email échoue
+        }
+
         return redirect()->route('candidat.dashboard')
             ->with('success', 'Compte créé avec succès ! Bienvenue sur BRACONGO Stages.');
     }
@@ -262,22 +290,35 @@ class CandidatController extends Controller
         $validator = Validator::make($request->all(), [
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:candidats,email,' . $candidat->id,
             'telephone' => 'nullable|string|max:20',
             'etablissement' => 'nullable|string|max:255',
             'niveau_etude' => 'nullable|string|max:255',
             'faculte' => 'nullable|string|max:255',
             'cv' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:1024',
+        ], [
+            'email.unique' => 'Cette adresse email est déjà utilisée par un autre compte.',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        // Mise à jour des informations de base
+        // Si l'email change, mettre à jour aussi l'email dans toutes les candidatures liées
+        $ancienEmail = $candidat->email;
+        $nouvelEmail = $request->input('email');
+
+        // Mise à jour des informations de base (y compris l'email)
         $candidat->update($request->only([
-            'nom', 'prenom', 'telephone', 'etablissement', 'niveau_etude', 'faculte'
+            'nom', 'prenom', 'email', 'telephone', 'etablissement', 'niveau_etude', 'faculte'
         ]));
+
+        // Propager le changement d'email aux candidatures existantes
+        if ($ancienEmail !== $nouvelEmail) {
+            Candidature::where('email', $ancienEmail)->update(['email' => $nouvelEmail]);
+            \Log::info("Email candidat mis à jour : {$ancienEmail} → {$nouvelEmail}. Candidatures mises à jour.");
+        }
 
         // Mise à jour du CV (nom de fichier sécurisé avec UUID)
         if ($request->hasFile('cv')) {

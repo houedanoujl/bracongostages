@@ -81,10 +81,13 @@
                         </div>
 
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" id="email" value="{{ $candidat->email }}" disabled
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                            <p class="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                            <input type="email" id="email" name="email" value="{{ old('email', $candidat->email) }}" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Modifiez votre adresse email. Elle sera utilisée pour toutes les communications.</p>
+                            @error('email')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>

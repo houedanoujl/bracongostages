@@ -187,13 +187,8 @@ class CandidatureForm extends Component
                 $this->directions_souhaitees = $opportunite->directions_associees;
             }
             
-            // Pré-remplir le poste souhaité depuis la catégorie ou le titre de l'opportunité
-            if (empty($this->poste_souhaite) && !empty($opportunite->categorie)) {
-                $this->poste_souhaite = $this->resolveSelectKey(
-                    $opportunite->categorie,
-                    \App\Models\Candidature::getPostesDisponibles()
-                );
-            }
+            // Note : le poste souhaité n'est plus pré-rempli côté front.
+            // L'affectation des postes est gérée exclusivement par Bracongo via le Backoffice.
         }
     }
 
@@ -403,10 +398,8 @@ class CandidatureForm extends Component
             $this->validate($validationRules);
             Log::info('Validation réussie pour submitSimple');
             
-            // Auto-déduire le poste souhaité depuis la direction choisie
-            if (empty($this->poste_souhaite) && !empty($this->directions_souhaitees)) {
-                $this->poste_souhaite = Candidature::deduirePosteDepuisDirections($this->directions_souhaitees);
-            }
+            // Note : le poste souhaité n'est plus défini côté front.
+            // L'affectation des postes est gérée exclusivement par Bracongo via le Backoffice.
 
             // Créer la candidature
             $candidature = Candidature::create([
@@ -419,7 +412,7 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite ?: null,
+                'poste_souhaite' => null, // Géré exclusivement par le backoffice
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,
@@ -429,10 +422,14 @@ class CandidatureForm extends Component
 
             Log::info('Candidature créée avec ID: ' . $candidature->id);
             
-            // Sauvegarder les documents s'ils existent
-            if ($this->cv || $this->lettre_motivation || $this->certificat_scolarite) {
+            // Sauvegarder les documents s'ils existent (ou copier depuis le profil)
+            if ($this->cv || $this->lettre_motivation || $this->certificat_scolarite || $this->releves_notes || $this->lettres_recommandation || $this->certificats_competences) {
                 $this->saveDocuments($candidature);
                 Log::info('Documents sauvegardés');
+            } elseif (auth('candidat')->user()) {
+                // Même sans upload, essayer de copier les documents du profil
+                $this->saveDocuments($candidature);
+                Log::info('Tentative de copie des documents depuis le profil');
             }
             
             $this->candidatureCode = $candidature->code_suivi;
@@ -519,10 +516,8 @@ class CandidatureForm extends Component
             $this->validate($validationRules);
             Log::info('Validation réussie');
 
-            // Auto-déduire le poste souhaité depuis la direction choisie
-            if (empty($this->poste_souhaite) && !empty($this->directions_souhaitees)) {
-                $this->poste_souhaite = Candidature::deduirePosteDepuisDirections($this->directions_souhaitees);
-            }
+            // Note : le poste souhaité n'est plus défini côté front.
+            // L'affectation des postes est gérée exclusivement par Bracongo via le Backoffice.
 
             // Créer la candidature
             $candidature = Candidature::create([
@@ -535,7 +530,7 @@ class CandidatureForm extends Component
                 'niveau_etude' => $this->niveau_etude,
                 'faculte' => $this->faculte,
                 'objectif_stage' => $this->objectif_stage,
-                'poste_souhaite' => $this->poste_souhaite ?: null,
+                'poste_souhaite' => null, // Géré exclusivement par le backoffice
                 'opportunite_id' => $this->opportunite_id,
                 'directions_souhaitees' => $this->directions_souhaitees,
                 'periode_debut_souhaitee' => $this->periode_debut_souhaitee,

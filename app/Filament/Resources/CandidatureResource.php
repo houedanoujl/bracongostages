@@ -758,60 +758,326 @@ class CandidatureResource extends Resource
                                 $etape = $statut->getEtape();
                                 $pct = round(($etape / 13) * 100);
                                 $color = $statut->value === 'rejete' ? '#ef4444' : '#22c55e';
+                                $nextStatuts = $statut->getNextStatuts();
+                                $nextLabel = !empty($nextStatuts) ? collect($nextStatuts)->map(fn ($s) => $s->getLabel())->implode(', ') : '🏁 Aucune (terminal)';
                                 return new HtmlString("
-                                    <div class='space-y-2'>
-                                        <div class='flex justify-between text-sm'>
-                                            <span class='font-medium'>{$statut->getLabel()}</span>
-                                            <span class='text-gray-500'>Étape {$etape}/13</span>
+                                    <div class='space-y-3'>
+                                        <div class='flex justify-between items-center'>
+                                            <span class='text-lg font-bold' style='color: {$color};'>Étape {$etape}/13</span>
+                                            <span class='px-2 py-1 rounded-full text-xs font-medium' style='background-color: {$color}20; color: {$color};'>{$statut->getLabel()}</span>
                                         </div>
-                                        <div class='w-full bg-gray-200 rounded-full h-2.5'>
-                                            <div class='h-2.5 rounded-full transition-all duration-500' style='width: {$pct}%; background-color: {$color};'></div>
+                                        <div class='w-full bg-gray-200 rounded-full h-3'>
+                                            <div class='h-3 rounded-full transition-all duration-500' style='width: {$pct}%; background-color: {$color};'></div>
                                         </div>
-                                        <p class='text-xs text-gray-500'>Le statut avance automatiquement lorsque vous remplissez les données de chaque étape.</p>
+                                        <div class='flex justify-between text-xs text-gray-500'>
+                                            <span>Prochaine(s) étape(s) : {$nextLabel}</span>
+                                            <span>{$pct}%</span>
+                                        </div>
+                                        <p class='text-xs text-gray-400 italic'>💡 Utilisez « Enregistrer & Continuer » dans la sidebar pour sauvegarder, envoyer l'email et passer à l'étape suivante.</p>
                                     </div>
                                 ");
                             }),
                     ])
                     ->visible(fn ($record) => $record !== null)
-                    ->collapsible()
-                    ->collapsed(),
+                    ->collapsible(),
             ]);
     }
 
     /**
-     * Bouton de sauvegarde intégré à chaque étape du wizard.
-     * Permet d'enregistrer les modifications sans attendre la dernière étape.
+     * Bouton de sauvegarde simple intégré à chaque étape du wizard.
      */
     public static function makeSaveStepAction(string $stepName): Forms\Components\Actions
     {
         return Forms\Components\Actions::make([
             Forms\Components\Actions\Action::make('save_step_' . \Illuminate\Support\Str::slug($stepName))
                 ->label('💾 Sauvegarder')
-                ->color('success')
+                ->color('gray')
                 ->icon('heroicon-o-check-circle')
-                ->size('lg')
+                ->size('sm')
                 ->extraAttributes(['class' => 'w-full'])
-                ->action(function ($livewire) {
-                    $livewire->save();
+                ->action(function ($livewire, $record) {
+                    try {
+                        $livewire->save(shouldRedirect: false);
+                    } catch (\Filament\Support\Exceptions\Halt $e) {
+                        // Fallback : sauvegarder directement les données du formulaire
+                        try {
+                            $formData = $livewire->data;
+                            $fillable = $record->getFillable();
+                            $dataToSave = [];
+                            foreach ($fillable as $field) {
+                                if (array_key_exists($field, $formData) && $formData[$field] !== null) {
+                                    $dataToSave[$field] = $formData[$field];
+                                }
+                            }
+                            if (isset($dataToSave['statut'])) {
+                                $newStatut = StatutCandidature::tryFrom($dataToSave['statut']);
+                                if ($newStatut && $newStatut->getEtape() < $record->statut->getEtape()) {
+                                    unset($dataToSave['statut']);
+                                }
+                            }
+                            $record->fill($dataToSave)->save();
+                        } catch (\Exception $saveError) {
+                            Notification::make()
+                                ->title('❌ Erreur de sauvegarde')
+                                ->body($saveError->getMessage())
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            return;
+                        }
+                    }
+                    Notification::make()->title('💾 Sauvegardé')->success()->duration(2000)->send();
                 }),
         ])->fullWidth();
     }
 
     /**
-     * Génère la sidebar droite d'une étape : messagerie + bouton de sauvegarde.
-     * Affichée en colonne latérale (columnSpan 1 sur 5).
+     * Bouton "Enregistrer & Continuer" avec choix d'email.
+     * Ouvre un formulaire rapide pour choisir le type d'email, puis sauvegarde, envoie, et navigue.
+     * Pas de popup de confirmation.
+     */
+    public static function makeSaveAndContinueAction(string $stepName): Forms\Components\Actions
+    {
+        $templateSlugs = self::getTemplatesForStep($stepName);
+
+        return Forms\Components\Actions::make([
+            Forms\Components\Actions\Action::make('save_continue_' . \Illuminate\Support\Str::slug($stepName))
+                ->label('Enregistrer & Continuer ➡️')
+                ->color('primary')
+                ->icon('heroicon-o-arrow-right-circle')
+                ->size('lg')
+                ->extraAttributes(['class' => 'w-full'])
+                // Formulaire de sélection du template email avec prévisualisation
+                ->modalHeading('📧 Enregistrer & Notifier — ' . $stepName)
+                ->modalWidth('xl')
+                ->modalSubmitActionLabel('Enregistrer & Continuer ➡️')
+                ->form(function () use ($templateSlugs, $stepName) {
+                    if (empty($templateSlugs)) {
+                        return [
+                            Forms\Components\Placeholder::make('no_email_info')
+                                ->content('Aucun modèle d\'email n\'est disponible pour cette étape. Les données seront sauvegardées et vous passerez à l\'étape suivante.')
+                                ->label(''),
+                        ];
+                    }
+                    return [
+                        Select::make('template_slug')
+                            ->label('Email de notification')
+                            ->options(function () use ($templateSlugs) {
+                                return EmailTemplate::whereIn('slug', $templateSlugs)
+                                    ->where('actif', true)
+                                    ->pluck('nom', 'slug')
+                                    ->toArray();
+                            })
+                            ->placeholder('— Aucun email (continuer sans notifier) —')
+                            ->helperText('Choisissez l\'email à envoyer au candidat, ou laissez vide pour continuer sans email.')
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
+                                $set('sujet_email', '');
+                                $set('contenu_email', '');
+                                if ($state && $record) {
+                                    $rendered = self::renderTemplate($state, $record);
+                                    $set('sujet_email', $rendered['sujet']);
+                                    $set('contenu_email', $rendered['contenu']);
+                                }
+                            }),
+
+                        // Indicateur de chargement
+                        Forms\Components\Placeholder::make('loading_spinner')
+                            ->content(new HtmlString('<div class="flex items-center gap-2 text-primary-600"><svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Chargement du template…</span></div>'))
+                            ->label('')
+                            ->visible(fn (Forms\Get $get) => $get('template_slug') && !$get('sujet_email')),
+
+                        // Sujet de l'email (éditable)
+                        TextInput::make('sujet_email')
+                            ->label('Sujet')
+                            ->visible(fn (Forms\Get $get) => !empty($get('sujet_email')))
+                            ->live(onBlur: true),
+
+                        // Corps de l'email (éditable, avec les valeurs dynamiques injectées)
+                        RichEditor::make('contenu_email')
+                            ->label('Corps de l\'email')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                            ->visible(fn (Forms\Get $get) => !empty($get('contenu_email'))),
+
+                        // Infos destinataire
+                        Forms\Components\Placeholder::make('destinataire_info')
+                            ->label('')
+                            ->content(fn ($record) => $record && $record->email
+                                ? new HtmlString("<div class='text-xs text-gray-500 mt-1'>📬 Destinataire : <strong>{$record->email}</strong></div>")
+                                : '')
+                            ->visible(fn (Forms\Get $get) => !empty($get('template_slug'))),
+                    ];
+                })
+                ->action(function (array $data, $record, $livewire) use ($stepName) {
+                    // 1. SAUVEGARDE — Tenter le save Filament complet d'abord.
+                    // Si la validation du wizard échoue (champs d'étapes futures vides),
+                    // fallback : sauvegarder directement les données du formulaire.
+                    $saved = false;
+                    try {
+                        $livewire->save(shouldRedirect: false);
+                        $saved = true;
+                    } catch (\Filament\Support\Exceptions\Halt $e) {
+                        // Le wizard valide TOUTES les étapes → échec si étapes futures incomplètes.
+                        // Fallback : sauvegarder directement avec les données du formulaire.
+                    }
+
+                    if (!$saved) {
+                        try {
+                            $formData = $livewire->data;
+                            $fillable = $record->getFillable();
+                            $dataToSave = [];
+                            foreach ($fillable as $field) {
+                                if (array_key_exists($field, $formData) && $formData[$field] !== null) {
+                                    $dataToSave[$field] = $formData[$field];
+                                }
+                            }
+
+                            // Anti-rétrogradation du statut
+                            if (isset($dataToSave['statut'])) {
+                                $newStatut = StatutCandidature::tryFrom($dataToSave['statut']);
+                                if ($newStatut && $newStatut->getEtape() < $record->statut->getEtape()) {
+                                    unset($dataToSave['statut']);
+                                }
+                            }
+
+                            $record->fill($dataToSave);
+                            $record->save();
+                            $saved = true;
+
+                            \Illuminate\Support\Facades\Log::info("Save & Continue fallback : candidature #{$record->id} sauvegardée directement.");
+                        } catch (\Exception $saveError) {
+                            \Illuminate\Support\Facades\Log::error("Save & Continue erreur : {$saveError->getMessage()}");
+                            Notification::make()
+                                ->title('❌ Erreur de sauvegarde')
+                                ->body('Impossible de sauvegarder : ' . $saveError->getMessage())
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            return;
+                        }
+                    }
+
+                    // 2. Rafraîchir le record pour avoir le statut à jour après auto-avancement
+                    $record->refresh();
+                    $etape = $record->statut->getEtape();
+
+                    // 3. Envoyer l'email si un template est choisi
+                    $emailSent = false;
+                    $slug = $data['template_slug'] ?? null;
+                    $sujet = $data['sujet_email'] ?? null;
+                    $contenu = $data['contenu_email'] ?? null;
+
+                    if ($slug && $record->email) {
+                        try {
+                            // Utiliser le sujet/contenu édité par l'utilisateur dans le modal
+                            // S'ils sont vides, re-rendre depuis le template
+                            if (empty($sujet) || empty($contenu)) {
+                                $rendered = self::renderTemplate($slug, $record);
+                                $sujet = $sujet ?: $rendered['sujet'];
+                                $contenu = $contenu ?: $rendered['contenu'];
+                            }
+
+                            if (!empty($sujet) && !empty($contenu)) {
+                                $notification = new EmailGeneriqueNotification($sujet, $contenu);
+
+                                // Pièces jointes
+                                $attachmentMap = [
+                                    'reponse_lettre_recommandation' => 'chemin_reponse_lettre',
+                                    'envoi_evaluation' => 'chemin_evaluation',
+                                    'envoi_attestation' => 'chemin_attestation',
+                                ];
+                                if (isset($attachmentMap[$slug]) && $record->{$attachmentMap[$slug]}) {
+                                    $filePath = storage_path('app/public/' . $record->{$attachmentMap[$slug]});
+                                    if (file_exists($filePath)) {
+                                        $notification->attachFile($filePath);
+                                    }
+                                }
+
+                                // Mises à jour post-envoi
+                                if ($slug === 'envoi_attestation') {
+                                    $record->update(['attestation_generee' => true, 'date_attestation' => now()]);
+                                } elseif ($slug === 'reponse_lettre_recommandation') {
+                                    $record->update(['reponse_lettre_envoyee' => true, 'date_reponse_lettre' => now()]);
+                                }
+
+                                NotificationFacade::route('mail', $record->email)->notify($notification);
+                                $emailSent = true;
+                            }
+                        } catch (\Exception $emailError) {
+                            Notification::make()
+                                ->title('⚠️ Sauvegardé mais email échoué')
+                                ->body("Erreur email : {$emailError->getMessage()}")
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }
+                    }
+
+                    // 4. Notification de succès
+                    $msg = "Étape « {$stepName} » enregistrée (étape {$etape}/13).";
+                    if ($emailSent) {
+                        $msg .= " 📧 Email envoyé à {$record->email}.";
+                    }
+                    Notification::make()->title('✅ ' . $msg)->success()->duration(4000)->send();
+
+                    // 5. Recharger la page — startOnStep() détectera le nouveau statut
+                    $url = self::getUrl('edit', ['record' => $record->id]);
+                    $livewire->redirect($url, navigate: false);
+                }),
+        ])->fullWidth();
+    }
+
+    /**
+     * Indicateur de progression dynamique pour la sidebar.
+     */
+    public static function makeProgressIndicator(string $stepName = 'default'): Forms\Components\Placeholder
+    {
+        return Forms\Components\Placeholder::make('progress_' . \Illuminate\Support\Str::slug($stepName))
+            ->label('')
+            ->content(function ($record) {
+                if (!$record || !$record->statut) return '';
+                $record->refresh();
+                $statut = $record->statut;
+                $etape = $statut->getEtape();
+                $pct = round(($etape / 13) * 100);
+                $color = $statut->value === 'rejete' ? '#ef4444' : '#3b82f6';
+                $nextStatuts = $statut->getNextStatuts();
+                $nextLabel = !empty($nextStatuts) ? $nextStatuts[0]->getLabel() : '🏁 Terminé';
+                return new HtmlString("
+                    <div class='space-y-2 text-center'>
+                        <div class='text-2xl font-bold' style='color: {$color};'>Étape {$etape}/13</div>
+                        <div class='w-full bg-gray-200 rounded-full h-2'>
+                            <div class='h-2 rounded-full transition-all duration-500' style='width: {$pct}%; background-color: {$color};'></div>
+                        </div>
+                        <div class='text-xs text-gray-600 font-medium'>{$statut->getLabel()}</div>
+                        <div class='text-xs text-gray-400'>Suivant : {$nextLabel}</div>
+                    </div>
+                ");
+            });
+    }
+
+    /**
+     * Génère la sidebar droite d'une étape.
      */
     public static function makeSidebar(string $stepName): Forms\Components\Group
     {
         return Forms\Components\Group::make([
-            // Bouton de sauvegarde en haut de la sidebar
+            // Indicateur de progression
             Forms\Components\Section::make('')
                 ->schema([
+                    self::makeProgressIndicator($stepName),
+                ])
+                ->extraAttributes(['class' => 'border-blue-200 bg-blue-50/50']),
+
+            // Boutons d'action
+            Forms\Components\Section::make('')
+                ->schema([
+                    self::makeSaveAndContinueAction($stepName),
                     self::makeSaveStepAction($stepName),
                 ])
                 ->extraAttributes(['class' => 'border-green-200 bg-green-50/50']),
 
-            // Section messagerie
+            // Section messagerie (pour envoi personnalisé)
             self::makeEmailAction($stepName),
         ])->columnSpan(1);
     }
@@ -822,15 +1088,23 @@ class CandidatureResource extends Resource
     public static function makeSidebarTests(): Forms\Components\Group
     {
         return Forms\Components\Group::make([
-            // Bouton de sauvegarde en haut
+            // Indicateur de progression
             Forms\Components\Section::make('')
                 ->schema([
+                    self::makeProgressIndicator('Tests'),
+                ])
+                ->extraAttributes(['class' => 'border-blue-200 bg-blue-50/50']),
+
+            // Boutons d'action
+            Forms\Components\Section::make('')
+                ->schema([
+                    self::makeSaveAndContinueAction('Tests'),
                     self::makeSaveStepAction('Tests'),
                 ])
                 ->extraAttributes(['class' => 'border-green-200 bg-green-50/50']),
 
-            // Section emails Tests
-            Forms\Components\Section::make('📧 Messagerie')
+            // Section emails Tests avec 3 boutons séparés
+            Forms\Components\Section::make('📧 Emails manuels')
                 ->schema([
                     Forms\Components\Actions::make([
                         // === Bouton 1 : Convocation au test ===
@@ -870,10 +1144,8 @@ class CandidatureResource extends Resource
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
-                            ->requiresConfirmation()
                             ->modalHeading('Convocation au test')
-                            ->modalDescription(fn ($record) => 'Envoyer la convocation à ' . ($record?->email ?? ''))
-                            ->modalSubmitActionLabel('Envoyer')
+                            ->modalSubmitActionLabel('Sauvegarder & Envoyer')
                             ->action(function (array $data, $record, $livewire) {
                                 try {
                                     $livewire->save();
@@ -909,10 +1181,8 @@ class CandidatureResource extends Resource
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
-                            ->requiresConfirmation()
                             ->modalHeading('Résultat : Admis')
-                            ->modalDescription(fn ($record) => 'Envoyer le résultat positif à ' . ($record?->email ?? ''))
-                            ->modalSubmitActionLabel('Envoyer')
+                            ->modalSubmitActionLabel('Sauvegarder & Envoyer')
                             ->action(function (array $data, $record, $livewire) {
                                 try {
                                     $livewire->save();
@@ -948,10 +1218,8 @@ class CandidatureResource extends Resource
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->required(),
                             ])
-                            ->requiresConfirmation()
                             ->modalHeading('Résultat : Non admis')
-                            ->modalDescription(fn ($record) => 'Envoyer le résultat négatif à ' . ($record?->email ?? ''))
-                            ->modalSubmitActionLabel('Envoyer')
+                            ->modalSubmitActionLabel('Sauvegarder & Envoyer')
                             ->action(function (array $data, $record, $livewire) {
                                 try {
                                     $livewire->save();
