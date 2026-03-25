@@ -41,12 +41,31 @@ class EditCandidature extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Valider la transition de statut côté serveur (empêcher le saut d'étapes)
+        // Rafraîchir le record pour avoir le statut le plus à jour (après auto-avancement)
+        $this->record->refresh();
+
         if (isset($data['statut'])) {
             $currentStatut = $this->record->statut;
             $newStatut = StatutCandidature::tryFrom($data['statut']);
 
             if ($currentStatut && $newStatut && $currentStatut !== $newStatut) {
+                // CAS 1 : Le formulaire tente de rétrograder le statut (étape inférieure ou égale)
+                // Cela arrive quand l'auto-avancement a déjà fait progresser le statut en DB
+                // mais le formulaire contient encore l'ancienne valeur → on garde le statut actuel
+                if ($newStatut->getEtape() < $currentStatut->getEtape()) {
+                    $data['statut'] = $currentStatut->value;
+
+                    Notification::make()
+                        ->title('ℹ️ Statut conservé')
+                        ->body("Le statut a été automatiquement maintenu à « {$currentStatut->getLabel()} » (étape {$currentStatut->getEtape()}/13). Le formulaire contenait une valeur obsolète.")
+                        ->info()
+                        ->duration(5000)
+                        ->send();
+
+                    return $data;
+                }
+
+                // CAS 2 : Transition vers l'avant mais non autorisée
                 if (!$currentStatut->canTransitionTo($newStatut)) {
                     $nextLabels = collect($currentStatut->getNextStatuts())
                         ->map(fn ($s) => $s->getLabel())
@@ -243,6 +262,8 @@ class EditCandidature extends EditRecord
 
     /**
      * Enregistre un changement de statut dans l'historique.
+     * Utilise une requête directe pour ne modifier QUE la colonne historique_statuts
+     * sans interférer avec les autres attributs dirty du modèle (ex: statut).
      */
     private function enregistrerHistorique($record, StatutCandidature $de, StatutCandidature $vers, string $commentaire): void
     {
@@ -254,7 +275,13 @@ class EditCandidature extends EditRecord
             'utilisateur' => auth()->user()?->name ?? 'Système',
             'commentaire' => $commentaire,
         ];
-        $record->updateQuietly(['historique_statuts' => $historique]);
+        // Mise à jour directe en base pour ne toucher que historique_statuts
+        \App\Models\Candidature::withoutEvents(function () use ($record, $historique) {
+            \App\Models\Candidature::where('id', $record->id)
+                ->update(['historique_statuts' => json_encode($historique)]);
+        });
+        // Synchroniser l'attribut en mémoire
+        $record->historique_statuts = $historique;
     }
 
     /**

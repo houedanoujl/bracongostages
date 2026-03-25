@@ -168,6 +168,14 @@ class Candidature extends Model
                     $nouveauStatut = StatutCandidature::tryFrom($nouveauStatut);
                 }
 
+                // Si le formulaire tente de rétrograder le statut (valeur obsolète après auto-avancement),
+                // annuler silencieusement le changement de statut et garder la valeur actuelle en DB
+                if ($ancienStatut && $nouveauStatut && $nouveauStatut->getEtape() < $ancienStatut->getEtape()) {
+                    $candidature->statut = $ancienStatut;
+                    \Illuminate\Support\Facades\Log::info("Rétrogradation de statut bloquée : {$nouveauStatut->value} → maintenu à {$ancienStatut->value}");
+                    return;
+                }
+
                 // Valider que la transition est autorisée
                 if ($ancienStatut && $nouveauStatut && !$ancienStatut->canTransitionTo($nouveauStatut)) {
                     throw ValidationException::withMessages([

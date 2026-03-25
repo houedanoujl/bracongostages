@@ -339,412 +339,412 @@ class CandidatureResource extends Resource
                         // ==================== ÉTAPE 4 : GESTION ====================
                         Forms\Components\Wizard\Step::make('Gestion')
                             ->icon('heroicon-o-cog-6-tooth')
-                            ->description(fn ($record) => $record ? '📍 ' . $record->statut->getLabel() : 'Statut & notes')
+                            ->description(function ($record) {
+                                if (!$record) return 'Statut & notes';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 4) return '🔒 Non accessible';
+                                return '📍 ' . $record->statut->getLabel();
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    Select::make('statut')
-                                        ->options(function ($record) {
-                                            if (!$record || !$record->statut) {
-                                                return StatutCandidature::getOptions();
-                                            }
-                                            // Proposer uniquement le statut actuel + les prochains statuts autorisés
-                                            $currentStatut = $record->statut;
-                                            $options = [$currentStatut->value => '✅ ' . $currentStatut->getLabel() . ' (actuel)'];
-                                            foreach ($currentStatut->getNextStatuts() as $next) {
-                                                $options[$next->value] = '➡️ ' . $next->getLabel();
-                                            }
-                                            return $options;
-                                        })
-                                        ->required()
-                                        ->live()
-                                        ->default(StatutCandidature::DOSSIER_RECU->value)
-                                        ->helperText(function ($record, Forms\Get $get) {
-                                            if (!$record || !$record->statut) return '';
-                                            $currentStatut = $record->statut;
-                                            $etape = $currentStatut->getEtape();
-                                            $nextStatuts = $currentStatut->getNextStatuts();
-                                            $nextLabels = collect($nextStatuts)->map(fn ($s) => $s->getLabel())->implode(', ');
-                                            $info = "📍 Étape {$etape}/13 — {$currentStatut->getLabel()}";
-                                            if ($currentStatut->isTerminal()) {
-                                                $info .= ' | 🏁 Statut terminal — aucune transition possible';
-                                            } elseif (!empty($nextLabels)) {
-                                                $info .= " | Prochaine(s) étape(s) : {$nextLabels}";
-                                            }
-                                            return $info;
-                                        })
-                                        ->afterStateUpdated(function ($state, $record, Forms\Set $set) {
-                                            // Validation en temps réel : empêcher le saut d'étapes
-                                            if ($record && $record->statut && $state) {
-                                                $newStatut = StatutCandidature::tryFrom($state);
-                                                if ($newStatut && !$record->statut->canTransitionTo($newStatut) && $state !== $record->statut->value) {
-                                                    Notification::make()
-                                                        ->title('⛔ Transition interdite')
-                                                        ->body("Impossible de passer de \"{$record->statut->getLabel()}\" à \"{$newStatut->getLabel()}\". Veuillez respecter l'ordre du workflow.")
-                                                        ->danger()
-                                                        ->persistent()
-                                                        ->send();
-                                                    // Remettre le statut actuel
-                                                    $set('statut', $record->statut->value);
-                                                }
-                                            }
-                                        }),
-                                    TextInput::make('code_suivi')
-                                        ->disabled()
-                                        ->dehydrated(false),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Select::make('statut')
+                                                ->options(function ($record) {
+                                                    if (!$record || !$record->statut) {
+                                                        return StatutCandidature::getOptions();
+                                                    }
+                                                    $currentStatut = $record->statut;
+                                                    $options = [$currentStatut->value => '✅ ' . $currentStatut->getLabel() . ' (actuel)'];
+                                                    foreach ($currentStatut->getNextStatuts() as $next) {
+                                                        $options[$next->value] = '➡️ ' . $next->getLabel();
+                                                    }
+                                                    return $options;
+                                                })
+                                                ->required()
+                                                ->live()
+                                                ->default(StatutCandidature::DOSSIER_RECU->value)
+                                                ->helperText(function ($record, Forms\Get $get) {
+                                                    if (!$record || !$record->statut) return '';
+                                                    $currentStatut = $record->statut;
+                                                    $etape = $currentStatut->getEtape();
+                                                    $nextStatuts = $currentStatut->getNextStatuts();
+                                                    $nextLabels = collect($nextStatuts)->map(fn ($s) => $s->getLabel())->implode(', ');
+                                                    $info = "📍 Étape {$etape}/13 — {$currentStatut->getLabel()}";
+                                                    if ($currentStatut->isTerminal()) {
+                                                        $info .= ' | 🏁 Statut terminal — aucune transition possible';
+                                                    } elseif (!empty($nextLabels)) {
+                                                        $info .= " | Prochaine(s) étape(s) : {$nextLabels}";
+                                                    }
+                                                    return $info;
+                                                })
+                                                ->afterStateUpdated(function ($state, $record, Forms\Set $set) {
+                                                    if ($record && $record->statut && $state) {
+                                                        $newStatut = StatutCandidature::tryFrom($state);
+                                                        if ($newStatut && !$record->statut->canTransitionTo($newStatut) && $state !== $record->statut->value) {
+                                                            Notification::make()
+                                                                ->title('⛔ Transition interdite')
+                                                                ->body("Impossible de passer de \"{$record->statut->getLabel()}\" à \"{$newStatut->getLabel()}\". Veuillez respecter l'ordre du workflow.")
+                                                                ->danger()
+                                                                ->persistent()
+                                                                ->send();
+                                                            $set('statut', $record->statut->value);
+                                                        }
+                                                    }
+                                                }),
+                                            TextInput::make('code_suivi')
+                                                ->disabled()
+                                                ->dehydrated(false),
+                                        ]),
+                                        RichEditor::make('motif_rejet')
+                                            ->label('Motif de rejet')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                                            ->visible(fn (Forms\Get $get) => $get('statut') === StatutCandidature::REJETE->value)
+                                            ->columnSpanFull(),
+                                        RichEditor::make('notes_internes')
+                                            ->label('Notes internes')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
+
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Gestion'),
                                 ]),
-                                RichEditor::make('motif_rejet')
-                                    ->label('Motif de rejet')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
-                                    ->visible(fn (Forms\Get $get) => $get('statut') === StatutCandidature::REJETE->value)
-                                    ->columnSpanFull(),
-                                RichEditor::make('notes_internes')
-                                    ->label('Notes internes')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                    ->columnSpanFull(),
-                                self::makeEmailAction('Gestion'),
-                                self::makeSaveStepAction('Gestion'),
                             ]),
 
                         // ==================== ÉTAPE 5 : TESTS ====================
                         Forms\Components\Wizard\Step::make('Tests')
                             ->icon('heroicon-o-clipboard-document-check')
-                            ->description(fn ($record) => $record && $record->note_test ? '✅ Note: ' . $record->note_test . '/20' : 'Test de sélection')
+                            ->description(function ($record) {
+                                if (!$record) return 'Test de sélection';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 5) return '🔒 Non accessible';
+                                if ($record->note_test) return '✅ Note: ' . $record->note_test . '/20';
+                                return 'Test de sélection';
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    DatePicker::make('date_test')
-                                        ->label('Date du test'),
-                                    TextInput::make('lieu_test')
-                                        ->label('Lieu du test'),
-                                    TextInput::make('note_test')
-                                        ->label('Note obtenue')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.01)
-                                        ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            DatePicker::make('date_test')
+                                                ->label('Date du test'),
+                                            TextInput::make('lieu_test')
+                                                ->label('Lieu du test'),
+                                            TextInput::make('note_test')
+                                                ->label('Note obtenue')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(20)
+                                                ->step(0.01)
+                                                ->suffix('/20')
+                                                ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                        ]),
+                                        RichEditor::make('commentaire_test')
+                                            ->label('Commentaires sur le test')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
+
+                                    // === Sidebar Tests (1/5 = 20%) avec 3 boutons email ===
+                                    self::makeSidebarTests(),
                                 ]),
-                                RichEditor::make('commentaire_test')
-                                    ->label('Commentaires sur le test')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
-                                    ->columnSpanFull(),
-
-                                // ---- Emails séparés pour l'étape Tests ----
-                                Forms\Components\Section::make('Messagerie — Tests')
-                                    ->schema([
-                                        Forms\Components\Actions::make([
-                                            // === Bouton 1 : Convocation au test ===
-                                            Forms\Components\Actions\Action::make('email_convocation_test')
-                                                ->label('📩 Convocation au test')
-                                                ->color('warning')
-                                                ->icon('heroicon-o-megaphone')
-                                                ->visible(fn ($record) => $record && $record->email)
-                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
-                                                    if ($record) {
-                                                        $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00']);
-                                                        $form->fill([
-                                                            'heure_test' => '09:00',
-                                                            'sujet_email' => $rendered['sujet'],
-                                                            'contenu_email' => $rendered['contenu'],
-                                                        ]);
-                                                    }
-                                                })
-                                                ->form([
-                                                    TextInput::make('heure_test')
-                                                        ->label('Heure du test')
-                                                        ->default('09:00')
-                                                        ->required()
-                                                        ->live(onBlur: true)
-                                                        ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
-                                                            if ($record) {
-                                                                $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => $state ?? '09:00']);
-                                                                $set('sujet_email', $rendered['sujet']);
-                                                                $set('contenu_email', $rendered['contenu']);
-                                                            }
-                                                        }),
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Convocation au test')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer la convocation au test à ' . ($record?->email ?? 'l\'adresse du candidat'))
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        NotificationFacade::route('mail', $record->email)
-                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                        Notification::make()->title('Sauvegardé — Convocation au test envoyée à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-
-                                            // === Bouton 2 : Résultat Admis ===
-                                            Forms\Components\Actions\Action::make('email_resultat_admis')
-                                                ->label('✅ Résultat : Admis')
-                                                ->color('success')
-                                                ->icon('heroicon-o-check-circle')
-                                                ->visible(fn ($record) => $record && $record->email)
-                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
-                                                    if ($record) {
-                                                        $rendered = self::renderTemplate('resultat_admis', $record);
-                                                        $form->fill([
-                                                            'sujet_email' => $rendered['sujet'],
-                                                            'contenu_email' => $rendered['contenu'],
-                                                        ]);
-                                                    }
-                                                })
-                                                ->form([
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Résultat : Admis')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer le résultat positif à ' . ($record?->email ?? 'l\'adresse du candidat'))
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        NotificationFacade::route('mail', $record->email)
-                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                        Notification::make()->title('Sauvegardé — Résultat « Admis » envoyé à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-
-                                            // === Bouton 3 : Résultat Non admis ===
-                                            Forms\Components\Actions\Action::make('email_resultat_non_admis')
-                                                ->label('❌ Résultat : Non admis')
-                                                ->color('danger')
-                                                ->icon('heroicon-o-x-circle')
-                                                ->visible(fn ($record) => $record && $record->email)
-                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
-                                                    if ($record) {
-                                                        $rendered = self::renderTemplate('resultat_non_admis', $record);
-                                                        $form->fill([
-                                                            'sujet_email' => $rendered['sujet'],
-                                                            'contenu_email' => $rendered['contenu'],
-                                                        ]);
-                                                    }
-                                                })
-                                                ->form([
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Résultat : Non admis')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer le résultat négatif à ' . ($record?->email ?? 'l\'adresse du candidat'))
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        NotificationFacade::route('mail', $record->email)
-                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                        Notification::make()->title('Sauvegardé — Résultat « Non admis » envoyé à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-                                        ])->fullWidth(),
-                                    ])->collapsible(),
-                                self::makeSaveStepAction('Tests'),
                             ]),
 
                         // ==================== ÉTAPE 6 : AFFECTATION ====================
                         Forms\Components\Wizard\Step::make('Affectation')
                             ->icon('heroicon-o-building-office')
-                            ->description(fn ($record) => $record && $record->service_affecte ? '✅ ' . ($record->service_affecte) : 'Service & tuteur')
+                            ->description(function ($record) {
+                                if (!$record) return 'Service & tuteur';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 6) return '🔒 Non accessible';
+                                if ($record->service_affecte) return '✅ ' . $record->service_affecte;
+                                return 'Service & tuteur';
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    Select::make('service_affecte')
-                                        ->label('Service d\'affectation')
-                                        ->options(Candidature::getDirectionsDisponibles())
-                                        ->searchable()
-                                        ->preload(),
-                                    Select::make('tuteur_id')
-                                        ->label('Tuteur de stage')
-                                        ->relationship('tuteur', 'name', fn (Builder $query) => $query->where('est_tuteur', true)->where('is_active', true))
-                                        ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name . ($record->direction ? " ({$record->direction})" : ''))
-                                        ->searchable()
-                                        ->preload(),
-                                    DatePicker::make('date_debut_stage_reel')
-                                        ->label('Date réelle de début'),
-                                    DatePicker::make('date_fin_stage_reel')
-                                        ->label('Date réelle de fin'),
-                                ]),
-                                RichEditor::make('programme_stage')
-                                    ->label('Programme de stage')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link', 'h2', 'h3'])
-                                    ->columnSpanFull(),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        // Rappel de la préférence du candidat
+                                        Forms\Components\Placeholder::make('preference_candidat')
+                                            ->label('📋 Préférence du candidat')
+                                            ->content(function ($record) {
+                                                if (!$record) return '';
+                                                $dirs = $record->directions_souhaitees;
+                                                if (empty($dirs)) return 'Aucune préférence exprimée.';
+                                                $allDirs = Candidature::getDirectionsDisponibles();
+                                                $labels = collect((array) $dirs)
+                                                    ->map(fn ($d) => $allDirs[$d] ?? $d)
+                                                    ->implode(', ');
+                                                return new HtmlString(
+                                                    "<span class='text-primary-600 dark:text-primary-400 font-medium'>{$labels}</span>"
+                                                    . ($record->poste_souhaite ? " — Poste : <strong>{$record->poste_souhaite}</strong>" : '')
+                                                );
+                                            })
+                                            ->columnSpanFull()
+                                            ->visible(fn ($record) => $record !== null),
 
-                                self::makeEmailAction('Affectation'),
-                                self::makeSaveStepAction('Affectation'),
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Select::make('service_affecte')
+                                                ->label('Service d\'affectation')
+                                                ->options(Candidature::getDirectionsDisponibles())
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText(fn ($record) => $record && !empty($record->directions_souhaitees) && empty($record->service_affecte)
+                                                    ? '💡 Pré-rempli avec la 1ʳᵉ préférence du candidat'
+                                                    : null)
+                                                ->afterStateHydrated(function (Forms\Components\Select $component, $state, $record) {
+                                                    if (empty($state) && $record && !empty($record->directions_souhaitees)) {
+                                                        $dirs = (array) $record->directions_souhaitees;
+                                                        $firstDir = $dirs[0] ?? null;
+                                                        if ($firstDir) {
+                                                            $component->state($firstDir);
+                                                        }
+                                                    }
+                                                }),
+                                            Select::make('tuteur_id')
+                                                ->label('Tuteur de stage')
+                                                ->relationship('tuteur', 'name', fn (Builder $query) => $query->where('est_tuteur', true)->where('is_active', true))
+                                                ->getOptionLabelFromRecordUsing(fn (User $record) => $record->name . ($record->direction ? " ({$record->direction})" : ''))
+                                                ->searchable()
+                                                ->preload(),
+                                            DatePicker::make('date_debut_stage_reel')
+                                                ->label('Date réelle de début')
+                                                ->helperText(fn ($record) => $record && $record->periode_debut_souhaitee
+                                                    ? '📅 Souhaitée : ' . \Carbon\Carbon::parse($record->periode_debut_souhaitee)->format('d/m/Y')
+                                                    : null)
+                                                ->afterStateHydrated(function ($component, $state, $record) {
+                                                    if (empty($state) && $record && $record->periode_debut_souhaitee) {
+                                                        $component->state($record->periode_debut_souhaitee);
+                                                    }
+                                                }),
+                                            DatePicker::make('date_fin_stage_reel')
+                                                ->label('Date réelle de fin')
+                                                ->helperText(fn ($record) => $record && $record->periode_fin_souhaitee
+                                                    ? '📅 Souhaitée : ' . \Carbon\Carbon::parse($record->periode_fin_souhaitee)->format('d/m/Y')
+                                                    : null)
+                                                ->afterStateHydrated(function ($component, $state, $record) {
+                                                    if (empty($state) && $record && $record->periode_fin_souhaitee) {
+                                                        $component->state($record->periode_fin_souhaitee);
+                                                    }
+                                                }),
+                                        ]),
+                                        RichEditor::make('programme_stage')
+                                            ->label('Programme de stage')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link', 'h2', 'h3'])
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
+
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Affectation'),
+                                ]),
                             ]),
 
                         // ==================== ÉTAPE 7 : INDUCTION & RÉPONSE LETTRE ====================
                         Forms\Components\Wizard\Step::make('Induction & Réponse')
                             ->icon('heroicon-o-clipboard-document-list')
-                            ->description(fn ($record) => $record && $record->induction_completee ? '✅ Induction terminée' : 'Induction & lettre')
+                            ->description(function ($record) {
+                                if (!$record) return 'Induction & lettre';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 7) return '🔒 Non accessible';
+                                if ($record->induction_completee) return '✅ Induction terminée';
+                                return 'Induction & lettre';
+                            })
                             ->schema([
-                                Forms\Components\Fieldset::make('Induction RH')->schema([
-                                    DatePicker::make('date_induction')
-                                        ->label('Date de l\'induction'),
-                                    Forms\Components\Toggle::make('induction_completee')
-                                        ->label('Induction complétée'),
-                                ])->columns(2),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Fieldset::make('Induction RH')->schema([
+                                            DatePicker::make('date_induction')
+                                                ->label('Date de l\'induction'),
+                                            Forms\Components\Toggle::make('induction_completee')
+                                                ->label('Induction complétée'),
+                                        ])->columns(2),
 
-                                Forms\Components\Fieldset::make('Réponse à la lettre de recommandation')->schema([
-                                    Forms\Components\Toggle::make('reponse_lettre_envoyee')
-                                        ->label('Réponse envoyée')
-                                        ->live(),
-                                    DatePicker::make('date_reponse_lettre')
-                                        ->label('Date d\'envoi')
-                                        ->visible(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true)
-                                        ->required(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true),
-                                    Forms\Components\FileUpload::make('chemin_reponse_lettre')
-                                        ->label('Fichier de réponse')
-                                        ->directory('documents/reponses-lettres')
-                                        ->disk('public')
-                                        ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
-                                        ->maxSize(10240)
-                                        ->downloadable()
-                                        ->openable()
-                                        ->columnSpanFull(),
-                                ])->columns(2),
+                                        Forms\Components\Fieldset::make('Réponse à la lettre de recommandation')->schema([
+                                            Forms\Components\Toggle::make('reponse_lettre_envoyee')
+                                                ->label('Réponse envoyée')
+                                                ->live(),
+                                            DatePicker::make('date_reponse_lettre')
+                                                ->label('Date d\'envoi')
+                                                ->visible(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true)
+                                                ->required(fn (Forms\Get $get) => $get('reponse_lettre_envoyee') == true),
+                                            Forms\Components\FileUpload::make('chemin_reponse_lettre')
+                                                ->label('Fichier de réponse')
+                                                ->directory('documents/reponses-lettres')
+                                                ->disk('public')
+                                                ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                                ->maxSize(10240)
+                                                ->downloadable()
+                                                ->openable()
+                                                ->columnSpanFull(),
+                                        ])->columns(2),
+                                    ])->columnSpan(4),
 
-                                self::makeEmailAction('Induction & Réponse'),
-                                self::makeSaveStepAction('Induction & Réponse'),
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Induction & Réponse'),
+                                ]),
                             ]),
 
                         // ==================== ÉTAPE 8 : ÉVALUATION ====================
                         Forms\Components\Wizard\Step::make('Évaluation')
                             ->icon('heroicon-o-chart-bar')
-                            ->description(fn ($record) => $record && $record->note_evaluation ? '✅ Note: ' . $record->note_evaluation . '/20' : 'Évaluation finale')
+                            ->description(function ($record) {
+                                if (!$record) return 'Évaluation finale';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 8) return '🔒 Non accessible';
+                                if ($record->note_evaluation) return '✅ Note: ' . $record->note_evaluation . '/20';
+                                return 'Évaluation finale';
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    DatePicker::make('date_evaluation')
-                                        ->label('Date de l\'évaluation'),
-                                    TextInput::make('note_evaluation')
-                                        ->label('Note finale')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.01)
-                                        ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
-                                    Select::make('appreciation_tuteur')
-                                        ->label('Appréciation du tuteur')
-                                        ->options([
-                                            'excellent' => 'Excellent',
-                                            'tres_bien' => 'Très bien',
-                                            'bien' => 'Bien',
-                                            'satisfaisant' => 'Satisfaisant',
-                                            'insuffisant' => 'Insuffisant',
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            DatePicker::make('date_evaluation')
+                                                ->label('Date de l\'évaluation'),
+                                            TextInput::make('note_evaluation')
+                                                ->label('Note finale')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(20)
+                                                ->step(0.01)
+                                                ->suffix('/20')
+                                                ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                            Select::make('appreciation_tuteur')
+                                                ->label('Appréciation du tuteur')
+                                                ->options([
+                                                    'excellent' => 'Excellent',
+                                                    'tres_bien' => 'Très bien',
+                                                    'bien' => 'Bien',
+                                                    'satisfaisant' => 'Satisfaisant',
+                                                    'insuffisant' => 'Insuffisant',
+                                                ]),
                                         ]),
-                                ]),
-                                RichEditor::make('commentaire_evaluation')
-                                    ->label('Commentaires')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
-                                    ->columnSpanFull(),
-                                RichEditor::make('competences_acquises_evaluation')
-                                    ->label('Compétences acquises')
-                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
-                                    ->columnSpanFull(),
-                                Forms\Components\FileUpload::make('chemin_evaluation')
-                                    ->label('Document d\'évaluation')
-                                    ->directory('documents/evaluations')
-                                    ->disk('public')
-                                    ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
-                                    ->maxSize(10240)
-                                    ->downloadable()
-                                    ->openable()
-                                    ->columnSpanFull(),
+                                        RichEditor::make('commentaire_evaluation')
+                                            ->label('Commentaires')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
+                                        RichEditor::make('competences_acquises_evaluation')
+                                            ->label('Compétences acquises')
+                                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
+                                        Forms\Components\FileUpload::make('chemin_evaluation')
+                                            ->label('Document d\'évaluation')
+                                            ->directory('documents/evaluations')
+                                            ->disk('public')
+                                            ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                            ->maxSize(10240)
+                                            ->downloadable()
+                                            ->openable()
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
 
-                                self::makeEmailAction('Évaluation'),
-                                self::makeSaveStepAction('Évaluation'),
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Évaluation'),
+                                ]),
                             ]),
 
                         // ==================== ÉTAPE 9 : ATTESTATION ====================
                         Forms\Components\Wizard\Step::make('Attestation')
                             ->icon('heroicon-o-trophy')
-                            ->description(fn ($record) => $record && $record->attestation_generee ? '✅ Générée' : 'Attestation de stage')
+                            ->description(function ($record) {
+                                if (!$record) return 'Attestation de stage';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 9) return '🔒 Non accessible';
+                                if ($record->attestation_generee) return '✅ Générée';
+                                return 'Attestation de stage';
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    Forms\Components\Toggle::make('attestation_generee')
-                                        ->label('Attestation générée')
-                                        ->live(),
-                                    DatePicker::make('date_attestation')
-                                        ->label('Date de l\'attestation')
-                                        ->visible(fn (Forms\Get $get) => $get('attestation_generee') == true)
-                                        ->required(fn (Forms\Get $get) => $get('attestation_generee') == true),
-                                ]),
-                                Forms\Components\FileUpload::make('chemin_attestation')
-                                    ->label('Fichier attestation')
-                                    ->directory('documents/attestations')
-                                    ->disk('public')
-                                    ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
-                                    ->maxSize(10240)
-                                    ->downloadable()
-                                    ->openable()
-                                    ->columnSpanFull(),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('attestation_generee')
+                                                ->label('Attestation générée')
+                                                ->live(),
+                                            DatePicker::make('date_attestation')
+                                                ->label('Date de l\'attestation')
+                                                ->visible(fn (Forms\Get $get) => $get('attestation_generee') == true)
+                                                ->required(fn (Forms\Get $get) => $get('attestation_generee') == true),
+                                        ]),
+                                        Forms\Components\FileUpload::make('chemin_attestation')
+                                            ->label('Fichier attestation')
+                                            ->directory('documents/attestations')
+                                            ->disk('public')
+                                            ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                            ->maxSize(10240)
+                                            ->downloadable()
+                                            ->openable()
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
 
-                                self::makeEmailAction('Attestation'),
-                                self::makeSaveStepAction('Attestation'),
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Attestation'),
+                                ]),
                             ]),
 
                         // ==================== ÉTAPE 10 : REMBOURSEMENT ====================
                         Forms\Components\Wizard\Step::make('Remboursement')
                             ->icon('heroicon-o-banknotes')
-                            ->description(fn ($record) => $record && $record->remboursement_effectue ? '✅ Effectué' : 'Transport & frais')
+                            ->description(function ($record) {
+                                if (!$record) return 'Transport & frais';
+                                $step = Pages\EditCandidature::getWizardStepForStatut($record->statut);
+                                if ($step < 10) return '🔒 Non accessible';
+                                if ($record->remboursement_effectue) return '✅ Effectué';
+                                return 'Transport & frais';
+                            })
                             ->schema([
-                                Forms\Components\Grid::make(2)->schema([
-                                    TextInput::make('montant_transport')
-                                        ->label('Montant')
-                                        ->numeric()
-                                        ->prefix('CDF'),
-                                    TextInput::make('reference_paiement')
-                                        ->label('Référence paiement'),
-                                    Forms\Components\Toggle::make('remboursement_effectue')
-                                        ->label('Remboursement effectué'),
-                                    DatePicker::make('date_remboursement')
-                                        ->label('Date du remboursement'),
+                                Forms\Components\Grid::make(5)->schema([
+                                    // === Contenu principal (4/5 = 80%) ===
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            TextInput::make('montant_transport')
+                                                ->label('Montant')
+                                                ->numeric()
+                                                ->prefix('CDF'),
+                                            TextInput::make('reference_paiement')
+                                                ->label('Référence paiement'),
+                                            Forms\Components\Toggle::make('remboursement_effectue')
+                                                ->label('Remboursement effectué'),
+                                            DatePicker::make('date_remboursement')
+                                                ->label('Date du remboursement'),
+                                        ]),
+                                        Forms\Components\FileUpload::make('chemin_justificatif_remboursement')
+                                            ->label('Justificatif de remboursement')
+                                            ->helperText('Reçu, bordereau de virement, ou tout document attestant du remboursement')
+                                            ->disk('public')
+                                            ->directory('justificatifs-remboursement')
+                                            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
+                                            ->maxSize(5120)
+                                            ->downloadable()
+                                            ->openable()
+                                            ->nullable()
+                                            ->columnSpanFull(),
+                                    ])->columnSpan(4),
+
+                                    // === Sidebar (1/5 = 20%) ===
+                                    self::makeSidebar('Remboursement'),
                                 ]),
-                                Forms\Components\FileUpload::make('chemin_justificatif_remboursement')
-                                    ->label('Justificatif de remboursement')
-                                    ->helperText('Reçu, bordereau de virement, ou tout document attestant du remboursement')
-                                    ->disk('public')
-                                    ->directory('justificatifs-remboursement')
-                                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
-                                    ->maxSize(5120)
-                                    ->downloadable()
-                                    ->openable()
-                                    ->nullable()
-                                    ->columnSpanFull(),
-                                self::makeEmailAction('Remboursement'),
-                                self::makeSaveStepAction('Remboursement'),
                             ]),
                     ])
-                    ->skippable(fn ($record) => $record !== null)
                     ->startOnStep(fn ($record) => $record
                         ? Pages\EditCandidature::getWizardStepForStatut($record->statut)
                         : 1)
+                    ->extraAlpineAttributes(function ($record) {
+                        // Mode création : navigation linéaire stricte (comportement Wizard par défaut)
+                        if (!$record || !$record->statut) {
+                            return [];
+                        }
+                        // Mode édition : navigation libre parmi les étapes déjà atteintes,
+                        // verrouillage des étapes au-delà du statut actuel du workflow.
+                        // getWizardStepForStatut retourne 1-10, on convertit en index 0-based.
+                        $maxStepIndex = Pages\EditCandidature::getWizardStepForStatut($record->statut) - 1;
+                        return [
+                            'x-effect' => "isStepAccessible = function(stepId) { return this.getStepIndex(stepId) <= {$maxStepIndex} || this.getStepIndex(this.step) > this.getStepIndex(stepId); }",
+                        ];
+                    })
                     ->submitAction(new HtmlString('<button type="submit" class="fi-btn fi-btn-size-md relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 focus-visible:ring-custom-500/50 dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50">Sauvegarder</button>'))
                     ->columnSpanFull(),
 
@@ -782,23 +782,191 @@ class CandidatureResource extends Resource
      * Bouton de sauvegarde intégré à chaque étape du wizard.
      * Permet d'enregistrer les modifications sans attendre la dernière étape.
      */
-    public static function makeSaveStepAction(string $stepName): Forms\Components\Section
+    public static function makeSaveStepAction(string $stepName): Forms\Components\Actions
     {
-        return Forms\Components\Section::make('')
-            ->schema([
-                Forms\Components\Actions::make([
-                    Forms\Components\Actions\Action::make('save_step_' . \Illuminate\Support\Str::slug($stepName))
-                        ->label('💾 Sauvegarder les modifications')
-                        ->color('success')
-                        ->icon('heroicon-o-check-circle')
-                        ->size('lg')
-                        ->extraAttributes(['class' => 'w-full'])
-                        ->action(function ($livewire) {
-                            $livewire->save();
-                        }),
-                ])->fullWidth(),
-            ])
-            ->extraAttributes(['class' => 'border-t-2 border-green-200 bg-green-50/50']);
+        return Forms\Components\Actions::make([
+            Forms\Components\Actions\Action::make('save_step_' . \Illuminate\Support\Str::slug($stepName))
+                ->label('💾 Sauvegarder')
+                ->color('success')
+                ->icon('heroicon-o-check-circle')
+                ->size('lg')
+                ->extraAttributes(['class' => 'w-full'])
+                ->action(function ($livewire) {
+                    $livewire->save();
+                }),
+        ])->fullWidth();
+    }
+
+    /**
+     * Génère la sidebar droite d'une étape : messagerie + bouton de sauvegarde.
+     * Affichée en colonne latérale (columnSpan 1 sur 5).
+     */
+    public static function makeSidebar(string $stepName): Forms\Components\Group
+    {
+        return Forms\Components\Group::make([
+            // Bouton de sauvegarde en haut de la sidebar
+            Forms\Components\Section::make('')
+                ->schema([
+                    self::makeSaveStepAction($stepName),
+                ])
+                ->extraAttributes(['class' => 'border-green-200 bg-green-50/50']),
+
+            // Section messagerie
+            self::makeEmailAction($stepName),
+        ])->columnSpan(1);
+    }
+
+    /**
+     * Génère la sidebar spéciale de l'étape Tests avec les 3 boutons email séparés.
+     */
+    public static function makeSidebarTests(): Forms\Components\Group
+    {
+        return Forms\Components\Group::make([
+            // Bouton de sauvegarde en haut
+            Forms\Components\Section::make('')
+                ->schema([
+                    self::makeSaveStepAction('Tests'),
+                ])
+                ->extraAttributes(['class' => 'border-green-200 bg-green-50/50']),
+
+            // Section emails Tests
+            Forms\Components\Section::make('📧 Messagerie')
+                ->schema([
+                    Forms\Components\Actions::make([
+                        // === Bouton 1 : Convocation au test ===
+                        Forms\Components\Actions\Action::make('email_convocation_test')
+                            ->label('📩 Convocation')
+                            ->color('warning')
+                            ->icon('heroicon-o-megaphone')
+                            ->visible(fn ($record) => $record && $record->email)
+                            ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                if ($record) {
+                                    $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00']);
+                                    $form->fill([
+                                        'heure_test' => '09:00',
+                                        'sujet_email' => $rendered['sujet'],
+                                        'contenu_email' => $rendered['contenu'],
+                                    ]);
+                                }
+                            })
+                            ->form([
+                                TextInput::make('heure_test')
+                                    ->label('Heure du test')
+                                    ->default('09:00')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
+                                        if ($record) {
+                                            $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => $state ?? '09:00']);
+                                            $set('sujet_email', $rendered['sujet']);
+                                            $set('contenu_email', $rendered['contenu']);
+                                        }
+                                    }),
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->required(),
+                                RichEditor::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                    ->required(),
+                            ])
+                            ->requiresConfirmation()
+                            ->modalHeading('Convocation au test')
+                            ->modalDescription(fn ($record) => 'Envoyer la convocation à ' . ($record?->email ?? ''))
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->action(function (array $data, $record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                    Notification::make()->title('✅ Convocation envoyée à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
+                                }
+                            }),
+
+                        // === Bouton 2 : Résultat Admis ===
+                        Forms\Components\Actions\Action::make('email_resultat_admis')
+                            ->label('✅ Admis')
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->visible(fn ($record) => $record && $record->email)
+                            ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                if ($record) {
+                                    $rendered = self::renderTemplate('resultat_admis', $record);
+                                    $form->fill([
+                                        'sujet_email' => $rendered['sujet'],
+                                        'contenu_email' => $rendered['contenu'],
+                                    ]);
+                                }
+                            })
+                            ->form([
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->required(),
+                                RichEditor::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                    ->required(),
+                            ])
+                            ->requiresConfirmation()
+                            ->modalHeading('Résultat : Admis')
+                            ->modalDescription(fn ($record) => 'Envoyer le résultat positif à ' . ($record?->email ?? ''))
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->action(function (array $data, $record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                    Notification::make()->title('✅ Résultat « Admis » envoyé à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
+                                }
+                            }),
+
+                        // === Bouton 3 : Résultat Non admis ===
+                        Forms\Components\Actions\Action::make('email_resultat_non_admis')
+                            ->label('❌ Non admis')
+                            ->color('danger')
+                            ->icon('heroicon-o-x-circle')
+                            ->visible(fn ($record) => $record && $record->email)
+                            ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                if ($record) {
+                                    $rendered = self::renderTemplate('resultat_non_admis', $record);
+                                    $form->fill([
+                                        'sujet_email' => $rendered['sujet'],
+                                        'contenu_email' => $rendered['contenu'],
+                                    ]);
+                                }
+                            })
+                            ->form([
+                                TextInput::make('sujet_email')
+                                    ->label('Sujet')
+                                    ->required(),
+                                RichEditor::make('contenu_email')
+                                    ->label('Contenu')
+                                    ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                    ->required(),
+                            ])
+                            ->requiresConfirmation()
+                            ->modalHeading('Résultat : Non admis')
+                            ->modalDescription(fn ($record) => 'Envoyer le résultat négatif à ' . ($record?->email ?? ''))
+                            ->modalSubmitActionLabel('Envoyer')
+                            ->action(function (array $data, $record, $livewire) {
+                                try {
+                                    $livewire->save();
+                                    NotificationFacade::route('mail', $record->email)
+                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                    Notification::make()->title('✅ Résultat « Non admis » envoyé à ' . $record->email)->success()->send();
+                                } catch (\Exception $e) {
+                                    Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
+                                }
+                            }),
+                    ]),
+                ])
+                ->collapsible()
+                ->collapsed(),
+        ])->columnSpan(1);
     }
 
     /**
