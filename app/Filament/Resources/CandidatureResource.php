@@ -28,6 +28,7 @@ use App\Models\EmailTemplate;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\RichEditor;
+use Illuminate\Support\HtmlString;
 
 class CandidatureResource extends Resource
 {
@@ -49,11 +50,11 @@ class CandidatureResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\Tabs::make('Candidature')
-                    ->tabs([
-                        // ==================== ONGLET 1 : CANDIDAT ====================
-                        Forms\Components\Tabs\Tab::make('Candidat')
+                Forms\Components\Wizard::make([
+                        // ==================== ÉTAPE 1 : CANDIDAT ====================
+                        Forms\Components\Wizard\Step::make('Candidat')
                             ->icon('heroicon-o-user')
+                            ->description('Informations personnelles')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     TextInput::make('nom')
@@ -109,9 +110,10 @@ class CandidatureResource extends Resource
                                     ->visible($isLocked),
                             ]),
 
-                        // ==================== ONGLET 2 : STAGE SOUHAITÉ ====================
-                        Forms\Components\Tabs\Tab::make('Stage souhaité')
+                        // ==================== ÉTAPE 2 : STAGE SOUHAITÉ ====================
+                        Forms\Components\Wizard\Step::make('Stage souhaité')
                             ->icon('heroicon-o-briefcase')
+                            ->description('Préférences de stage')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Select::make('poste_souhaite')
@@ -167,9 +169,10 @@ class CandidatureResource extends Resource
                                     ->visible($isLocked),
                             ]),
 
-                        // ==================== ONGLET 3 : DOCUMENTS ====================
-                        Forms\Components\Tabs\Tab::make('Documents')
+                        // ==================== ÉTAPE 3 : DOCUMENTS ====================
+                        Forms\Components\Wizard\Step::make('Documents')
                             ->icon('heroicon-o-document')
+                            ->description('Pièces du dossier')
                             ->schema([
                                 Forms\Components\Repeater::make('documents')
                                     ->relationship('documents')
@@ -231,11 +234,112 @@ class CandidatureResource extends Resource
                                         ];
                                         return $types[$state['type_document'] ?? ''] ?? 'Document';
                                     }),
+                                Forms\Components\Section::make('Messagerie')
+                                    ->schema([
+                                        Forms\Components\Actions::make([
+                                            // ---- Bouton 1 : Dossier complet ----
+                                            Forms\Components\Actions\Action::make('email_dossier_complet')
+                                                ->label('Dossier complet')
+                                                ->color('success')
+                                                ->icon('heroicon-o-check-circle')
+                                                ->visible(fn ($record) => $record && $record->email)
+                                                ->form([
+                                                    TextInput::make('sujet_email')
+                                                        ->label('Sujet')
+                                                        ->default(fn ($record) => self::renderTemplate('analyse_dossier', $record)['sujet'])
+                                                        ->required(),
+                                                    RichEditor::make('contenu_email')
+                                                        ->label('Contenu')
+                                                        ->default(fn ($record) => self::renderTemplate('analyse_dossier', $record)['contenu'])
+                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                                        ->required(),
+                                                ])
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Confirmer le dossier complet')
+                                                ->modalDescription(fn ($record) => 'Sauvegarder et notifier ' . ($record?->email ?? 'le candidat') . ' que son dossier est complet et en cours d\'analyse.')
+                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
+                                                ->action(function (array $data, $record, $livewire) {
+                                                    try {
+                                                        $livewire->save();
+                                                        NotificationFacade::route('mail', $record->email)
+                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                                        Notification::make()->title('Sauvegardé — Email « dossier complet » envoyé à ' . $record->email)->success()->send();
+                                                    } catch (\Exception $e) {
+                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
+                                                    }
+                                                }),
+
+                                            // ---- Bouton 2 : Dossier incomplet ----
+                                            Forms\Components\Actions\Action::make('email_dossier_incomplet')
+                                                ->label('Dossier incomplet')
+                                                ->color('danger')
+                                                ->icon('heroicon-o-exclamation-triangle')
+                                                ->visible(fn ($record) => $record && $record->email)
+                                                ->form([
+                                                    Forms\Components\CheckboxList::make('pieces_manquantes')
+                                                        ->label('Pièces manquantes')
+                                                        ->options([
+                                                            'cv' => 'CV',
+                                                            'lettre_motivation' => 'Lettre de motivation',
+                                                            'certificat_scolarite' => 'Certificat de scolarité',
+                                                            'releves_notes' => 'Relevés de notes',
+                                                            'lettres_recommandation' => 'Lettres de recommandation',
+                                                            'certificats_competences' => 'Certificats de compétences',
+                                                        ])
+                                                        ->columns(2)
+                                                        ->live()
+                                                        ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
+                                                            if ($record) {
+                                                                $rendered = self::renderTemplate('dossier_incomplet', $record);
+                                                                $contenu = $rendered['contenu'];
+                                                                if (!empty($state)) {
+                                                                    $labels = collect([
+                                                                        'cv' => 'CV',
+                                                                        'lettre_motivation' => 'Lettre de motivation',
+                                                                        'certificat_scolarite' => 'Certificat de scolarité',
+                                                                        'releves_notes' => 'Relevés de notes',
+                                                                        'lettres_recommandation' => 'Lettres de recommandation',
+                                                                        'certificats_competences' => 'Certificats de compétences',
+                                                                    ]);
+                                                                    $liste = collect($state)->map(fn ($s) => '- ' . ($labels[$s] ?? $s))->implode('<br>');
+                                                                    $contenu .= '<br><br><strong>Pièces manquantes :</strong><br>' . $liste;
+                                                                }
+                                                                $set('sujet_email', $rendered['sujet']);
+                                                                $set('contenu_email', $contenu);
+                                                            }
+                                                        }),
+                                                    TextInput::make('sujet_email')
+                                                        ->label('Sujet')
+                                                        ->default(fn ($record) => self::renderTemplate('dossier_incomplet', $record)['sujet'])
+                                                        ->required(),
+                                                    RichEditor::make('contenu_email')
+                                                        ->label('Contenu')
+                                                        ->default(fn ($record) => self::renderTemplate('dossier_incomplet', $record)['contenu'])
+                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                                        ->required(),
+                                                ])
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Signaler un dossier incomplet')
+                                                ->modalDescription(fn ($record) => 'Sauvegarder et notifier ' . ($record?->email ?? 'le candidat') . ' des pièces manquantes.')
+                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
+                                                ->action(function (array $data, $record, $livewire) {
+                                                    try {
+                                                        $livewire->save();
+                                                        NotificationFacade::route('mail', $record->email)
+                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                                        Notification::make()->title('Sauvegardé — Email « dossier incomplet » envoyé à ' . $record->email)->success()->send();
+                                                    } catch (\Exception $e) {
+                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
+                                                    }
+                                                }),
+                                        ])->fullWidth(),
+                                    ])->collapsible(),
                             ]),
 
-                        // ==================== ONGLET 4 : GESTION ====================
-                        Forms\Components\Tabs\Tab::make('Gestion')
+                        // ==================== ÉTAPE 4 : GESTION ====================
+                        Forms\Components\Wizard\Step::make('Gestion')
                             ->icon('heroicon-o-cog-6-tooth')
+                            ->description(fn ($record) => $record ? '📍 ' . $record->statut->getLabel() : 'Statut & notes')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Select::make('statut')
@@ -297,11 +401,14 @@ class CandidatureResource extends Resource
                                     ->label('Notes internes')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                     ->columnSpanFull(),
+                                self::makeEmailAction('Gestion'),
+                                self::makeSaveStepAction('Gestion'),
                             ]),
 
-                        // ==================== ONGLET 5 : TESTS ====================
-                        Forms\Components\Tabs\Tab::make('Tests')
+                        // ==================== ÉTAPE 5 : TESTS ====================
+                        Forms\Components\Wizard\Step::make('Tests')
                             ->icon('heroicon-o-clipboard-document-check')
+                            ->description(fn ($record) => $record && $record->note_test ? '✅ Note: ' . $record->note_test . '/20' : 'Test de sélection')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     DatePicker::make('date_test')
@@ -322,53 +429,39 @@ class CandidatureResource extends Resource
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
                                     ->columnSpanFull(),
 
-                                Forms\Components\Section::make('Actions email')
+                                // ---- Emails séparés pour l'étape Tests ----
+                                Forms\Components\Section::make('Messagerie — Tests')
                                     ->schema([
                                         Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('save_and_notify_convocation')
-                                                ->label('Sauvegarder & envoyer convocation')
+                                            // === Bouton 1 : Convocation au test ===
+                                            Forms\Components\Actions\Action::make('email_convocation_test')
+                                                ->label('📩 Convocation au test')
                                                 ->color('warning')
-                                                ->icon('heroicon-o-envelope')
-                                                ->visible(fn ($record) => $record && $record->date_test && $record->email)
+                                                ->icon('heroicon-o-megaphone')
+                                                ->visible(fn ($record) => $record && $record->email)
+                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                                    if ($record) {
+                                                        $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00']);
+                                                        $form->fill([
+                                                            'heure_test' => '09:00',
+                                                            'sujet_email' => $rendered['sujet'],
+                                                            'contenu_email' => $rendered['contenu'],
+                                                        ]);
+                                                    }
+                                                })
                                                 ->form([
                                                     TextInput::make('heure_test')
                                                         ->label('Heure du test')
                                                         ->default('09:00')
-                                                        ->required(),
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['sujet'])
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->default(fn ($record) => self::renderTemplate('convocation_test', $record, ['heure_test' => '09:00'])['contenu'])
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Envoyer la convocation au test')
-                                                ->modalDescription('Les données seront sauvegardées puis l\'email sera envoyé.')
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    $livewire->save();
-                                                    NotificationFacade::route('mail', $record->email)
-                                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                    Notification::make()->title('Sauvegardé — Email Convocation envoyée à ' . $record->email)->success()->send();
-                                                }),
-                                            Forms\Components\Actions\Action::make('save_and_notify_resultat')
-                                                ->label('Sauvegarder & envoyer résultat')
-                                                ->color('info')
-                                                ->icon('heroicon-o-envelope')
-                                                ->visible(fn ($record) => $record && $record->note_test !== null && $record->email)
-                                                ->form([
-                                                    Forms\Components\Select::make('type_resultat')
-                                                        ->label('Type de résultat')
-                                                        ->options([
-                                                            'resultat_admis' => 'Admis',
-                                                            'resultat_non_admis' => 'Non admis',
-                                                        ])
                                                         ->required()
-                                                        ->live(),
+                                                        ->live(onBlur: true)
+                                                        ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
+                                                            if ($record) {
+                                                                $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => $state ?? '09:00']);
+                                                                $set('sujet_email', $rendered['sujet']);
+                                                                $set('contenu_email', $rendered['contenu']);
+                                                            }
+                                                        }),
                                                     TextInput::make('sujet_email')
                                                         ->label('Sujet')
                                                         ->required(),
@@ -377,32 +470,107 @@ class CandidatureResource extends Resource
                                                         ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
                                                         ->required(),
                                                 ])
-                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
-                                                    $slug = ($record->note_test >= 10) ? 'resultat_admis' : 'resultat_non_admis';
-                                                    $rendered = self::renderTemplate($slug, $record);
-                                                    $form->fill([
-                                                        'type_resultat' => $slug,
-                                                        'sujet_email' => $rendered['sujet'],
-                                                        'contenu_email' => $rendered['contenu'],
-                                                    ]);
-                                                })
                                                 ->requiresConfirmation()
-                                                ->modalHeading('Envoyer le résultat du test')
-                                                ->modalDescription('Les données seront sauvegardées puis l\'email sera envoyé.')
+                                                ->modalHeading('Convocation au test')
+                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer la convocation au test à ' . ($record?->email ?? 'l\'adresse du candidat'))
                                                 ->modalSubmitActionLabel('Sauvegarder & Envoyer')
                                                 ->action(function (array $data, $record, $livewire) {
-                                                    $livewire->save();
-                                                    NotificationFacade::route('mail', $record->email)
-                                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                    Notification::make()->title('Sauvegardé — Email Résultat envoyé à ' . $record->email)->success()->send();
+                                                    try {
+                                                        $livewire->save();
+                                                        NotificationFacade::route('mail', $record->email)
+                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                                        Notification::make()->title('Sauvegardé — Convocation au test envoyée à ' . $record->email)->success()->send();
+                                                    } catch (\Exception $e) {
+                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
+                                                    }
+                                                }),
+
+                                            // === Bouton 2 : Résultat Admis ===
+                                            Forms\Components\Actions\Action::make('email_resultat_admis')
+                                                ->label('✅ Résultat : Admis')
+                                                ->color('success')
+                                                ->icon('heroicon-o-check-circle')
+                                                ->visible(fn ($record) => $record && $record->email)
+                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                                    if ($record) {
+                                                        $rendered = self::renderTemplate('resultat_admis', $record);
+                                                        $form->fill([
+                                                            'sujet_email' => $rendered['sujet'],
+                                                            'contenu_email' => $rendered['contenu'],
+                                                        ]);
+                                                    }
+                                                })
+                                                ->form([
+                                                    TextInput::make('sujet_email')
+                                                        ->label('Sujet')
+                                                        ->required(),
+                                                    RichEditor::make('contenu_email')
+                                                        ->label('Contenu')
+                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                                        ->required(),
+                                                ])
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Résultat : Admis')
+                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer le résultat positif à ' . ($record?->email ?? 'l\'adresse du candidat'))
+                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
+                                                ->action(function (array $data, $record, $livewire) {
+                                                    try {
+                                                        $livewire->save();
+                                                        NotificationFacade::route('mail', $record->email)
+                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                                        Notification::make()->title('Sauvegardé — Résultat « Admis » envoyé à ' . $record->email)->success()->send();
+                                                    } catch (\Exception $e) {
+                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
+                                                    }
+                                                }),
+
+                                            // === Bouton 3 : Résultat Non admis ===
+                                            Forms\Components\Actions\Action::make('email_resultat_non_admis')
+                                                ->label('❌ Résultat : Non admis')
+                                                ->color('danger')
+                                                ->icon('heroicon-o-x-circle')
+                                                ->visible(fn ($record) => $record && $record->email)
+                                                ->mountUsing(function (Forms\ComponentContainer $form, $record) {
+                                                    if ($record) {
+                                                        $rendered = self::renderTemplate('resultat_non_admis', $record);
+                                                        $form->fill([
+                                                            'sujet_email' => $rendered['sujet'],
+                                                            'contenu_email' => $rendered['contenu'],
+                                                        ]);
+                                                    }
+                                                })
+                                                ->form([
+                                                    TextInput::make('sujet_email')
+                                                        ->label('Sujet')
+                                                        ->required(),
+                                                    RichEditor::make('contenu_email')
+                                                        ->label('Contenu')
+                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                                        ->required(),
+                                                ])
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Résultat : Non admis')
+                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer le résultat négatif à ' . ($record?->email ?? 'l\'adresse du candidat'))
+                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
+                                                ->action(function (array $data, $record, $livewire) {
+                                                    try {
+                                                        $livewire->save();
+                                                        NotificationFacade::route('mail', $record->email)
+                                                            ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                                        Notification::make()->title('Sauvegardé — Résultat « Non admis » envoyé à ' . $record->email)->success()->send();
+                                                    } catch (\Exception $e) {
+                                                        Notification::make()->title('Erreur d\'envoi : ' . $e->getMessage())->danger()->send();
+                                                    }
                                                 }),
                                         ])->fullWidth(),
                                     ])->collapsible(),
+                                self::makeSaveStepAction('Tests'),
                             ]),
 
-                        // ==================== ONGLET 6 : AFFECTATION ====================
-                        Forms\Components\Tabs\Tab::make('Affectation')
+                        // ==================== ÉTAPE 6 : AFFECTATION ====================
+                        Forms\Components\Wizard\Step::make('Affectation')
                             ->icon('heroicon-o-building-office')
+                            ->description(fn ($record) => $record && $record->service_affecte ? '✅ ' . ($record->service_affecte) : 'Service & tuteur')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Select::make('service_affecte')
@@ -426,46 +594,14 @@ class CandidatureResource extends Resource
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link', 'h2', 'h3'])
                                     ->columnSpanFull(),
 
-                                Forms\Components\Section::make('Actions email')
-                                    ->schema([
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('save_and_notify_confirmation')
-                                                ->label('Sauvegarder & envoyer confirmation dates')
-                                                ->color('success')
-                                                ->icon('heroicon-o-calendar-days')
-                                                ->visible(fn ($record) => $record && $record->date_debut_stage && $record->date_fin_stage && $record->email)
-                                                ->form([
-                                                    TextInput::make('heure_presentation')
-                                                        ->label('Heure de présentation')
-                                                        ->default('08:00')
-                                                        ->required(),
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['sujet'])
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->default(fn ($record) => self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => '08:00'])['contenu'])
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Envoyer la confirmation des dates')
-                                                ->modalDescription('Les données seront sauvegardées puis l\'email sera envoyé.')
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    $livewire->save();
-                                                    NotificationFacade::route('mail', $record->email)
-                                                        ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
-                                                    Notification::make()->title('Sauvegardé — Email Confirmation dates envoyée à ' . $record->email)->success()->send();
-                                                }),
-                                        ])->fullWidth(),
-                                    ])->collapsible(),
+                                self::makeEmailAction('Affectation'),
+                                self::makeSaveStepAction('Affectation'),
                             ]),
 
-                        // ==================== ONGLET 7 : INDUCTION & RÉPONSE LETTRE ====================
-                        Forms\Components\Tabs\Tab::make('Induction & Réponse')
+                        // ==================== ÉTAPE 7 : INDUCTION & RÉPONSE LETTRE ====================
+                        Forms\Components\Wizard\Step::make('Induction & Réponse')
                             ->icon('heroicon-o-clipboard-document-list')
+                            ->description(fn ($record) => $record && $record->induction_completee ? '✅ Induction terminée' : 'Induction & lettre')
                             ->schema([
                                 Forms\Components\Fieldset::make('Induction RH')->schema([
                                     DatePicker::make('date_induction')
@@ -493,51 +629,14 @@ class CandidatureResource extends Resource
                                         ->columnSpanFull(),
                                 ])->columns(2),
 
-                                Forms\Components\Section::make('Actions email')
-                                    ->schema([
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('save_and_send_reponse_lettre')
-                                                ->label('Sauvegarder & envoyer réponse lettre')
-                                                ->color('success')
-                                                ->icon('heroicon-o-envelope')
-                                                ->visible(fn ($record) => $record && $record->chemin_reponse_lettre && $record->email)
-                                                ->form([
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->default(fn ($record) => self::renderTemplate('reponse_lettre_recommandation', $record)['sujet'])
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->default(fn ($record) => self::renderTemplate('reponse_lettre_recommandation', $record)['contenu'])
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Envoyer la réponse par email')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer la réponse à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        $filePath = storage_path('app/public/' . $record->chemin_reponse_lettre);
-                                                        $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                                                        if (file_exists($filePath)) {
-                                                            $notification->attachFile($filePath);
-                                                        }
-                                                        NotificationFacade::route('mail', $record->email)->notify($notification);
-                                                        $record->update(['reponse_lettre_envoyee' => true, 'date_reponse_lettre' => now()]);
-                                                        Notification::make()->title('Sauvegardé — Email Réponse envoyée à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-                                        ])->fullWidth(),
-                                    ])->collapsible(),
+                                self::makeEmailAction('Induction & Réponse'),
+                                self::makeSaveStepAction('Induction & Réponse'),
                             ]),
 
-                        // ==================== ONGLET 8 : ÉVALUATION ====================
-                        Forms\Components\Tabs\Tab::make('Évaluation')
+                        // ==================== ÉTAPE 8 : ÉVALUATION ====================
+                        Forms\Components\Wizard\Step::make('Évaluation')
                             ->icon('heroicon-o-chart-bar')
+                            ->description(fn ($record) => $record && $record->note_evaluation ? '✅ Note: ' . $record->note_evaluation . '/20' : 'Évaluation finale')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     DatePicker::make('date_evaluation')
@@ -578,50 +677,14 @@ class CandidatureResource extends Resource
                                     ->openable()
                                     ->columnSpanFull(),
 
-                                Forms\Components\Section::make('Actions email')
-                                    ->schema([
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('save_and_send_evaluation')
-                                                ->label('Sauvegarder & envoyer l\'évaluation')
-                                                ->color('success')
-                                                ->icon('heroicon-o-envelope')
-                                                ->visible(fn ($record) => $record && $record->chemin_evaluation && $record->email)
-                                                ->form([
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->default(fn ($record) => self::renderTemplate('envoi_evaluation', $record)['sujet'])
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->default(fn ($record) => self::renderTemplate('envoi_evaluation', $record)['contenu'])
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Envoyer l\'évaluation par email')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer le document d\'évaluation à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        $filePath = storage_path('app/public/' . $record->chemin_evaluation);
-                                                        $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                                                        if (file_exists($filePath)) {
-                                                            $notification->attachFile($filePath);
-                                                        }
-                                                        NotificationFacade::route('mail', $record->email)->notify($notification);
-                                                        Notification::make()->title('Sauvegardé — Email Évaluation envoyée à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-                                        ])->fullWidth(),
-                                    ])->collapsible(),
+                                self::makeEmailAction('Évaluation'),
+                                self::makeSaveStepAction('Évaluation'),
                             ]),
 
-                        // ==================== ONGLET 9 : ATTESTATION ====================
-                        Forms\Components\Tabs\Tab::make('Attestation')
+                        // ==================== ÉTAPE 9 : ATTESTATION ====================
+                        Forms\Components\Wizard\Step::make('Attestation')
                             ->icon('heroicon-o-trophy')
+                            ->description(fn ($record) => $record && $record->attestation_generee ? '✅ Générée' : 'Attestation de stage')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\Toggle::make('attestation_generee')
@@ -642,51 +705,14 @@ class CandidatureResource extends Resource
                                     ->openable()
                                     ->columnSpanFull(),
 
-                                Forms\Components\Section::make('Actions email')
-                                    ->schema([
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('save_and_send_attestation')
-                                                ->label('Sauvegarder & envoyer attestation')
-                                                ->color('success')
-                                                ->icon('heroicon-o-envelope')
-                                                ->visible(fn ($record) => $record && $record->chemin_attestation && $record->email)
-                                                ->form([
-                                                    TextInput::make('sujet_email')
-                                                        ->label('Sujet')
-                                                        ->default(fn ($record) => self::renderTemplate('envoi_attestation', $record)['sujet'])
-                                                        ->required(),
-                                                    RichEditor::make('contenu_email')
-                                                        ->label('Contenu')
-                                                        ->default(fn ($record) => self::renderTemplate('envoi_attestation', $record)['contenu'])
-                                                        ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
-                                                        ->required(),
-                                                ])
-                                                ->requiresConfirmation()
-                                                ->modalHeading('Envoyer l\'attestation par email')
-                                                ->modalDescription(fn ($record) => 'Sauvegarder et envoyer l\'attestation à ' . ($record?->email ?? 'l\'adresse du candidat') . ' ?')
-                                                ->modalSubmitActionLabel('Sauvegarder & Envoyer')
-                                                ->action(function (array $data, $record, $livewire) {
-                                                    try {
-                                                        $livewire->save();
-                                                        $filePath = storage_path('app/public/' . $record->chemin_attestation);
-                                                        $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                                                        if (file_exists($filePath)) {
-                                                            $notification->attachFile($filePath);
-                                                        }
-                                                        NotificationFacade::route('mail', $record->email)->notify($notification);
-                                                        $record->update(['attestation_generee' => true, 'date_attestation' => now()]);
-                                                        Notification::make()->title('Sauvegardé — Email Attestation envoyée à ' . $record->email)->success()->send();
-                                                    } catch (\Exception $e) {
-                                                        Notification::make()->title('Erreur d\'envoi: ' . $e->getMessage())->danger()->send();
-                                                    }
-                                                }),
-                                        ])->fullWidth(),
-                                    ])->collapsible(),
+                                self::makeEmailAction('Attestation'),
+                                self::makeSaveStepAction('Attestation'),
                             ]),
 
-                        // ==================== ONGLET 10 : REMBOURSEMENT ====================
-                        Forms\Components\Tabs\Tab::make('Remboursement')
+                        // ==================== ÉTAPE 10 : REMBOURSEMENT ====================
+                        Forms\Components\Wizard\Step::make('Remboursement')
                             ->icon('heroicon-o-banknotes')
+                            ->description(fn ($record) => $record && $record->remboursement_effectue ? '✅ Effectué' : 'Transport & frais')
                             ->schema([
                                 Forms\Components\Grid::make(2)->schema([
                                     TextInput::make('montant_transport')
@@ -711,11 +737,68 @@ class CandidatureResource extends Resource
                                     ->openable()
                                     ->nullable()
                                     ->columnSpanFull(),
+                                self::makeEmailAction('Remboursement'),
+                                self::makeSaveStepAction('Remboursement'),
                             ]),
                     ])
-                    ->persistTabInQueryString()
+                    ->skippable(fn ($record) => $record !== null)
+                    ->startOnStep(fn ($record) => $record
+                        ? Pages\EditCandidature::getWizardStepForStatut($record->statut)
+                        : 1)
+                    ->submitAction(new HtmlString('<button type="submit" class="fi-btn fi-btn-size-md relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 focus-visible:ring-custom-500/50 dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50">Sauvegarder</button>'))
                     ->columnSpanFull(),
+
+                // Indicateur de statut en mode édition
+                Forms\Components\Section::make('📍 Progression du workflow')
+                    ->schema([
+                        Forms\Components\Placeholder::make('workflow_indicator')
+                            ->content(function ($record) {
+                                if (!$record || !$record->statut) return '';
+                                $statut = $record->statut;
+                                $etape = $statut->getEtape();
+                                $pct = round(($etape / 13) * 100);
+                                $color = $statut->value === 'rejete' ? '#ef4444' : '#22c55e';
+                                return new HtmlString("
+                                    <div class='space-y-2'>
+                                        <div class='flex justify-between text-sm'>
+                                            <span class='font-medium'>{$statut->getLabel()}</span>
+                                            <span class='text-gray-500'>Étape {$etape}/13</span>
+                                        </div>
+                                        <div class='w-full bg-gray-200 rounded-full h-2.5'>
+                                            <div class='h-2.5 rounded-full transition-all duration-500' style='width: {$pct}%; background-color: {$color};'></div>
+                                        </div>
+                                        <p class='text-xs text-gray-500'>Le statut avance automatiquement lorsque vous remplissez les données de chaque étape.</p>
+                                    </div>
+                                ");
+                            }),
+                    ])
+                    ->visible(fn ($record) => $record !== null)
+                    ->collapsible()
+                    ->collapsed(),
             ]);
+    }
+
+    /**
+     * Bouton de sauvegarde intégré à chaque étape du wizard.
+     * Permet d'enregistrer les modifications sans attendre la dernière étape.
+     */
+    public static function makeSaveStepAction(string $stepName): Forms\Components\Section
+    {
+        return Forms\Components\Section::make('')
+            ->schema([
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('save_step_' . \Illuminate\Support\Str::slug($stepName))
+                        ->label('💾 Sauvegarder les modifications')
+                        ->color('success')
+                        ->icon('heroicon-o-check-circle')
+                        ->size('lg')
+                        ->extraAttributes(['class' => 'w-full'])
+                        ->action(function ($livewire) {
+                            $livewire->save();
+                        }),
+                ])->fullWidth(),
+            ])
+            ->extraAttributes(['class' => 'border-t-2 border-green-200 bg-green-50/50']);
     }
 
     /**
@@ -729,7 +812,186 @@ class CandidatureResource extends Resource
             return ['sujet' => '[Template manquant: ' . $slug . ']', 'contenu' => ''];
         }
 
-        return $template->remplacerPlaceholders($record, $extras);
+        $result = $template->remplacerPlaceholders($record, $extras);
+
+        // Corriger le double encodage UTF-8 (ex: informÃ©(e) → informé(e))
+        $result['sujet'] = self::fixUtf8Encoding($result['sujet']);
+        $result['contenu'] = self::fixUtf8Encoding($result['contenu']);
+
+        // Convertir les sauts de ligne en <br> pour le rendu HTML dans le RichEditor
+        if (str_contains($result['contenu'], "\n") && !str_contains($result['contenu'], '<br')) {
+            $result['contenu'] = nl2br(e($result['contenu']));
+        }
+
+        return $result;
+    }
+
+    /**
+     * Corrige le double encodage UTF-8 (ex: Ã© → é, Ã  → à)
+     * Ce problème survient lorsque du texte UTF-8 est ré-encodé comme s'il était latin1.
+     */
+    private static function fixUtf8Encoding(string $text): string
+    {
+        // Détecter si le texte semble avoir un double encodage UTF-8
+        if (preg_match('/Ã[\x80-\xBF]/', $text)) {
+            $fixed = mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
+            // Vérifier que la conversion a produit du UTF-8 valide
+            if (mb_check_encoding($fixed, 'UTF-8')) {
+                return $fixed;
+            }
+        }
+        return $text;
+    }
+
+    /**
+     * Retourne les slugs de templates email pertinents pour chaque étape du wizard
+     */
+    public static function getTemplatesForStep(string $step): array
+    {
+        return match ($step) {
+            'Gestion' => ['analyse_dossier', 'dossier_incomplet'],
+            'Tests' => ['convocation_test', 'resultat_admis', 'resultat_non_admis'],
+            'Affectation' => ['confirmation_dates', 'debut_stage'],
+            'Induction & Réponse' => ['induction_rh', 'reponse_lettre_recommandation'],
+            'Évaluation' => ['envoi_evaluation'],
+            'Attestation' => ['envoi_attestation'],
+            'Remboursement' => ['stage_termine'],
+            default => [],
+        };
+    }
+
+    /**
+     * Génère une action email unifiée pour une étape du wizard.
+     * Charge les templates pertinents et gère les champs extras, pièces jointes, et mises à jour post-envoi.
+     */
+    public static function makeEmailAction(string $stepName): Forms\Components\Section
+    {
+        $templateSlugs = self::getTemplatesForStep($stepName);
+
+        return Forms\Components\Section::make('Messagerie')
+            ->schema([
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('envoyer_email_' . \Illuminate\Support\Str::slug($stepName))
+                        ->label('Envoyer un email')
+                        ->color('primary')
+                        ->icon('heroicon-o-envelope')
+                        ->visible(fn ($record) => $record && $record->email)
+                        ->form([
+                            Select::make('template_slug')
+                                ->label('Modèle d\'email')
+                                ->placeholder('Sélectionnez un modèle…')
+                                ->options(fn () => EmailTemplate::whereIn('slug', $templateSlugs)
+                                    ->where('actif', true)
+                                    ->pluck('nom', 'slug')
+                                    ->toArray())
+                                ->required()
+                                ->live()
+                                ->loadingMessage('Chargement du template…')
+                                ->helperText(fn (Forms\Get $get) => $get('template_slug') && !$get('sujet_email')
+                                    ? '⏳ Chargement du contenu en cours…'
+                                    : null)
+                                ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $record) {
+                                    // Réinitialiser les champs pendant le chargement
+                                    $set('sujet_email', '');
+                                    $set('contenu_email', '');
+
+                                    if ($state && $record) {
+                                        $extras = [];
+                                        if ($state === 'convocation_test') {
+                                            $extras['heure_test'] = $get('heure_test') ?? '09:00';
+                                        }
+                                        if ($state === 'confirmation_dates') {
+                                            $extras['heure_presentation'] = $get('heure_presentation') ?? '08:00';
+                                        }
+                                        $rendered = self::renderTemplate($state, $record, $extras);
+                                        $set('sujet_email', $rendered['sujet']);
+                                        $set('contenu_email', $rendered['contenu']);
+                                    }
+                                }),
+                            Forms\Components\Placeholder::make('loading_indicator')
+                                ->content(new HtmlString('<div class="flex items-center gap-2 text-primary-600"><svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Chargement du template en cours…</span></div>'))
+                                ->visible(fn (Forms\Get $get) => $get('template_slug') && !$get('sujet_email')),
+                            TextInput::make('heure_test')
+                                ->label('Heure du test')
+                                ->default('09:00')
+                                ->visible(fn (Forms\Get $get) => $get('template_slug') === 'convocation_test')
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $record) {
+                                    if ($record && $get('template_slug') === 'convocation_test') {
+                                        $rendered = self::renderTemplate('convocation_test', $record, ['heure_test' => $state ?? '09:00']);
+                                        $set('sujet_email', $rendered['sujet']);
+                                        $set('contenu_email', $rendered['contenu']);
+                                    }
+                                }),
+                            TextInput::make('heure_presentation')
+                                ->label('Heure de présentation')
+                                ->default('08:00')
+                                ->visible(fn (Forms\Get $get) => $get('template_slug') === 'confirmation_dates')
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $record) {
+                                    if ($record && $get('template_slug') === 'confirmation_dates') {
+                                        $rendered = self::renderTemplate('confirmation_dates', $record, ['heure_presentation' => $state ?? '08:00']);
+                                        $set('sujet_email', $rendered['sujet']);
+                                        $set('contenu_email', $rendered['contenu']);
+                                    }
+                                }),
+                            TextInput::make('sujet_email')
+                                ->label('Sujet')
+                                ->required()
+                                ->visible(fn (Forms\Get $get) => (bool) $get('sujet_email') || !$get('template_slug')),
+                            RichEditor::make('contenu_email')
+                                ->label('Contenu')
+                                ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                                ->required()
+                                ->visible(fn (Forms\Get $get) => (bool) $get('sujet_email') || !$get('template_slug')),
+                        ])
+                        ->requiresConfirmation()
+                        ->modalHeading('Envoyer un email')
+                        ->modalDescription(fn ($record) => 'Sauvegarder et envoyer un email à ' . ($record?->email ?? 'l\'adresse du candidat'))
+                        ->modalSubmitActionLabel('Sauvegarder & Envoyer')
+                        ->action(function (array $data, $record, $livewire) {
+                            try {
+                                $livewire->save();
+
+                                $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
+
+                                // Pièces jointes selon le template
+                                $slug = $data['template_slug'];
+                                $attachmentMap = [
+                                    'reponse_lettre_recommandation' => 'chemin_reponse_lettre',
+                                    'envoi_evaluation' => 'chemin_evaluation',
+                                    'envoi_attestation' => 'chemin_attestation',
+                                ];
+
+                                if (isset($attachmentMap[$slug]) && $record->{$attachmentMap[$slug]}) {
+                                    $filePath = storage_path('app/public/' . $record->{$attachmentMap[$slug]});
+                                    if (file_exists($filePath)) {
+                                        $notification->attachFile($filePath);
+                                    }
+                                }
+
+                                NotificationFacade::route('mail', $record->email)->notify($notification);
+
+                                // Mises à jour post-envoi
+                                if ($slug === 'envoi_attestation') {
+                                    $record->update(['attestation_generee' => true, 'date_attestation' => now()]);
+                                } elseif ($slug === 'reponse_lettre_recommandation') {
+                                    $record->update(['reponse_lettre_envoyee' => true, 'date_reponse_lettre' => now()]);
+                                }
+
+                                Notification::make()
+                                    ->title('Sauvegardé — Email envoyé à ' . $record->email)
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Erreur d\'envoi: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                ])->fullWidth(),
+            ])->collapsible();
     }
 
     public static function table(Table $table): Table

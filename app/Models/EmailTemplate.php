@@ -61,9 +61,28 @@ class EmailTemplate extends Model
         $sujet = str_replace(array_keys($replacements), array_values($replacements), $this->sujet);
         $contenu = str_replace(array_keys($replacements), array_values($replacements), $this->contenu);
 
+        // Corriger le double encodage UTF-8 (ex: informÃ©(e) → informé(e))
+        $sujet = self::fixUtf8($sujet);
+        $contenu = self::fixUtf8($contenu);
+
         return [
             'sujet' => $sujet,
             'contenu' => $contenu,
         ];
+    }
+
+    /**
+     * Corrige le double encodage UTF-8 (Ã© → é, Ã  → à, etc.)
+     */
+    private static function fixUtf8(string $text): string
+    {
+        // Détecter si le texte contient des séquences doublement encodées
+        if (preg_match('/\xC3[\x80-\xBF]/', $text)) {
+            $fixed = mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
+            if (mb_check_encoding($fixed, 'UTF-8')) {
+                return $fixed;
+            }
+        }
+        return $text;
     }
 }

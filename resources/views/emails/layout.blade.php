@@ -76,10 +76,10 @@
 
         <div class="footer">
             <p><strong>BRACONGO - Brasseries du Congo</strong></p>
-            <p>Avenue des Brasseries n&deg;7666, Kingabwa, Limete</p>
-            <p>Kinshasa, R&eacute;publique D&eacute;mocratique du Congo</p>
+            <p>Avenue des Brasseries n°7666, Kingabwa, Limete</p>
+            <p>Kinshasa, République Démocratique du Congo</p>
             <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-                Cet email a &eacute;t&eacute; envoy&eacute; automatiquement. Merci de ne pas y r&eacute;pondre directement.
+                Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.
             </p>
         </div>
     </div>
