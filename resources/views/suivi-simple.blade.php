@@ -84,13 +84,16 @@
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-semibold text-gray-900">Étape actuelle</h2>
-                        <span class="text-sm text-gray-500">Étape {{ $candidature->statut->getEtape() }} / 13</span>
+                        @php
+                            $wizardStep = \App\Filament\Resources\CandidatureResource\Pages\EditCandidature::getWizardStepForStatut($candidature->statut);
+                        @endphp
+                        <span class="text-sm text-gray-500">Étape {{ $wizardStep }} / 11</span>
                     </div>
                     
                     <!-- Barre de progression -->
                     <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
                         <div class="h-3 rounded-full transition-all duration-500 {{ $candidature->statut->value === 'rejete' ? 'bg-red-500' : 'bg-green-500' }}" 
-                             style="width: {{ ($candidature->statut->getEtape() / 13) * 100 }}%"></div>
+                             style="width: {{ ($wizardStep / 11) * 100 }}%"></div>
                     </div>
 
                     <div class="p-4 rounded-lg {{ $candidature->statut->value === 'rejete' ? 'bg-red-50' : 'bg-blue-50' }}">
@@ -157,46 +160,39 @@
                     <h2 class="text-xl font-semibold text-gray-900 mb-6">Progression de votre candidature</h2>
                     
                     @php
-                        $currentStep = $candidature->statut->getEtape();
+                        $wizardStep = \App\Filament\Resources\CandidatureResource\Pages\EditCandidature::getWizardStepForStatut($candidature->statut);
                         $isRejected = $candidature->statut->value === 'rejete';
                         
                         $phases = [
                             [
-                                'name' => 'Réception & Analyse',
+                                'name' => 'Dossier',
                                 'steps' => [
-                                    ['etape' => 1, 'label' => 'Dossier reçu', 'icon' => 'inbox'],
-                                    ['etape' => 2, 'label' => 'Analyse DRH', 'icon' => 'magnifying-glass'],
+                                    ['step' => 1, 'label' => 'Candidat', 'icon' => '👤'],
+                                    ['step' => 2, 'label' => 'Stage souhaité', 'icon' => '🎯'],
+                                    ['step' => 3, 'label' => 'Documents', 'icon' => '📄'],
                                 ]
                             ],
                             [
-                                'name' => 'Tests & Décision',
+                                'name' => 'Analyse & Tests',
                                 'steps' => [
-                                    ['etape' => 3, 'label' => 'Test de niveau', 'icon' => 'edit'],
-                                    ['etape' => 4, 'label' => 'Décision finale', 'icon' => 'scale'],
-                                    ['etape' => 5, 'label' => 'Candidature acceptée', 'icon' => 'check'],
+                                    ['step' => 4, 'label' => 'Gestion du dossier', 'icon' => '🔍'],
+                                    ['step' => 5, 'label' => 'Convocation test', 'icon' => '📢'],
+                                    ['step' => 6, 'label' => 'Résultats test', 'icon' => '📋'],
                                 ]
                             ],
                             [
                                 'name' => 'Intégration',
                                 'steps' => [
-                                    ['etape' => 6, 'label' => 'Affectation service', 'icon' => '🏢'],
-                                    ['etape' => 7, 'label' => 'Réponse établissement', 'icon' => 'envelope'],
-                                    ['etape' => 8, 'label' => 'Induction RH', 'icon' => 'academic-cap'],
+                                    ['step' => 7, 'label' => 'Affectation', 'icon' => '🏢'],
+                                    ['step' => 8, 'label' => 'Induction & Réponse', 'icon' => '📝'],
                                 ]
                             ],
                             [
-                                'name' => 'Stage',
+                                'name' => 'Stage & Clôture',
                                 'steps' => [
-                                    ['etape' => 9, 'label' => 'Accueil service', 'icon' => 'hand-raised'],
-                                    ['etape' => 10, 'label' => 'Stage en cours', 'icon' => 'briefcase'],
-                                    ['etape' => 11, 'label' => 'Évaluation', 'icon' => 'star'],
-                                ]
-                            ],
-                            [
-                                'name' => 'Clôture',
-                                'steps' => [
-                                    ['etape' => 12, 'label' => 'Attestation', 'icon' => 'scroll'],
-                                    ['etape' => 13, 'label' => 'Stage terminé', 'icon' => 'trophy'],
+                                    ['step' => 9, 'label' => 'Évaluation', 'icon' => '⭐'],
+                                    ['step' => 10, 'label' => 'Attestation', 'icon' => '🏆'],
+                                    ['step' => 11, 'label' => 'Remboursement', 'icon' => '💰'],
                                 ]
                             ],
                         ];
@@ -212,14 +208,14 @@
                                 <div class="flex items-start">
                                     @foreach($phase['steps'] as $step)
                                         @php
-                                            $isCompleted = $currentStep > $step['etape'] || ($currentStep == 13 && $step['etape'] == 13);
-                                            $isCurrent   = $currentStep == $step['etape'] && !$isRejected;
+                                            $isCompleted = $wizardStep > $step['step'] || ($wizardStep == 11 && $step['step'] == 11);
+                                            $isCurrent   = $wizardStep == $step['step'] && !$isRejected;
                                         @endphp
 
                                         {{-- Colonne : cercle + label --}}
                                         <div class="flex flex-col items-center flex-1 min-w-0">
                                             <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
-                                                @if($isRejected && $step['etape'] >= $currentStep)
+                                                @if($isRejected && $step['step'] >= $wizardStep)
                                                     bg-red-100 text-red-500
                                                 @elseif($isCompleted)
                                                     bg-green-100 text-green-600
@@ -230,7 +226,7 @@
                                                 @endif">
                                                 @if($isCompleted && !$isRejected)
                                                     ✓
-                                                @elseif($isRejected && $step['etape'] >= $currentStep)
+                                                @elseif($isRejected && $step['step'] >= $wizardStep)
                                                     ✗
                                                 @else
                                                     {{ $step['icon'] }}
@@ -239,7 +235,7 @@
                                             <p class="text-xs text-center mt-2 px-1 leading-tight
                                                 @if($isCompleted && !$isRejected) text-green-700 font-medium
                                                 @elseif($isCurrent) text-blue-700 font-semibold
-                                                @elseif($isRejected && $step['etape'] >= $currentStep) text-red-400
+                                                @elseif($isRejected && $step['step'] >= $wizardStep) text-red-400
                                                 @else text-gray-400
                                                 @endif">
                                                 {{ $step['label'] }}
@@ -283,11 +279,23 @@
                 @if(in_array($candidature->statut->value, ['attente_test', 'test_planifie']) && $candidature->date_test)
                     <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-4">Informations sur votre test</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <p class="text-sm text-yellow-700 font-medium">Date du test</p>
+                                <p class="text-sm text-yellow-700 font-medium">📅 Date du test</p>
                                 <p class="text-yellow-800 font-semibold">{{ \Carbon\Carbon::parse($candidature->date_test)->format('d/m/Y') }}</p>
                             </div>
+                            @if($candidature->heure_test)
+                            <div>
+                                <p class="text-sm text-yellow-700 font-medium">🕐 Heure du test</p>
+                                <p class="text-yellow-800 font-semibold">{{ $candidature->heure_test }}</p>
+                            </div>
+                            @endif
+                            @if($candidature->lieu_test)
+                            <div>
+                                <p class="text-sm text-yellow-700 font-medium">📍 Lieu du test</p>
+                                <p class="text-yellow-800 font-semibold">{{ $candidature->lieu_test }}</p>
+                            </div>
+                            @endif
                         </div>
                         <div class="mt-4 p-3 bg-yellow-100 rounded-lg">
                             <p class="text-sm text-yellow-800">
@@ -365,7 +373,7 @@
                         @if($candidature->programme_stage)
                             <div class="mt-4 p-3 bg-green-100 rounded-lg">
                                 <p class="text-sm text-green-700 font-medium mb-2">Programme de stage</p>
-                                <p class="text-sm text-green-800">{{ $candidature->programme_stage }}</p>
+                                <div class="text-sm text-green-800 prose prose-sm max-w-none">{!! $candidature->programme_stage !!}</div>
                             </div>
                         @endif
                     </div>

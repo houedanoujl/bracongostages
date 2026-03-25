@@ -7,6 +7,7 @@ use App\Enums\StatutCandidature;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Contracts\View\View;
 
 class EditCandidature extends EditRecord
 {
@@ -15,28 +16,50 @@ class EditCandidature extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('save_header')
-                ->label('Sauvegarder')
-                ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->action(function () {
-                    $this->save();
-                })
-                ->keyBindings(['mod+s']),
-            Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\Action::make('retour_liste')
+                ->label('← Retour à la liste')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(fn () => CandidatureResource::getUrl('index')),
+            Actions\ViewAction::make()
+                ->label('Aperçu')
+                ->icon('heroicon-o-eye')
+                ->color('info'),
         ];
     }
 
+    /**
+     * Masquer les actions par défaut du formulaire.
+     * La progression et la sauvegarde sont gérées via la sidebar de chaque étape.
+     */
     protected function getFormActions(): array
     {
-        return [
-            $this->getSaveFormAction()
-                ->label('Sauvegarder toutes les modifications')
-                ->icon('heroicon-o-check-circle')
-                ->color('success'),
-            $this->getCancelFormAction(),
-        ];
+        return [];
+    }
+
+    /**
+     * Rendu du footer : barre de progression du workflow.
+     */
+    protected function getFooterWidgets(): array
+    {
+        return [];
+    }
+
+    public function getFooter(): ?\Illuminate\Contracts\View\View
+    {
+        $record = $this->record;
+        if (!$record || !$record->statut) {
+            return null;
+        }
+
+        $steps = CandidatureResource::getWizardStepNames();
+        $currentWizardStep = self::getWizardStepForStatut($record->statut);
+
+        return view('filament.components.workflow-progress-bar', [
+            'record' => $record,
+            'steps' => $steps,
+            'currentStep' => $currentWizardStep,
+        ]);
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -115,13 +138,98 @@ class EditCandidature extends EditRecord
     }
 
     /**
-     * Avance automatiquement le statut si les données saisies correspondent à une étape supérieure.
-     * Par exemple : si on note un test alors que le statut est "analyse_dossier", on fait avancer
-     * le statut automatiquement en respectant le workflow.
+     * Premier statut correspondant à une étape wizard donnée.
+     * Utilisé pour l'avancement déterministe entre étapes.
+     */
+    public static function getFirstStatutForWizardStep(int $wizardStep): ?StatutCandidature
+    {
+        return match ($wizardStep) {
+            4 => StatutCandidature::ANALYSE_DOSSIER,
+            5 => StatutCandidature::ATTENTE_TEST,
+            6 => StatutCandidature::TEST_PASSE,
+            7 => StatutCandidature::PLANIFICATION,
+            8 => StatutCandidature::REPONSE_LETTRE_ENVOYEE,
+            9 => StatutCandidature::EN_EVALUATION,
+            10 => StatutCandidature::ATTESTATION_GENEREE,
+            11 => StatutCandidature::REMBOURSEMENT_EN_COURS,
+            default => null,
+        };
+    }
+
+    /**
+     * Avancement déterministe vers l'étape SUIVANTE du wizard.
+     * Appelé par le bouton "Sauvegarder et passer à".
+     * Ne saute JAMAIS plus d'une étape wizard à la fois.
+     */
+    public static function advanceToNextWizardStep($record, int $currentStepNumber, string $stepName): void
+    {
+        $nextStepNumber = $currentStepNumber + 1;
+        $targetStatut = self::getFirstStatutForWizardStep($nextStepNumber);
+
+        if (!$targetStatut) {
+            // Dernière étape : on essaie de terminer
+            if ($record->statut !== StatutCandidature::TERMINE) {
+                $path = self::buildTransitionPath($record->statut, StatutCandidature::TERMINE);
+                if (!empty($path)) {
+                    $previousStatut = $record->statut;
+                    foreach ($path as $step) {
+                        $record->statut = $step;
+                        self::enregistrerHistorique($record, $previousStatut, $step, 'Terminaison via bouton étape ' . $stepName);
+                        $previousStatut = $step;
+                    }
+                    $record->saveQuietly();
+                }
+            }
+            return;
+        }
+
+        // Vérifier que le target est réellement plus avancé
+        if ($targetStatut->getEtape() <= $record->statut->getEtape()) {
+            return;
+        }
+
+        // Construire le chemin BFS vers le premier statut de l'étape suivante
+        $path = self::buildTransitionPath($record->statut, $targetStatut);
+
+        if (empty($path)) {
+            // Si pas de chemin direct, essayer d'avancer d'un cran dans le workflow
+            $nextStatuts = $record->statut->getNextStatuts();
+            if (!empty($nextStatuts)) {
+                $bestNext = null;
+                foreach ($nextStatuts as $candidate) {
+                    if ($candidate === StatutCandidature::REJETE) continue;
+                    if ($bestNext === null || $candidate->getEtape() > $bestNext->getEtape()) {
+                        $bestNext = $candidate;
+                    }
+                }
+                if ($bestNext) {
+                    $record->statut = $bestNext;
+                    self::enregistrerHistorique($record, $record->getOriginal('statut') ?? $record->statut, $bestNext, 'Avancement via bouton étape ' . $stepName);
+                    $record->saveQuietly();
+                }
+            }
+            return;
+        }
+
+        // Appliquer le chemin de transitions
+        $previousStatut = $record->statut;
+        foreach ($path as $step) {
+            $record->statut = $step;
+            self::enregistrerHistorique($record, $previousStatut, $step, 'Avancement via bouton étape ' . $stepName);
+            $previousStatut = $step;
+        }
+        $record->saveQuietly();
+    }
+
+    /**
+     * Avance automatiquement le statut UNIQUEMENT au sein de la même étape wizard.
+     * Par exemple : TEST_PLANIFIE → TEST_PASSE (les deux sont dans l'étape 5 "Tests").
+     * Ne traverse JAMAIS les frontières entre étapes wizard.
      */
     public static function autoAdvanceStatut($record): void
     {
         $currentStatut = $record->statut;
+        $currentWizardStep = self::getWizardStepForStatut($currentStatut);
         $targetStatut = self::detectTargetStatut($record);
 
         if (!$targetStatut || $targetStatut === $currentStatut) {
@@ -131,6 +239,17 @@ class EditCandidature extends EditRecord
         // Vérifier que le target est "plus avancé" que le statut actuel
         if ($targetStatut->getEtape() <= $currentStatut->getEtape()) {
             return;
+        }
+
+        // === GARDE : ne jamais traverser les frontières entre étapes wizard ===
+        $targetWizardStep = self::getWizardStepForStatut($targetStatut);
+        if ($targetWizardStep > $currentWizardStep) {
+            // Le target est dans une étape wizard ultérieure → on refuse le saut
+            // On cherche le statut le plus avancé DANS la même étape wizard
+            $targetStatut = self::detectTargetStatutWithinStep($record, $currentWizardStep);
+            if (!$targetStatut || $targetStatut === $currentStatut) {
+                return;
+            }
         }
 
         // Construire le chemin de transitions pour atteindre le target
@@ -144,7 +263,7 @@ class EditCandidature extends EditRecord
         $previousStatut = $currentStatut;
         foreach ($path as $step) {
             $record->statut = $step;
-            self::enregistrerHistorique($record, $previousStatut, $step, 'Avancement automatique basé sur les données saisies');
+            self::enregistrerHistorique($record, $previousStatut, $step, 'Avancement automatique (intra-étape)');
             $previousStatut = $step;
         }
 
@@ -215,6 +334,50 @@ class EditCandidature extends EditRecord
         }
 
         return null;
+    }
+
+    /**
+     * Détecte le statut cible en restant DANS la même étape wizard.
+     * Évite de sauter vers une étape wizard ultérieure.
+     */
+    public static function detectTargetStatutWithinStep($record, int $currentWizardStep): ?StatutCandidature
+    {
+        $candidates = [
+            // Convocation au test (wizard step 5)
+            ['condition' => fn ($r) => $r->date_test && ($r->note_test === null || $r->note_test == 0), 'statut' => StatutCandidature::TEST_PLANIFIE],
+            // Résultats du test (wizard step 6)
+            ['condition' => fn ($r) => $r->note_test !== null && $r->note_test > 0, 'statut' => StatutCandidature::TEST_PASSE],
+            // Affectation (wizard step 7)
+            ['condition' => fn ($r) => $r->service_affecte && $r->tuteur_id, 'statut' => StatutCandidature::AFFECTE],
+            // Induction (wizard step 8)
+            ['condition' => fn ($r) => $r->induction_completee, 'statut' => StatutCandidature::INDUCTION_TERMINEE],
+            ['condition' => fn ($r) => $r->date_induction && !$r->induction_completee, 'statut' => StatutCandidature::INDUCTION_PLANIFIEE],
+            ['condition' => fn ($r) => $r->reponse_lettre_envoyee, 'statut' => StatutCandidature::REPONSE_LETTRE_ENVOYEE],
+            // Évaluation (wizard step 9)
+            ['condition' => fn ($r) => $r->note_evaluation !== null && $r->note_evaluation > 0, 'statut' => StatutCandidature::EVALUATION_TERMINEE],
+            ['condition' => fn ($r) => $r->date_evaluation, 'statut' => StatutCandidature::EN_EVALUATION],
+            // Attestation (wizard step 10)
+            ['condition' => fn ($r) => $r->attestation_generee || $r->chemin_attestation, 'statut' => StatutCandidature::ATTESTATION_GENEREE],
+            // Remboursement (wizard step 11)
+            ['condition' => fn ($r) => $r->remboursement_effectue && $r->date_remboursement, 'statut' => StatutCandidature::TERMINE],
+        ];
+
+        // Trouver le meilleur statut DANS la même étape wizard
+        $bestTarget = null;
+        foreach ($candidates as $candidate) {
+            $statut = $candidate['statut'];
+            $wizardStep = self::getWizardStepForStatut($statut);
+            if ($wizardStep !== $currentWizardStep) {
+                continue; // Ignorer les statuts d'autres étapes wizard
+            }
+            if (($candidate['condition'])($record) && $statut->getEtape() > $record->statut->getEtape()) {
+                if ($bestTarget === null || $statut->getEtape() > $bestTarget->getEtape()) {
+                    $bestTarget = $statut;
+                }
+            }
+        }
+
+        return $bestTarget;
     }
 
     /**
@@ -304,47 +467,51 @@ class EditCandidature extends EditRecord
                 StatutCandidature::DOSSIER_INCOMPLET,
             ]) => 4,
 
-            // Étape 5 : Tests
+            // Étape 5 : Convocation au test
             in_array($statut, [
                 StatutCandidature::ATTENTE_TEST,
                 StatutCandidature::TEST_PLANIFIE,
+            ]) => 5,
+
+            // Étape 6 : Résultats du test
+            in_array($statut, [
                 StatutCandidature::TEST_PASSE,
                 StatutCandidature::ATTENTE_RESULTATS,
                 StatutCandidature::ATTENTE_DECISION,
                 StatutCandidature::ACCEPTE,
                 StatutCandidature::VALIDE,
-            ]) => 5,
+            ]) => 6,
 
-            // Étape 6 : Affectation
+            // Étape 7 : Affectation
             in_array($statut, [
                 StatutCandidature::PLANIFICATION,
                 StatutCandidature::ATTENTE_AFFECTATION,
                 StatutCandidature::AFFECTE,
-            ]) => 6,
+            ]) => 7,
 
-            // Étape 7 : Induction & Réponse
+            // Étape 8 : Induction & Réponse
             in_array($statut, [
                 StatutCandidature::REPONSE_LETTRE_ENVOYEE,
                 StatutCandidature::INDUCTION_PLANIFIEE,
                 StatutCandidature::INDUCTION_TERMINEE,
                 StatutCandidature::ACCUEIL_SERVICE,
                 StatutCandidature::STAGE_EN_COURS,
-            ]) => 7,
+            ]) => 8,
 
-            // Étape 8 : Évaluation
+            // Étape 9 : Évaluation
             in_array($statut, [
                 StatutCandidature::EN_EVALUATION,
                 StatutCandidature::EVALUATION_TERMINEE,
-            ]) => 8,
+            ]) => 9,
 
-            // Étape 9 : Attestation
-            StatutCandidature::ATTESTATION_GENEREE === $statut => 9,
+            // Étape 10 : Attestation
+            StatutCandidature::ATTESTATION_GENEREE === $statut => 10,
 
-            // Étape 10 : Remboursement
+            // Étape 11 : Remboursement
             in_array($statut, [
                 StatutCandidature::REMBOURSEMENT_EN_COURS,
                 StatutCandidature::TERMINE,
-            ]) => 10,
+            ]) => 11,
 
             // Rejeté → Gestion
             StatutCandidature::REJETE === $statut => 4,

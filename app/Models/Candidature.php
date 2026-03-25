@@ -62,6 +62,7 @@ class Candidature extends Model
         'tuteur_id',
         'programme_stage',
         'date_test',
+        'heure_test',
         'lieu_test',
         'note_test',
         'resultat_test',
@@ -92,6 +93,7 @@ class Candidature extends Model
         'chemin_reponse_lettre',
         'historique_statuts',
         'notes_internes',
+        'emails_envoyes_par_etape',
     ];
 
     protected $casts = [
@@ -116,6 +118,7 @@ class Candidature extends Model
         'remboursement_effectue' => 'boolean',
         'reponse_lettre_envoyee' => 'boolean',
         'historique_statuts' => 'array',
+        'emails_envoyes_par_etape' => 'array',
         'note_test' => 'decimal:2',
         'note_evaluation' => 'decimal:2',
         'montant_transport' => 'decimal:2',
@@ -125,6 +128,35 @@ class Candidature extends Model
      * Note maximale autorisée pour les évaluations et tests
      */
     const NOTE_MAX = 20;
+
+    /**
+     * Marquer l'email d'une étape du wizard comme envoyé.
+     */
+    public function marquerEmailEnvoye(string $stepName): void
+    {
+        $emails = $this->emails_envoyes_par_etape ?? [];
+        $emails[$stepName] = now()->toIso8601String();
+        $this->emails_envoyes_par_etape = $emails;
+        $this->saveQuietly();
+    }
+
+    /**
+     * Vérifier si l'email d'une étape a été envoyé.
+     */
+    public function emailEtapeEnvoye(string $stepName): bool
+    {
+        $emails = $this->emails_envoyes_par_etape ?? [];
+        return !empty($emails[$stepName]);
+    }
+
+    /**
+     * Obtenir la date d'envoi de l'email d'une étape.
+     */
+    public function dateEmailEtape(string $stepName): ?string
+    {
+        $emails = $this->emails_envoyes_par_etape ?? [];
+        return $emails[$stepName] ?? null;
+    }
 
     protected static function boot()
     {

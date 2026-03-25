@@ -10,12 +10,14 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class FilamentServiceProvider extends PanelProvider
@@ -79,6 +81,35 @@ class FilamentServiceProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->brandName('BRACONGO Admin')
-            ->favicon(asset('favicon.ico'));
+            ->favicon(asset('favicon.ico'))
+            ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString(
+                    '<style>' . file_get_contents(resource_path('css/filament-workflow.css')) . '</style>'
+                ),
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): HtmlString => new HtmlString("
+                    <script>
+                        document.addEventListener('livewire:navigated', () => {
+                            if (window.location.pathname.match(/\\/admin\\/candidatures\\/[0-9]+\\/edit/)) {
+                                const sidebar = document.querySelector('[x-data]');
+                                if (sidebar && sidebar.__x) {
+                                    sidebar.__x.\$data.isOpen = false;
+                                }
+                                document.querySelectorAll('aside.fi-sidebar').forEach(el => {
+                                    el.closest('[x-data]')?.__x?.\$dispatch('collapse-sidebar');
+                                });
+                                // Forcer via le store Filament
+                                if (window.Alpine && window.Alpine.store) {
+                                    try { Alpine.store('sidebar').close(); } catch(e) {}
+                                }
+                            }
+                        });
+                    </script>
+                "),
+            );
     }
 } 

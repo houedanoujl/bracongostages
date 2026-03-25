@@ -1,0 +1,154 @@
+/*
+ * Custom CSS pour le wizard workflow des candidatures.
+ * Injecté via le renderHook 'head.end' du panel Filament.
+ */
+
+/* ============================================
+   1. MASQUER LA NAVIGATION PAR DÉFAUT DU WIZARD
+   ============================================ */
+
+/* Masquer les boutons Next/Previous par défaut du wizard Filament */
+.fi-wizard > .fi-wizard-footer {
+    display: none !important;
+}
+
+/* ============================================
+   2. SIDEBAR AMÉLIORÉE
+   ============================================ */
+
+/* Effet sticky sur la sidebar de chaque étape */
+.fi-wizard .fi-fo-group:last-child > .fi-fo-field-wrp {
+    position: sticky;
+    top: 1rem;
+}
+
+/* ============================================
+   3. ÉTATS DÉSACTIVÉS (bouton principal)
+   ============================================ */
+
+/* Bouton principal désactivé : email non envoyé */
+.fi-ac-action[disabled] {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    filter: grayscale(30%);
+}
+
+/* Tooltip sur bouton désactivé */
+.fi-ac-action[disabled]:hover {
+    opacity: 0.6 !important;
+}
+
+/* ============================================
+   4. BARRE DE PROGRESSION STICKY (FOOTER)
+   ============================================ */
+
+.workflow-progress-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    border-top: 2px solid #e5e7eb;
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.dark .workflow-progress-bar {
+    background: rgba(31, 41, 55, 0.97);
+    border-top-color: #374151;
+}
+
+/* ============================================
+   5. SECTIONS DE LA SIDEBAR
+   ============================================ */
+
+/* Section email prioritaire */
+.fi-section.border-primary-200 {
+    transition: all 0.2s ease;
+}
+
+.fi-section.border-primary-200:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+/* Section action verte */
+.fi-section.border-green-200 {
+    transition: all 0.2s ease;
+}
+
+/* Section contexte bleue */
+.fi-section.border-blue-200 {
+    transition: all 0.2s ease;
+}
+
+/* ============================================
+   6. WIZARD STEPS HEADER
+   ============================================ */
+
+/* Rendre les étapes non-cliquables visuellement */
+.fi-wizard-header-step:not(.fi-active) {
+    opacity: 0.6;
+}
+
+.fi-wizard-header-step.fi-active {
+    opacity: 1;
+}
+
+/* Étape verrouillée */
+.fi-wizard-header-step[aria-disabled="true"] {
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+/* ============================================
+   7. ANIMATIONS & TRANSITIONS
+   ============================================ */
+
+/* Transition douce entre étapes */
+.fi-wizard-step-content {
+    animation: fadeInStep 0.3s ease-in-out;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   8. RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Sur mobile, la sidebar passe en dessous */
+    .fi-wizard .fi-fo-grid.grid-cols-5 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .fi-wizard .fi-fo-grid.grid-cols-5 > .fi-fo-group:last-child {
+        order: -1;
+        margin-bottom: 1rem;
+    }
+
+    .workflow-progress-bar {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* ============================================
+   9. PRINT
+   ============================================ */
+
+@media print {
+    .workflow-progress-bar,
+    .fi-wizard-header {
+        display: none !important;
+    }
+}
