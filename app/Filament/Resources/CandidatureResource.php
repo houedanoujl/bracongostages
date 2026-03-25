@@ -807,7 +807,8 @@ class CandidatureResource extends Resource
                                     ->downloadable()
                                     ->openable()
                                     ->columnSpanFull(),
-                            ]
+                            ],
+                            extraEmailActions: fn () => self::makeEvaluationEmailActions()
                         ),
 
                         // ==================== ÉTAPE 10 : ATTESTATION ====================
@@ -1758,6 +1759,77 @@ class CandidatureResource extends Resource
                             $record->marquerEmailEnvoye('Induction & Réponse');
                             Notification::make()->title('✅ Réponse lettre envoyée à ' . $record->email)->success()->send();
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=8', navigate: false);
+                        } catch (\Exception $e) {
+                            Notification::make()->title('❌ Erreur : ' . $e->getMessage())->danger()->send();
+                        }
+                    }),
+            ])->fullWidth(),
+        ];
+    }
+
+    /**
+     * Actions email spécifiques pour l'étape Évaluation (envoi évaluation avec valeurs live).
+     */
+    public static function makeEvaluationEmailActions(): array
+    {
+        return [
+            Forms\Components\Actions::make([
+                Forms\Components\Actions\Action::make('email_envoi_evaluation')
+                    ->label('📊 Envoyer l\'évaluation')
+                    ->color('primary')
+                    ->icon('heroicon-o-chart-bar')
+                    ->size('lg')
+                    ->extraAttributes(['class' => 'w-full'])
+                    ->visible(fn ($record) => $record && $record->email)
+                    ->mountUsing(function (Forms\ComponentContainer $form, $record, $livewire) {
+                        if ($record) {
+                            $formData = $livewire->data ?? [];
+                            $tempRecord = clone $record;
+                            $tempRecord->note_evaluation = $formData['note_evaluation'] ?? $record->note_evaluation;
+                            $tempRecord->appreciation_tuteur = $formData['appreciation_tuteur'] ?? $record->appreciation_tuteur;
+                            $tempRecord->commentaire_evaluation = $formData['commentaire_evaluation'] ?? $record->commentaire_evaluation;
+                            $tempRecord->date_evaluation = $formData['date_evaluation'] ?? $record->date_evaluation;
+                            $rendered = self::renderTemplate('envoi_evaluation', $tempRecord);
+                            $form->fill(['sujet_email' => $rendered['sujet'], 'contenu_email' => $rendered['contenu']]);
+                        }
+                    })
+                    ->form([
+                        TextInput::make('sujet_email')->label('Sujet')->required(),
+                        RichEditor::make('contenu_email')->label('Contenu')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link'])
+                            ->required(),
+                    ])
+                    ->modalHeading('📊 Envoi de l\'évaluation de stage')
+                    ->modalDescription(fn ($record) => $record ? 'Envoyer à : ' . $record->email : '')
+                    ->modalSubmitActionLabel('Envoyer l\'évaluation')
+                    ->action(function (array $data, $record, $livewire) {
+                        try {
+                            // Sauvegarder les champs d'évaluation avant envoi
+                            $formData = $livewire->data;
+                            $record->fill([
+                                'date_evaluation' => $formData['date_evaluation'] ?? $record->date_evaluation,
+                                'note_evaluation' => $formData['note_evaluation'] ?? $record->note_evaluation,
+                                'appreciation_tuteur' => $formData['appreciation_tuteur'] ?? $record->appreciation_tuteur,
+                                'commentaire_evaluation' => $formData['commentaire_evaluation'] ?? $record->commentaire_evaluation,
+                                'competences_acquises_evaluation' => $formData['competences_acquises_evaluation'] ?? $record->competences_acquises_evaluation,
+                            ])->save();
+
+                            $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
+
+                            // Attacher le document d'évaluation si disponible
+                            $chemin = $formData['chemin_evaluation'] ?? $record->chemin_evaluation;
+                            if ($chemin) {
+                                $filePath = storage_path('app/public/' . $chemin);
+                                if (file_exists($filePath)) {
+                                    $notification->attachFile($filePath);
+                                }
+                            }
+
+                            NotificationFacade::route('mail', $record->email)
+                                ->notify($notification);
+                            $record->marquerEmailEnvoye('Évaluation');
+                            Notification::make()->title('✅ Évaluation envoyée à ' . $record->email)->success()->send();
+                            $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=9', navigate: false);
                         } catch (\Exception $e) {
                             Notification::make()->title('❌ Erreur : ' . $e->getMessage())->danger()->send();
                         }
