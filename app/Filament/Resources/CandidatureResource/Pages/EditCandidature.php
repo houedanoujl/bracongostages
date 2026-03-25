@@ -106,12 +106,12 @@ class EditCandidature extends EditRecord
 
         // Si le statut a changé via le formulaire, reconstruire l'historique
         if ($ancienStatut && $record->statut !== $ancienStatut) {
-            $this->enregistrerHistorique($record, $ancienStatut, $record->statut, 'Modifié via le formulaire d\'édition');
+            self::enregistrerHistorique($record, $ancienStatut, $record->statut, 'Modifié via le formulaire d\'édition');
         }
 
         // ====== AUTO-AVANCEMENT DU STATUT ======
         // Détecter si des données clés ont été remplies et avancer le statut automatiquement
-        $this->autoAdvanceStatut($record);
+        self::autoAdvanceStatut($record);
     }
 
     /**
@@ -119,10 +119,10 @@ class EditCandidature extends EditRecord
      * Par exemple : si on note un test alors que le statut est "analyse_dossier", on fait avancer
      * le statut automatiquement en respectant le workflow.
      */
-    private function autoAdvanceStatut($record): void
+    public static function autoAdvanceStatut($record): void
     {
         $currentStatut = $record->statut;
-        $targetStatut = $this->detectTargetStatut($record);
+        $targetStatut = self::detectTargetStatut($record);
 
         if (!$targetStatut || $targetStatut === $currentStatut) {
             return;
@@ -134,7 +134,7 @@ class EditCandidature extends EditRecord
         }
 
         // Construire le chemin de transitions pour atteindre le target
-        $path = $this->buildTransitionPath($currentStatut, $targetStatut);
+        $path = self::buildTransitionPath($currentStatut, $targetStatut);
 
         if (empty($path)) {
             return;
@@ -144,7 +144,7 @@ class EditCandidature extends EditRecord
         $previousStatut = $currentStatut;
         foreach ($path as $step) {
             $record->statut = $step;
-            $this->enregistrerHistorique($record, $previousStatut, $step, 'Avancement automatique basé sur les données saisies');
+            self::enregistrerHistorique($record, $previousStatut, $step, 'Avancement automatique basé sur les données saisies');
             $previousStatut = $step;
         }
 
@@ -162,7 +162,7 @@ class EditCandidature extends EditRecord
     /**
      * Détecte le statut cible en fonction des données remplies dans le formulaire.
      */
-    private function detectTargetStatut($record): ?StatutCandidature
+    public static function detectTargetStatut($record): ?StatutCandidature
     {
         // Remboursement effectué → Terminé
         if ($record->remboursement_effectue && $record->date_remboursement) {
@@ -221,7 +221,7 @@ class EditCandidature extends EditRecord
      * Construit le chemin de transitions valides entre deux statuts.
      * Utilise un BFS (parcours en largeur) pour trouver le chemin le plus court.
      */
-    private function buildTransitionPath(StatutCandidature $from, StatutCandidature $to): array
+    public static function buildTransitionPath(StatutCandidature $from, StatutCandidature $to): array
     {
         if ($from === $to) {
             return [];
@@ -265,7 +265,7 @@ class EditCandidature extends EditRecord
      * Utilise une requête directe pour ne modifier QUE la colonne historique_statuts
      * sans interférer avec les autres attributs dirty du modèle (ex: statut).
      */
-    private function enregistrerHistorique($record, StatutCandidature $de, StatutCandidature $vers, string $commentaire): void
+    public static function enregistrerHistorique($record, StatutCandidature $de, StatutCandidature $vers, string $commentaire): void
     {
         $historique = $record->historique_statuts ?? [];
         $historique[] = [

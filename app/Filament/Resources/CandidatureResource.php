@@ -119,10 +119,10 @@ class CandidatureResource extends Resource
                                     Select::make('poste_souhaite')
                                         ->label('Poste souhaité')
                                         ->options(Candidature::getPostesDisponibles())
-                                        ->required()
                                         ->searchable()
-                                        ->disabled($isLocked)
-                                        ->dehydrated($canDehydrate),
+                                        ->placeholder('Sélectionner un poste')
+                                        ->dehydrated()
+                                        ->helperText(fn ($record) => $record ? '✏️ Modifiable par l\'administrateur' : null),
                                     Select::make('opportunite_id')
                                         ->label('Opportunité')
                                         ->options(fn () => \App\Models\Opportunite::pluck('titre', 'slug')->toArray())
@@ -909,59 +909,47 @@ class CandidatureResource extends Resource
                     ];
                 })
                 ->action(function (array $data, $record, $livewire) use ($stepName) {
-                    // 1. SAUVEGARDE — Tenter le save Filament complet d'abord.
-                    // Si la validation du wizard échoue (champs d'étapes futures vides),
-                    // fallback : sauvegarder directement les données du formulaire.
-                    $saved = false;
+                    // === 1. SAUVEGARDE DIRECTE (bypass validation wizard complète) ===
                     try {
-                        $livewire->save(shouldRedirect: false);
-                        $saved = true;
-                    } catch (\Filament\Support\Exceptions\Halt $e) {
-                        // Le wizard valide TOUTES les étapes → échec si étapes futures incomplètes.
-                        // Fallback : sauvegarder directement avec les données du formulaire.
-                    }
-
-                    if (!$saved) {
-                        try {
-                            $formData = $livewire->data;
-                            $fillable = $record->getFillable();
-                            $dataToSave = [];
-                            foreach ($fillable as $field) {
-                                if (array_key_exists($field, $formData) && $formData[$field] !== null) {
-                                    $dataToSave[$field] = $formData[$field];
-                                }
+                        $formData = $livewire->data;
+                        $fillable = $record->getFillable();
+                        $dataToSave = [];
+                        foreach ($fillable as $field) {
+                            if (array_key_exists($field, $formData)) {
+                                $dataToSave[$field] = $formData[$field];
                             }
-
-                            // Anti-rétrogradation du statut
-                            if (isset($dataToSave['statut'])) {
-                                $newStatut = StatutCandidature::tryFrom($dataToSave['statut']);
-                                if ($newStatut && $newStatut->getEtape() < $record->statut->getEtape()) {
-                                    unset($dataToSave['statut']);
-                                }
-                            }
-
-                            $record->fill($dataToSave);
-                            $record->save();
-                            $saved = true;
-
-                            \Illuminate\Support\Facades\Log::info("Save & Continue fallback : candidature #{$record->id} sauvegardée directement.");
-                        } catch (\Exception $saveError) {
-                            \Illuminate\Support\Facades\Log::error("Save & Continue erreur : {$saveError->getMessage()}");
-                            Notification::make()
-                                ->title('❌ Erreur de sauvegarde')
-                                ->body('Impossible de sauvegarder : ' . $saveError->getMessage())
-                                ->danger()
-                                ->persistent()
-                                ->send();
-                            return;
                         }
+
+                        // Anti-rétrogradation du statut
+                        if (isset($dataToSave['statut'])) {
+                            $newStatut = StatutCandidature::tryFrom($dataToSave['statut']);
+                            if ($newStatut && $newStatut->getEtape() < $record->statut->getEtape()) {
+                                unset($dataToSave['statut']);
+                            }
+                        }
+
+                        $record->fill($dataToSave);
+                        $record->save();
+
+                        \Illuminate\Support\Facades\Log::info("Save & Continue : candidature #{$record->id} sauvegardée.");
+                    } catch (\Exception $saveError) {
+                        \Illuminate\Support\Facades\Log::error("Save & Continue erreur : {$saveError->getMessage()}");
+                        Notification::make()
+                            ->title('❌ Erreur de sauvegarde')
+                            ->body('Impossible de sauvegarder : ' . $saveError->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                        return;
                     }
 
-                    // 2. Rafraîchir le record pour avoir le statut à jour après auto-avancement
+                    // === 2. Auto-avancement du statut ===
+                    $record->refresh();
+                    \App\Filament\Resources\CandidatureResource\Pages\EditCandidature::autoAdvanceStatut($record);
                     $record->refresh();
                     $etape = $record->statut->getEtape();
 
-                    // 3. Envoyer l'email si un template est choisi
+                    // === 3. Envoyer l'email si un template est choisi ===
                     $emailSent = false;
                     $slug = $data['template_slug'] ?? null;
                     $sujet = $data['sujet_email'] ?? null;
@@ -969,8 +957,6 @@ class CandidatureResource extends Resource
 
                     if ($slug && $record->email) {
                         try {
-                            // Utiliser le sujet/contenu édité par l'utilisateur dans le modal
-                            // S'ils sont vides, re-rendre depuis le template
                             if (empty($sujet) || empty($contenu)) {
                                 $rendered = self::renderTemplate($slug, $record);
                                 $sujet = $sujet ?: $rendered['sujet'];
@@ -980,7 +966,6 @@ class CandidatureResource extends Resource
                             if (!empty($sujet) && !empty($contenu)) {
                                 $notification = new EmailGeneriqueNotification($sujet, $contenu);
 
-                                // Pièces jointes
                                 $attachmentMap = [
                                     'reponse_lettre_recommandation' => 'chemin_reponse_lettre',
                                     'envoi_evaluation' => 'chemin_evaluation',
@@ -993,7 +978,6 @@ class CandidatureResource extends Resource
                                     }
                                 }
 
-                                // Mises à jour post-envoi
                                 if ($slug === 'envoi_attestation') {
                                     $record->update(['attestation_generee' => true, 'date_attestation' => now()]);
                                 } elseif ($slug === 'reponse_lettre_recommandation') {
@@ -1013,14 +997,14 @@ class CandidatureResource extends Resource
                         }
                     }
 
-                    // 4. Notification de succès
+                    // === 4. Notification de succès ===
                     $msg = "Étape « {$stepName} » enregistrée (étape {$etape}/13).";
                     if ($emailSent) {
                         $msg .= " 📧 Email envoyé à {$record->email}.";
                     }
                     Notification::make()->title('✅ ' . $msg)->success()->duration(4000)->send();
 
-                    // 5. Recharger la page — startOnStep() détectera le nouveau statut
+                    // === 5. REDIRECTION (ferme le modal + recharge la page) ===
                     $url = self::getUrl('edit', ['record' => $record->id]);
                     $livewire->redirect($url, navigate: false);
                 }),
