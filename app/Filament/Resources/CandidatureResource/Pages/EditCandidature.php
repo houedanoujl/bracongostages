@@ -62,6 +62,27 @@ class EditCandidature extends EditRecord
         ]);
     }
 
+    protected function afterFill(): void
+    {
+        // Si promptAdvance=1 est dans l'URL, auto-cliquer sur le bouton d'avancement
+        // pour afficher le popup "Passer à l'étape suivante" après un envoi d'email
+        if (request()->query('promptAdvance') === '1') {
+            $step = (int) request()->query('step', 1);
+            $this->js("
+                setTimeout(function() {
+                    const btn = document.getElementById('advance-btn-{$step}');
+                    if (btn && !btn.disabled) {
+                        btn.click();
+                    }
+                    // Nettoyer l'URL
+                    const url = new URL(window.location);
+                    url.searchParams.delete('promptAdvance');
+                    window.history.replaceState({}, '', url);
+                }, 1200);
+            ");
+        }
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // Rafraîchir le record pour avoir le statut le plus à jour (après auto-avancement)

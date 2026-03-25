@@ -46,11 +46,16 @@ class EmailTemplate extends Model
             '{date_test}' => $candidature->date_test ? \Carbon\Carbon::parse($candidature->date_test)->format('d/m/Y') : '',
             '{date_debut}' => $candidature->date_debut_stage ? \Carbon\Carbon::parse($candidature->date_debut_stage)->format('d/m/Y') : '',
             '{date_fin}' => $candidature->date_fin_stage ? \Carbon\Carbon::parse($candidature->date_fin_stage)->format('d/m/Y') : '',
+            '{date_debut_reel}' => $candidature->date_debut_stage_reel ? \Carbon\Carbon::parse($candidature->date_debut_stage_reel)->format('d/m/Y') : '',
+            '{date_fin_reel}' => $candidature->date_fin_stage_reel ? \Carbon\Carbon::parse($candidature->date_fin_stage_reel)->format('d/m/Y') : '',
             '{direction_service}' => $directionLabel,
             '{etablissement}' => $candidature->etablissement ?? '',
             '{code_suivi}' => $candidature->code_suivi ?? '',
             '{note_evaluation}' => $candidature->note_evaluation ?? 'N/A',
             '{appreciation_tuteur}' => $appreciations[$candidature->appreciation_tuteur ?? ''] ?? ($candidature->appreciation_tuteur ?? 'N/A'),
+            '{tuteur_nom}' => $candidature->tuteur_id 
+                ? (\App\Models\User::find($candidature->tuteur_id)?->name ?? '') 
+                : '',
         ];
 
         // Merge extras (e.g. heure_test, heure_presentation)

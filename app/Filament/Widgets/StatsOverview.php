@@ -10,21 +10,33 @@ use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {
+    // Rafraîchir les stats toutes les 30 secondes au lieu de chaque requête
+    protected static ?string $pollingInterval = '30s';
+
     protected function getStats(): array
     {
-        $totalCandidatures = Candidature::count();
-        $candidaturesValides = Candidature::where('statut', StatutCandidature::VALIDE)->count();
-        $candidaturesEnAttente = Candidature::whereIn('statut', [
-            StatutCandidature::NON_TRAITE,
-            StatutCandidature::ANALYSE_DOSSIER,
-            StatutCandidature::ATTENTE_TEST,
-            StatutCandidature::ATTENTE_RESULTATS,
-            StatutCandidature::ATTENTE_AFFECTATION
-        ])->count();
-        
-        $candidaturesCeMois = Candidature::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
+        // Cache les stats pendant 60 secondes pour réduire les requêtes DB
+        return cache()->remember('filament_stats_overview', 60, function () {
+            return $this->computeStats();
+        });
+    }
+
+    protected function computeStats(): array
+    {
+        // Requête unique avec agrégation pour remplacer 6 count() séparés
+        $stats = Candidature::toBase()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN statut = 'valide' THEN 1 ELSE 0 END) as valides")
+            ->selectRaw("SUM(CASE WHEN statut IN ('non_traite','analyse_dossier','attente_test','attente_resultats','attente_affectation') THEN 1 ELSE 0 END) as en_attente")
+            ->selectRaw("SUM(CASE WHEN MONTH(created_at) = ? AND YEAR(created_at) = ? THEN 1 ELSE 0 END) as ce_mois", [now()->month, now()->year])
+            ->selectRaw("SUM(CASE WHEN statut = 'valide' AND MONTH(updated_at) = ? AND YEAR(updated_at) = ? THEN 1 ELSE 0 END) as validations_mois", [now()->month, now()->year])
+            ->first();
+
+        $totalCandidatures = $stats->total;
+        $candidaturesValides = $stats->valides;
+        $candidaturesEnAttente = $stats->en_attente;
+        $candidaturesCeMois = $stats->ce_mois;
+        $validationsCeMois = $stats->validations_mois;
             
         $tauxValidation = $totalCandidatures > 0 ? 
             round(($candidaturesValides / $totalCandidatures) * 100, 1) : 0;
@@ -37,16 +49,6 @@ class StatsOverview extends BaseWidget
             ->get()
             ->pluck('etablissement')
             ->join(', ');
-
-        // Distribution par statut pour ce mois
-        $nouveaucesMois = Candidature::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
-            
-        $validationsCeMois = Candidature::where('statut', StatutCandidature::VALIDE)
-            ->whereMonth('updated_at', now()->month)
-            ->whereYear('updated_at', now()->year)
-            ->count();
 
         return [
             Stat::make('Total des candidatures', $totalCandidatures)

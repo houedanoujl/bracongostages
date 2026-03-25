@@ -175,7 +175,7 @@
                             [
                                 'name' => 'Analyse & Tests',
                                 'steps' => [
-                                    ['step' => 4, 'label' => 'Gestion du dossier', 'icon' => '🔍'],
+                                    ['step' => 4, 'label' => 'Gestion', 'icon' => '🔍'],
                                     ['step' => 5, 'label' => 'Convocation test', 'icon' => '📢'],
                                     ['step' => 6, 'label' => 'Résultats test', 'icon' => '📋'],
                                 ]
@@ -191,8 +191,8 @@
                                 'name' => 'Stage & Clôture',
                                 'steps' => [
                                     ['step' => 9, 'label' => 'Évaluation', 'icon' => '⭐'],
-                                    ['step' => 10, 'label' => 'Attestation', 'icon' => '🏆'],
-                                    ['step' => 11, 'label' => 'Remboursement', 'icon' => '💰'],
+                                    ['step' => 10, 'label' => 'Attestation', 'icon' => '📜'],
+                                    ['step' => 11, 'label' => 'Remboursement', 'icon' => '🏆'],
                                 ]
                             ],
                         ];
@@ -429,9 +429,42 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-teal-700">Votre attestation a été générée le {{ $candidature->date_attestation ? \Carbon\Carbon::parse($candidature->date_attestation)->format('d/m/Y') : '' }}</p>
-                                <p class="text-xs text-teal-600 mt-1">Vous pouvez la récupérer auprès du service RH</p>
+                                @if($candidature->chemin_attestation)
+                                    <p class="text-xs text-teal-600 mt-1">Cliquez sur le bouton pour télécharger votre attestation</p>
+                                @else
+                                    <p class="text-xs text-teal-600 mt-1">Vous pouvez la récupérer auprès du service RH</p>
+                                @endif
                             </div>
-                            <div class="text-4xl">📄</div>
+                            @if($candidature->chemin_attestation)
+                                <a href="{{ route('attestation.download', $candidature->code_suivi) }}"
+                                   class="inline-flex items-center px-4 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition shadow-sm text-sm flex-shrink-0 ml-4">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    Télécharger
+                                </a>
+                            @else
+                                <div class="text-4xl">📄</div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @if(in_array($candidature->statut->value, ['reponse_lettre_envoyee', 'induction_planifiee', 'induction_terminee', 'accueil_service', 'stage_en_cours', 'en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine']) && $candidature->chemin_reponse_lettre)
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-indigo-800 mb-4">Réponse à la lettre de recommandation</h3>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-indigo-700">La réponse officielle à la lettre de recommandation de votre établissement est disponible.</p>
+                                <p class="text-xs text-indigo-600 mt-1">Cliquez sur le bouton pour télécharger le document</p>
+                            </div>
+                            <a href="{{ route('reponse-lettre.download', $candidature->code_suivi) }}"
+                               class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm text-sm flex-shrink-0 ml-4">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Télécharger
+                            </a>
                         </div>
                     </div>
                 @endif
@@ -457,6 +490,18 @@
                                 </div>
                             @endif
                         </div>
+                        @if($candidature->chemin_justificatif_remboursement)
+                            <div class="mt-4 pt-4 border-t border-emerald-200 flex items-center justify-between">
+                                <p class="text-sm text-emerald-700">Justificatif de remboursement disponible</p>
+                                <a href="{{ route('remboursement.download', $candidature->code_suivi) }}"
+                                   class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition shadow-sm text-sm flex-shrink-0 ml-4">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    Télécharger
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 @endif
 

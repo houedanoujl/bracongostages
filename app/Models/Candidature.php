@@ -158,6 +158,80 @@ class Candidature extends Model
         return $emails[$stepName] ?? null;
     }
 
+    /**
+     * Mapping : nom d'étape → slugs d'emails requis.
+     * Strings simples = requis (logique ET — tous doivent être envoyés).
+     * Sous-tableaux = alternatives (logique OU — un seul suffit).
+     */
+    public static function getRequiredEmailsForStep(string $stepName): array
+    {
+        return match ($stepName) {
+            'Documents' => [['documents_complet', 'documents_incomplet']],
+            'Gestion' => [['gestion_complet', 'gestion_incomplet']],
+            'Convocation test' => ['convocation_test'],
+            'Résultats test' => [['resultat_admis', 'resultat_non_admis']],
+            'Affectation' => ['affectation_confirmation', 'affectation_debut'],
+            'Induction & Réponse' => ['induction_rh', 'induction_reponse'],
+            'Évaluation' => ['evaluation'],
+            'Attestation' => ['attestation'],
+            'Remboursement' => ['remboursement'],
+            default => [],
+        };
+    }
+
+    /**
+     * Libellés lisibles pour chaque slug d'email.
+     */
+    public static function getEmailSlugLabels(): array
+    {
+        return [
+            'documents_complet' => 'Dossier complet',
+            'documents_incomplet' => 'Dossier incomplet',
+            'gestion_complet' => 'Dossier complet',
+            'gestion_incomplet' => 'Dossier incomplet',
+            'convocation_test' => 'Convocation au test',
+            'resultat_admis' => 'Résultat : Admis',
+            'resultat_non_admis' => 'Résultat : Non admis',
+            'affectation_confirmation' => 'Confirmation des dates',
+            'affectation_debut' => 'Début du stage',
+            'induction_rh' => 'Induction RH',
+            'induction_reponse' => 'Réponse lettre',
+            'evaluation' => 'Évaluation',
+            'attestation' => 'Attestation',
+            'remboursement' => 'Stage terminé',
+        ];
+    }
+
+    /**
+     * Vérifier si TOUS les emails requis d'une étape ont été envoyés.
+     * Supporte la rétrocompatibilité avec l'ancien format (clé = nom d'étape).
+     */
+    public function tousEmailsEtapeEnvoyes(string $stepName): bool
+    {
+        $required = self::getRequiredEmailsForStep($stepName);
+        if (empty($required)) return true;
+
+        $emails = $this->emails_envoyes_par_etape ?? [];
+
+        // Rétrocompatibilité : si l'ancienne clé (nom d'étape) existe, considérer comme fait
+        if (!empty($emails[$stepName])) return true;
+
+        foreach ($required as $req) {
+            if (is_array($req)) {
+                // Logique OU : au moins un doit être envoyé
+                $anySent = false;
+                foreach ($req as $slug) {
+                    if (!empty($emails[$slug])) { $anySent = true; break; }
+                }
+                if (!$anySent) return false;
+            } else {
+                // Logique ET : doit être envoyé
+                if (empty($emails[$req])) return false;
+            }
+        }
+        return true;
+    }
+
     protected static function boot()
     {
         parent::boot();

@@ -29,6 +29,7 @@ class FilamentServiceProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->colors([
                 'primary' => [
                     50 => '#fff7ed',
@@ -80,13 +81,14 @@ class FilamentServiceProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->spa()
             ->brandName('BRACONGO Admin')
             ->favicon(asset('favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): HtmlString => new HtmlString(
-                    '<style>' . file_get_contents(resource_path('css/filament-workflow.css')) . '</style>'
+                    '<style>' . cache()->rememberForever('filament_workflow_css', fn () => file_get_contents(resource_path('css/filament-workflow.css'))) . '</style>'
                 ),
             )
             ->renderHook(

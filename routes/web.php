@@ -53,6 +53,75 @@ Route::post('/suivi/search', function (\Illuminate\Http\Request $request) {
     return redirect('/suivi/' . $candidature->code_suivi);
 })->name('candidature.suivi.search');
 
+// Téléchargement de l'attestation par le candidat (sécurisé par code de suivi)
+Route::get('/attestation/{code}/download', function ($code) {
+    $candidature = \App\Models\Candidature::where('code_suivi', $code)->first();
+
+    if (!$candidature || !$candidature->attestation_generee || !$candidature->chemin_attestation) {
+        abort(404, 'Attestation non disponible.');
+    }
+
+    $chemin = $candidature->chemin_attestation;
+    if (is_array($chemin)) {
+        $chemin = reset($chemin) ?: null;
+    }
+
+    if ($chemin && \Illuminate\Support\Facades\Storage::disk('public')->exists($chemin)) {
+        return \Illuminate\Support\Facades\Storage::disk('public')->download(
+            $chemin,
+            'Attestation_' . $candidature->nom . '_' . $candidature->prenom . '.' . pathinfo($chemin, PATHINFO_EXTENSION)
+        );
+    }
+
+    abort(404, 'Fichier d\'attestation introuvable.');
+})->name('attestation.download');
+
+// Téléchargement du justificatif de remboursement par le candidat
+Route::get('/remboursement/{code}/download', function ($code) {
+    $candidature = \App\Models\Candidature::where('code_suivi', $code)->first();
+
+    if (!$candidature || !$candidature->chemin_justificatif_remboursement) {
+        abort(404, 'Justificatif de remboursement non disponible.');
+    }
+
+    $chemin = $candidature->chemin_justificatif_remboursement;
+    if (is_array($chemin)) {
+        $chemin = reset($chemin) ?: null;
+    }
+
+    if ($chemin && \Illuminate\Support\Facades\Storage::disk('public')->exists($chemin)) {
+        return \Illuminate\Support\Facades\Storage::disk('public')->download(
+            $chemin,
+            'Remboursement_' . $candidature->nom . '_' . $candidature->prenom . '.' . pathinfo($chemin, PATHINFO_EXTENSION)
+        );
+    }
+
+    abort(404, 'Fichier de justificatif introuvable.');
+})->name('remboursement.download');
+
+// Téléchargement de la réponse à la lettre de recommandation par le candidat
+Route::get('/reponse-lettre/{code}/download', function ($code) {
+    $candidature = \App\Models\Candidature::where('code_suivi', $code)->first();
+
+    if (!$candidature || !$candidature->chemin_reponse_lettre) {
+        abort(404, 'Réponse à la lettre non disponible.');
+    }
+
+    $chemin = $candidature->chemin_reponse_lettre;
+    if (is_array($chemin)) {
+        $chemin = reset($chemin) ?: null;
+    }
+
+    if ($chemin && \Illuminate\Support\Facades\Storage::disk('public')->exists($chemin)) {
+        return \Illuminate\Support\Facades\Storage::disk('public')->download(
+            $chemin,
+            'Reponse_Lettre_' . $candidature->nom . '_' . $candidature->prenom . '.' . pathinfo($chemin, PATHINFO_EXTENSION)
+        );
+    }
+
+    abort(404, 'Fichier de réponse introuvable.');
+})->name('reponse-lettre.download');
+
 // Route de diagnostic email supprimée pour raisons de sécurité
 
 // Routes pour les évaluations
