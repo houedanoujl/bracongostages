@@ -94,6 +94,10 @@ php artisan storage:link --force
 echo "🗄️ Migration base de données..."
 php artisan migrate --force --no-interaction
 
+# 9b. Seeding des templates email (insère uniquement si absents)
+echo "📧 Vérification des templates email..."
+php artisan db:seed --class=EmailTemplateSeeder --force --no-interaction 2>/dev/null || echo "⚠️ Seeding templates email ignoré (déjà présents ou erreur)"
+
 # 10. Nettoyage complet des caches
 echo "🧹 Nettoyage des caches..."
 php artisan cache:clear

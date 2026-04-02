@@ -59,7 +59,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Candidatures actives</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $candidatures->whereNotIn('statut', ['valide', 'rejete'])->count() }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $candidatures->filter(fn($c) => !in_array($c->statut->value, ['valide', 'rejete', 'termine']))->count() }}</p>
                     </div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">En cours</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $candidatures->whereIn('statut', ['analyse_dossier', 'attente_test', 'attente_resultats', 'attente_affectation'])->count() }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $candidatures->filter(fn($c) => in_array($c->statut->value, ['analyse_dossier', 'attente_test', 'attente_resultats', 'attente_affectation']))->count() }}</p>
                     </div>
                 </div>
             </div>

@@ -18,11 +18,10 @@
                     </div>
                     <div class="text-right">
                         <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                            @if($candidature->statut->value === 'non_traite') bg-yellow-100 text-yellow-800
-                            @elseif($candidature->statut->value === 'en_cours') bg-blue-100 text-blue-800
-                            @elseif($candidature->statut->value === 'accepte') bg-green-100 text-green-800
-                            @elseif($candidature->statut->value === 'refuse') bg-red-100 text-red-800
-                            @else bg-gray-100 text-gray-800 @endif">
+                            @if(in_array($candidature->statut->value, ['non_traite', 'dossier_recu'])) bg-yellow-100 text-yellow-800
+                            @elseif($candidature->statut->value === 'rejete') bg-red-100 text-red-800
+                            @elseif(in_array($candidature->statut->value, ['accepte', 'valide', 'termine'])) bg-green-100 text-green-800
+                            @else bg-blue-100 text-blue-800 @endif">
                             {{ $candidature->statut->getLabel() }}
                         </div>
                     </div>
@@ -184,10 +183,10 @@
                         <div class="mb-3">
                             <label class="block text-sm font-medium text-gray-500">Note globale</label>
                             <div class="flex items-center">
-                                <span class="text-2xl font-bold text-bracongo-red-600">{{ $candidature->evaluation->note_globale }}/5</span>
+                                <span class="text-2xl font-bold text-bracongo-red-600">{{ $candidature->evaluation->note_moyenne }}/5</span>
                                 <div class="ml-3 flex">
                                     @for($i = 1; $i <= 5; $i++)
-                                    <svg class="w-5 h-5 {{ $i <= $candidature->evaluation->note_globale ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-5 h-5 {{ $i <= $candidature->evaluation->note_moyenne ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                     </svg>
                                     @endfor
@@ -195,10 +194,10 @@
                             </div>
                         </div>
                         
-                        @if($candidature->evaluation->commentaires)
+                        @if($candidature->evaluation->commentaire_libre)
                         <div>
                             <label class="block text-sm font-medium text-gray-500 mb-2">Commentaires</label>
-                            <p class="text-gray-700">{{ $candidature->evaluation->commentaires }}</p>
+                            <p class="text-gray-700">{{ $candidature->evaluation->commentaire_libre }}</p>
                         </div>
                         @endif
                         

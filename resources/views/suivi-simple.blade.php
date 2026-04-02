@@ -100,25 +100,25 @@
                         <div class="flex items-start">
                             <div class="flex-shrink-0 text-2xl mr-3">
                                 {{ match($candidature->statut->value) {
-                                    'dossier_recu', 'non_traite' => 'inbox',
-                                    'analyse_dossier' => 'magnifying-glass',
-                                    'dossier_incomplet' => 'warning',
-                                    'attente_test', 'test_planifie' => 'edit',
-                                    'test_passe', 'attente_resultats' => 'pencil',
-                                    'attente_decision' => 'clock',
-                                    'accepte', 'valide' => 'check',
-                                    'planification', 'attente_affectation' => 'calendar',
+                                    'dossier_recu', 'non_traite' => '📥',
+                                    'analyse_dossier' => '🔍',
+                                    'dossier_incomplet' => '⚠️',
+                                    'attente_test', 'test_planifie' => '📝',
+                                    'test_passe', 'attente_resultats' => '✏️',
+                                    'attente_decision' => '⏳',
+                                    'accepte', 'valide' => '✅',
+                                    'planification', 'attente_affectation' => '📅',
                                     'affecte' => '🏢',
-                                    'reponse_lettre_envoyee' => 'envelope',
-                                    'induction_planifiee', 'induction_terminee' => 'academic-cap',
-                                    'accueil_service' => 'hand-raised',
-                                    'stage_en_cours' => 'briefcase',
-                                    'en_evaluation', 'evaluation_terminee' => 'star',
-                                    'attestation_generee' => 'scroll',
-                                    'remboursement_en_cours' => 'banknotes',
-                                    'termine' => 'trophy',
-                                    'rejete' => 'x-mark',
-                                    default => 'clipboard'
+                                    'reponse_lettre_envoyee' => '✉️',
+                                    'induction_planifiee', 'induction_terminee' => '🎓',
+                                    'accueil_service' => '🤝',
+                                    'stage_en_cours' => '💼',
+                                    'en_evaluation', 'evaluation_terminee' => '⭐',
+                                    'attestation_generee' => '📜',
+                                    'remboursement_en_cours' => '💰',
+                                    'termine' => '🏆',
+                                    'rejete' => '❌',
+                                    default => '📋'
                                 } }}
                             </div>
                             <div>

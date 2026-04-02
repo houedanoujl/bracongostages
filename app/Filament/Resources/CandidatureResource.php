@@ -537,7 +537,11 @@ class CandidatureResource extends Resource
                                         ->maxValue(20)
                                         ->step(0.01)
                                         ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20'])
+                                        ->validationMessages([
+                                            'max' => 'La note ne peut pas dépasser 20/20.',
+                                        ])
+                                        ->live(onBlur: true),
                                 ]),
                                 RichEditor::make('commentaire_test')
                                     ->label('Commentaires sur le test')
@@ -789,7 +793,11 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                                         ->maxValue(20)
                                         ->step(0.01)
                                         ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20'])
+                                        ->validationMessages([
+                                            'max' => 'La note ne peut pas dépasser 20/20.',
+                                        ])
+                                        ->live(onBlur: true),
                                     Select::make('appreciation_tuteur')
                                         ->label('Appréciation du tuteur')
                                         ->options([
