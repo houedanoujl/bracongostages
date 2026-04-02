@@ -88,7 +88,10 @@ class FilamentServiceProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): HtmlString => new HtmlString(
-                    '<style>' . cache()->rememberForever('filament_workflow_css', fn () => file_get_contents(resource_path('css/filament-workflow.css'))) . '</style>'
+                    '<style>' . cache()->rememberForever('filament_workflow_css', function () {
+                        $path = resource_path('css/filament-workflow.css');
+                        return file_exists($path) ? file_get_contents($path) : '';
+                    }) . '</style>'
                 ),
             )
             ->renderHook(

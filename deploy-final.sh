@@ -95,7 +95,14 @@ php artisan vendor:publish --provider="Filament\Support\SupportServiceProvider" 
 print_status "Optimisation des assets Filament..."
 php artisan filament:optimize 2>/dev/null || print_warning "Optimisation Filament non disponible"
 
-# 4. Optimisation de Laravel
+# 4. Nettoyage des anciens caches AVANT reconstruction
+print_status "Nettoyage des anciens caches..."
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# 4b. Optimisation de Laravel (reconstruction des caches)
 print_status "Optimisation de Laravel..."
 php artisan config:cache
 php artisan route:cache
@@ -210,11 +217,11 @@ print_success "Permissions configurées"
 print_status "Création des liens symboliques..."
 php artisan storage:link
 
-# 8. Nettoyage du cache
-print_status "Nettoyage du cache..."
-php artisan cache:clear
-php artisan config:clear
-php artisan view:clear
+# 8. Reconstruction finale des caches (après migrations et storage:link)
+print_status "Reconstruction finale des caches..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 # 9. Vérification des services
 print_status "Vérification des services..."

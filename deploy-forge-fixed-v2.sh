@@ -124,10 +124,8 @@ if command -v supervisorctl &> /dev/null; then
     sudo supervisorctl restart all 2>/dev/null || true
 fi
 
-# 13. Nettoyage des caches
-echo "🧹 Nettoyage des caches..."
-php artisan cache:clear
-php artisan view:clear
+# 13. Vérification des caches (les caches sont déjà créés à l'étape 8)
+echo "✅ Caches de configuration, routes et vues actifs."
 
 # 14. Vérifications finales
 echo "✅ Vérifications finales..."

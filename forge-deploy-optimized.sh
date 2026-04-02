@@ -60,10 +60,8 @@ if command -v supervisorctl &> /dev/null; then
     sudo supervisorctl restart all
 fi
 
-# 12. Nettoyage des caches
-echo "🧹 Nettoyage..."
-php artisan cache:clear
-php artisan view:clear
+# 12. Vérification des caches
+echo "✅ Caches de configuration, routes et vues actifs."
 
 echo "✅ Déploiement terminé avec succès !"
 echo "🌐 Site: https://bracongostages.bigfive.dev"

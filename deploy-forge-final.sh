@@ -152,6 +152,13 @@ echo "✅ Assets construits"
 # 9. Configuration Laravel
 echo "⚙️ Configuration Laravel..."
 php artisan key:generate --force --no-interaction
+
+# Nettoyage des anciens caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Reconstruction des caches
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

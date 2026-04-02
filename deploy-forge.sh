@@ -132,13 +132,7 @@ php artisan storage:link
 echo "🔄 Rechargement des services..."
 sudo -S service php8.2-fpm reload
 
-# 10. Nettoyage des caches
-echo "🧹 Nettoyage des caches..."
-php artisan cache:clear
-php artisan view:clear
-php artisan config:clear
-
-# 11. Optimisations finales
+# 10. Optimisations finales (les caches sont déjà créés à l'étape 7)
 echo "⚡ Optimisations finales..."
 php artisan optimize
 
