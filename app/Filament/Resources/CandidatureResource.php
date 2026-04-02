@@ -91,7 +91,7 @@ class CandidatureResource extends Resource
             'Gestion' => ['statut', 'motif_rejet', 'notes_internes'],
             'Convocation test' => ['statut', 'date_test', 'heure_test', 'lieu_test'],
             'Résultats test' => ['statut', 'note_test', 'commentaire_test'],
-            'Affectation' => ['statut', 'service_affecte', 'tuteur_id', 'date_debut_stage_reel', 'date_fin_stage_reel', 'programme_stage'],
+            'Affectation' => ['statut', 'service_affecte', 'tuteur_id', 'date_debut_stage_reel', 'date_fin_stage_reel', 'date_debut_stage', 'date_fin_stage', 'programme_stage'],
             'Induction & Réponse' => ['statut', 'date_induction', 'induction_completee', 'reponse_lettre_envoyee', 'date_reponse_lettre', 'chemin_reponse_lettre'],
             'Évaluation' => ['statut', 'date_evaluation', 'note_evaluation', 'appreciation_tuteur', 'commentaire_evaluation', 'competences_acquises_evaluation', 'chemin_evaluation'],
             'Attestation' => ['statut', 'attestation_generee', 'date_attestation', 'chemin_attestation'],
@@ -1185,6 +1185,13 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             }
                         }
                         $dataToSave = self::normalizeFileUploadFields($dataToSave);
+                        // Synchroniser les dates non-_reel depuis les _reel (pour templates email & suivi)
+                        if (isset($dataToSave['date_debut_stage_reel'])) {
+                            $dataToSave['date_debut_stage'] = $dataToSave['date_debut_stage_reel'];
+                        }
+                        if (isset($dataToSave['date_fin_stage_reel'])) {
+                            $dataToSave['date_fin_stage'] = $dataToSave['date_fin_stage_reel'];
+                        }
                         $record->fill($dataToSave);
                         $record->save();
                     } catch (\Exception $saveError) {
@@ -1263,6 +1270,13 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             }
                         }
                         $dataToSave = CandidatureResource::normalizeFileUploadFields($dataToSave);
+                        // Synchroniser les dates non-_reel depuis les _reel (pour templates email & suivi)
+                        if (isset($dataToSave['date_debut_stage_reel'])) {
+                            $dataToSave['date_debut_stage'] = $dataToSave['date_debut_stage_reel'];
+                        }
+                        if (isset($dataToSave['date_fin_stage_reel'])) {
+                            $dataToSave['date_fin_stage'] = $dataToSave['date_fin_stage_reel'];
+                        }
                         $record->fill($dataToSave)->save();
                         Notification::make()
                             ->title('Données sauvegardées')
@@ -1460,6 +1474,13 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             }
                         }
                         $dataToSave = self::normalizeFileUploadFields($dataToSave);
+                        // Synchroniser les dates non-_reel depuis les _reel (pour templates email & suivi)
+                        if (isset($dataToSave['date_debut_stage_reel'])) {
+                            $dataToSave['date_debut_stage'] = $dataToSave['date_debut_stage_reel'];
+                        }
+                        if (isset($dataToSave['date_fin_stage_reel'])) {
+                            $dataToSave['date_fin_stage'] = $dataToSave['date_fin_stage_reel'];
+                        }
                         $record->fill($dataToSave)->save();
 
                         // Send email
@@ -1717,11 +1738,16 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                         try {
                             // Sauvegarder les champs du formulaire avant envoi
                             $formData = $livewire->data;
+                            $dateDebut = $formData['date_debut_stage_reel'] ?? $record->date_debut_stage_reel;
+                            $dateFin = $formData['date_fin_stage_reel'] ?? $record->date_fin_stage_reel;
                             $record->fill([
                                 'service_affecte' => $formData['service_affecte'] ?? $record->service_affecte,
                                 'tuteur_id' => $formData['tuteur_id'] ?? $record->tuteur_id,
-                                'date_debut_stage_reel' => $formData['date_debut_stage_reel'] ?? $record->date_debut_stage_reel,
-                                'date_fin_stage_reel' => $formData['date_fin_stage_reel'] ?? $record->date_fin_stage_reel,
+                                'date_debut_stage_reel' => $dateDebut,
+                                'date_fin_stage_reel' => $dateFin,
+                                // Synchroniser les dates non-_reel pour les templates email et le suivi
+                                'date_debut_stage' => $dateDebut ?? $record->date_debut_stage,
+                                'date_fin_stage' => $dateFin ?? $record->date_fin_stage,
                                 'programme_stage' => $formData['programme_stage'] ?? $record->programme_stage,
                             ])->save();
 
@@ -1771,11 +1797,16 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                     ->action(function (array $data, $record, $livewire) {
                         try {
                             $formData = $livewire->data;
+                            $dateDebut = $formData['date_debut_stage_reel'] ?? $record->date_debut_stage_reel;
+                            $dateFin = $formData['date_fin_stage_reel'] ?? $record->date_fin_stage_reel;
                             $record->fill([
                                 'service_affecte' => $formData['service_affecte'] ?? $record->service_affecte,
                                 'tuteur_id' => $formData['tuteur_id'] ?? $record->tuteur_id,
-                                'date_debut_stage_reel' => $formData['date_debut_stage_reel'] ?? $record->date_debut_stage_reel,
-                                'date_fin_stage_reel' => $formData['date_fin_stage_reel'] ?? $record->date_fin_stage_reel,
+                                'date_debut_stage_reel' => $dateDebut,
+                                'date_fin_stage_reel' => $dateFin,
+                                // Synchroniser les dates non-_reel pour les templates email et le suivi
+                                'date_debut_stage' => $dateDebut ?? $record->date_debut_stage,
+                                'date_fin_stage' => $dateFin ?? $record->date_fin_stage,
                             ])->save();
 
                             NotificationFacade::route('mail', $record->email)

@@ -49,10 +49,15 @@ class EvaluationController extends Controller
         }
 
         // Vérifier que le stage est terminé (si date de fin renseignée)
-        $dateFin = $candidature->date_fin_stage_reel ?? $candidature->date_fin_stage;
-        if ($dateFin && $dateFin->isFuture()) {
-            return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
-                ->with('error', 'Votre stage n\'est pas encore terminé. Vous pourrez évaluer votre expérience après la fin du stage.');
+        // Les statuts avancés (évaluation, attestation, remboursement, terminé) 
+        // signifient que le stage EST terminé, peu importe la date de fin planifiée
+        $statutsStageTermine = ['en_evaluation', 'evaluation_terminee', 'attestation_generee', 'remboursement_en_cours', 'termine'];
+        if (!in_array($candidature->statut->value, $statutsStageTermine)) {
+            $dateFin = $candidature->date_fin_stage_reel ?? $candidature->date_fin_stage;
+            if ($dateFin && $dateFin->isFuture()) {
+                return redirect()->route('candidature.suivi.code', $candidature->code_suivi)
+                    ->with('error', 'Votre stage n\'est pas encore terminé. Vous pourrez évaluer votre expérience après la fin du stage.');
+            }
         }
 
         // Vérifier si une évaluation existe déjà
