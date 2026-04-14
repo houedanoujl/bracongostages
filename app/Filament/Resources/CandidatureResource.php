@@ -22,6 +22,7 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 use Filament\Support\Enums\ActionSize;
 use App\Notifications\EmailGeneriqueNotification;
 use App\Models\EmailTemplate;
@@ -530,15 +531,13 @@ class CandidatureResource extends Resource
                                     ->visible(fn ($record) => $record && $record->date_test),
 
                                 Forms\Components\Grid::make(2)->schema([
-                                    TextInput::make('note_test')
+                                    Select::make('note_test')
                                         ->label('Note obtenue')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.5)
-                                        ->suffix('/20')
+                                        ->options(collect(range(1, 20))->mapWithKeys(fn ($n) => [$n => "$n / 20"]))
+                                        ->placeholder('Sélectionner une note')
+                                        ->searchable()
                                         ->live()
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                        ->suffix('/20'),
                                 ]),
                                 RichEditor::make('commentaire_test')
                                     ->label('Commentaires sur le test')
@@ -783,15 +782,10 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                                 Forms\Components\Grid::make(2)->schema([
                                     DatePicker::make('date_evaluation')
                                         ->label('Date de l\'évaluation'),
-                                    TextInput::make('note_evaluation')
+                                    Select::make('note_evaluation')
                                         ->label('Note finale')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.5)
-                                        ->suffix('/20')
-                                        ->live()
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20']),
+                                        ->options(collect(range(0, 20))->mapWithKeys(fn ($n) => [$n => "{$n}/20"])->toArray())
+                                        ->live(),
                                     Select::make('appreciation_tuteur')
                                         ->label('Appréciation du tuteur')
                                         ->options([
@@ -1163,12 +1157,19 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                 ->action(function ($record, $livewire) use ($stepName, $stepNumber) {
                     try {
                         // === SAUVEGARDE SCOPÉE : uniquement les champs de l'étape courante ===
+                        // Ne jamais écraser une valeur existante en DB par null
+                        // (protège contre les champs non-hydratés lors de la navigation wizard)
                         $formData = $livewire->data;
                         $stepFields = self::getFieldsForStep($stepName);
                         $dataToSave = [];
                         foreach ($stepFields as $field) {
                             if (array_key_exists($field, $formData)) {
-                                $dataToSave[$field] = $formData[$field];
+                                $value = $formData[$field];
+                                // Si la valeur du formulaire est null mais qu'il y a une valeur en DB, conserver la DB
+                                if ($value === null && $record->{$field} !== null) {
+                                    continue;
+                                }
+                                $dataToSave[$field] = $value;
                             }
                         }
                         // Protéger contre la rétrogradation du statut
@@ -1475,8 +1476,9 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             'envoi_attestation' => 'chemin_attestation',
                             'stage_termine' => 'chemin_justificatif_remboursement',
                         ];
+                        $hasAttachment = false;
                         if (isset($attachmentMap[$slug])) {
-                            self::resolveAndAttachFile($notification, $record, $livewire, $attachmentMap[$slug]);
+                            $hasAttachment = self::resolveAndAttachFile($notification, $record, $livewire, $attachmentMap[$slug]);
                         }
 
                         // Post-send updates
@@ -1491,12 +1493,19 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                         // Mark step email as sent (slug individuel)
                         $record->marquerEmailEnvoye($slug);
 
-                        Notification::make()
+                        $notif = Notification::make()
                             ->title('Email envoyé avec succès')
                             ->body("Email envoyé à {$record->email}. Vous pouvez maintenant passer à l'étape suivante.")
                             ->success()
-                            ->duration(5000)
-                            ->send();
+                            ->duration(5000);
+
+                        if (isset($attachmentMap[$slug]) && !$hasAttachment) {
+                            $notif->body("Email envoyé à {$record->email} SANS pièce jointe. Veuillez uploader le fichier, sauvegarder, puis renvoyer si nécessaire.")
+                                ->warning()
+                                ->duration(8000);
+                        }
+
+                        $notif->send();
 
                         // Refresh page — rester sur la même étape
                         $currentStep = Pages\EditCandidature::getWizardStepForStatut($record->statut);
@@ -1871,12 +1880,18 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                         try {
                             $record->refresh();
                             $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                            self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_reponse_lettre');
+                            $hasAttachment = self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_reponse_lettre');
 
                             NotificationFacade::route('mail', $record->email)
                                 ->notify($notification);
                             $record->marquerEmailEnvoye('induction_reponse');
-                            Notification::make()->title('Réponse lettre envoyée à ' . $record->email)->success()->send();
+
+                            $msg = 'Réponse lettre envoyée à ' . $record->email;
+                            if (!$hasAttachment) {
+                                Notification::make()->title($msg)->body('Aucune pièce jointe trouvée. Veuillez uploader le fichier de réponse et renvoyer si nécessaire.')->warning()->duration(8000)->send();
+                            } else {
+                                Notification::make()->title($msg)->success()->send();
+                            }
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=8', navigate: false);
                         } catch (\Exception $e) {
                             Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
@@ -1926,12 +1941,18 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                         try {
                             $record->refresh();
                             $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                            self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_evaluation');
+                            $hasAttachment = self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_evaluation');
 
                             NotificationFacade::route('mail', $record->email)
                                 ->notify($notification);
                             $record->marquerEmailEnvoye('evaluation');
-                            Notification::make()->title('Évaluation envoyée à ' . $record->email)->success()->send();
+
+                            $msg = 'Évaluation envoyée à ' . $record->email;
+                            if (!$hasAttachment) {
+                                Notification::make()->title($msg)->body('Aucune pièce jointe trouvée. Veuillez uploader le document d\'évaluation et renvoyer si nécessaire.')->warning()->duration(8000)->send();
+                            } else {
+                                Notification::make()->title($msg)->success()->send();
+                            }
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=9', navigate: false);
                         } catch (\Exception $e) {
                             Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
@@ -2097,12 +2118,18 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             }
 
                             $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                            self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_attestation');
+                            $hasAttachment = self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_attestation');
 
                             NotificationFacade::route('mail', $record->email)
                                 ->notify($notification);
                             $record->marquerEmailEnvoye('attestation');
-                            Notification::make()->title('Attestation envoyée à ' . $record->email)->success()->send();
+
+                            $msg = 'Attestation envoyée à ' . $record->email;
+                            if (!$hasAttachment) {
+                                Notification::make()->title($msg)->body('Aucune pièce jointe trouvée. Veuillez uploader le fichier attestation et renvoyer si nécessaire.')->warning()->duration(8000)->send();
+                            } else {
+                                Notification::make()->title($msg)->success()->send();
+                            }
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=10', navigate: false);
                         } catch (\Exception $e) {
                             Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
@@ -2149,12 +2176,18 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                         try {
                             $record->refresh();
                             $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
-                            self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_justificatif_remboursement');
+                            $hasAttachment = self::resolveAndAttachFile($notification, $record, $livewire, 'chemin_justificatif_remboursement');
 
                             NotificationFacade::route('mail', $record->email)
                                 ->notify($notification);
                             $record->marquerEmailEnvoye('remboursement');
-                            Notification::make()->title('Email « stage terminé » envoyé à ' . $record->email)->success()->send();
+
+                            $msg = 'Email « stage terminé » envoyé à ' . $record->email;
+                            if (!$hasAttachment) {
+                                Notification::make()->title($msg)->body('Aucune pièce jointe trouvée. Veuillez uploader le justificatif de remboursement et renvoyer si nécessaire.')->warning()->duration(8000)->send();
+                            } else {
+                                Notification::make()->title($msg)->success()->send();
+                            }
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=11', navigate: false);
                         } catch (\Exception $e) {
                             Notification::make()->title('Erreur : ' . $e->getMessage())->danger()->send();
@@ -2180,24 +2213,64 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
 
     /**
      * Résout le chemin d'un fichier uploadé et l'attache à la notification email.
-     * Lit depuis les données du formulaire (non sauvegardées) puis fallback sur la DB.
+     * Gère les fichiers temporaires Livewire (non encore sauvegardés par Filament).
+     *
+     * @return bool true si un fichier a été attaché, false sinon
      */
     private static function resolveAndAttachFile(
         EmailGeneriqueNotification $notification,
         $record,
         $livewire,
         string $fieldName
-    ): void {
+    ): bool {
+        $directoryMap = [
+            'chemin_reponse_lettre' => 'documents/reponses-lettres',
+            'chemin_evaluation' => 'documents/evaluations',
+            'chemin_attestation' => 'documents/attestations',
+            'chemin_justificatif_remboursement' => 'documents/remboursements',
+        ];
+
         $formData = $livewire->data ?? [];
         $chemin = $formData[$fieldName] ?? null;
 
         // Normaliser : Filament FileUpload retourne un array
         if (is_array($chemin)) {
-            $chemin = !empty($chemin) ? (is_string(reset($chemin)) ? reset($chemin) : null) : null;
+            $first = reset($chemin);
+            if ($first instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                // Livewire 3 : objet TemporaryUploadedFile → stocker puis utiliser le chemin final
+                $directory = $directoryMap[$fieldName] ?? 'documents';
+                $chemin = $first->store($directory, 'public');
+            } elseif (is_string($first) && !empty($first)) {
+                $chemin = $first;
+            } else {
+                $chemin = null;
+            }
+        }
+
+        // Si c'est un objet TemporaryUploadedFile non-array
+        if ($chemin instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            $directory = $directoryMap[$fieldName] ?? 'documents';
+            $chemin = $chemin->store($directory, 'public');
+        }
+
+        // Si c'est un fichier temporaire Livewire (chemin string), le déplacer vers le stockage final
+        if (is_string($chemin) && str_starts_with($chemin, 'livewire-tmp/')) {
+            $tempPath = storage_path('app/' . $chemin);
+            if (file_exists($tempPath)) {
+                $directory = $directoryMap[$fieldName] ?? 'documents';
+                $ext = pathinfo($chemin, PATHINFO_EXTENSION) ?: 'pdf';
+                $finalPath = $directory . '/' . uniqid() . '.' . $ext;
+
+                Storage::disk('public')->put($finalPath, file_get_contents($tempPath));
+                $chemin = $finalPath;
+            } else {
+                \Illuminate\Support\Facades\Log::warning("Fichier temporaire Livewire introuvable: {$tempPath} (champ: {$fieldName})");
+                $chemin = null;
+            }
         }
 
         // Fallback : lire depuis la DB
-        if (!$chemin) {
+        if (!$chemin || !is_string($chemin)) {
             $chemin = $record->{$fieldName};
             if (is_array($chemin)) {
                 $chemin = reset($chemin) ?: null;
@@ -2205,7 +2278,8 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
         }
 
         if (!$chemin) {
-            return;
+            \Illuminate\Support\Facades\Log::info("Email envoyé sans pièce jointe : aucun fichier trouvé pour le champ '{$fieldName}' (candidature #{$record->id})");
+            return false;
         }
 
         // Sauvegarder le chemin en DB si pas encore persisté
@@ -2213,12 +2287,27 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
             $record->update([$fieldName => $chemin]);
         }
 
-        $filePath = storage_path('app/public/' . $chemin);
-        if (file_exists($filePath)) {
-            $notification->attachFile($filePath);
-        } else {
-            \Illuminate\Support\Facades\Log::warning("Pièce jointe introuvable: {$filePath} (champ: {$fieldName})");
+        // Essayer plusieurs chemins possibles pour trouver le fichier
+        $filePath = null;
+        $candidates = [
+            Storage::disk('public')->path($chemin),
+            storage_path('app/public/' . $chemin),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                $filePath = $candidate;
+                break;
+            }
         }
+
+        if ($filePath) {
+            $notification->attachFile($filePath);
+            return true;
+        }
+
+        \Illuminate\Support\Facades\Log::warning("Pièce jointe introuvable pour candidature #{$record->id} (champ: {$fieldName}). Chemins testés: " . implode(', ', $candidates));
+        return false;
     }
 
     public static function renderTemplate(string $slug, $record, array $extras = []): array

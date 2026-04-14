@@ -25,7 +25,8 @@
       "Bash(php -l:*)",
       "Bash(ls:*)",
       "Bash(docker compose up:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(grep -rn \"documents\\\\|->documents\\\\|Document::\" /c/Users/socialmedia/Documents/GitHub/bracongostages/app/Notifications/*.php)"
     ]
   }
 }
