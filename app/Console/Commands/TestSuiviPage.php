@@ -76,7 +76,7 @@ class TestSuiviPage extends Command
             'ConfigurationResource' => \App\Filament\Resources\ConfigurationResource::class,
             'ConfigurationListeResource' => \App\Filament\Resources\ConfigurationListeResource::class,
             'OpportuniteResource' => \App\Filament\Resources\OpportuniteResource::class,
-            'TemoignageResource' => \App\Filament\Resources\TemoignageResource::class,
+            'EvaluationResource' => \App\Filament\Resources\EvaluationResource::class,
         ];
 
         foreach ($resources as $name => $class) {

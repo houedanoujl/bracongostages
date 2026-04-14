@@ -5,7 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Candidature;
 use App\Models\Configuration;
-use App\Models\Temoignage;
+use App\Models\Evaluation;
 use Illuminate\Support\Facades\Cache;
 
 class HomeStatistics extends Component
@@ -108,20 +108,18 @@ class HomeStatistics extends Component
 
     private function loadTemoignages()
     {
-        // Charger les témoignages mis en avant pour la homepage
+        // Charger les retours d'expérience mis en avant pour la homepage
         $this->temoignages = Cache::remember('temoignages_homepage', 1800, function () {
-            return Temoignage::pourHomepage(3)->map(function ($temoignage) {
+            return Evaluation::pourHomepage(3)->map(function ($retour) {
                 return [
-                    'nom_complet' => $temoignage->nom_complet,
-                    'poste_occupe' => $temoignage->poste_occupe,
-                    'entreprise' => $temoignage->entreprise,
-                    'etablissement_origine' => $temoignage->etablissement_origine,
-                    'citation_courte' => $temoignage->citation_courte,
-                    'note_experience' => $temoignage->note_experience,
-                    'etoiles' => $temoignage->etoiles,
-                    'photo_url' => $temoignage->photo_url,
-                    'direction_stage' => $temoignage->direction_stage,
-                    'duree_stage_formattee' => $temoignage->duree_stage_formattee,
+                    'nom_complet' => ($retour->candidature?->prenom ?? '') . ' ' . ($retour->candidature?->nom ?? ''),
+                    'poste_occupe' => $retour->candidature?->poste_souhaite,
+                    'entreprise' => 'BRACONGO',
+                    'etablissement_origine' => $retour->candidature?->etablissement,
+                    'citation_courte' => $retour->citation_accueil,
+                    'note_experience' => $retour->note_experience ?? $retour->satisfaction_generale,
+                    'photo_url' => $retour->photo_url,
+                    'direction_stage' => $retour->candidature?->directions_souhaitees[0] ?? null,
                 ];
             })->toArray();
         });

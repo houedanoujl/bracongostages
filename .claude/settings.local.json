@@ -23,7 +23,9 @@
       "Bash(composer outdated:*)",
       "Bash(xargs grep -l \"authorize\")",
       "Bash(php -l:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(docker compose up:*)",
+      "Bash(timeout:*)"
     ]
   }
 }

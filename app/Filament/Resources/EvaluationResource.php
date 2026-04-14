@@ -12,23 +12,33 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\BooleanColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TagsInput;
+use Filament\Notifications\Notification;
 
 class EvaluationResource extends Resource
 {
     protected static ?string $model = Evaluation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static ?string $navigationGroup = 'Analyses';
+    protected static ?string $navigationGroup = 'Contenu';
 
-    protected static ?string $navigationLabel = 'Évaluations';
+    protected static ?string $navigationLabel = 'Retours d\'expérience';
+
+    protected static ?string $modelLabel = 'retour d\'expérience';
+
+    protected static ?string $pluralModelLabel = 'retours d\'expérience';
 
     protected static ?int $navigationSort = 3;
 
@@ -170,6 +180,66 @@ class EvaluationResource extends Resource
                             ->helperText('Calculée automatiquement à partir des évaluations'),
                     ])
                     ->collapsed(),
+
+                Section::make('Témoignage & Page d\'accueil')
+                    ->description('Contenu du retour d\'expérience pour affichage public')
+                    ->schema([
+                        Toggle::make('afficher_en_accueil')
+                            ->label('Afficher en page d\'accueil')
+                            ->helperText('Mettre ce retour en avant sur la homepage'),
+                        RichEditor::make('temoignage_texte')
+                            ->label('Témoignage du stagiaire')
+                            ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList'])
+                            ->columnSpanFull(),
+                        TextInput::make('citation_accueil')
+                            ->label('Citation courte')
+                            ->helperText('Phrase courte mise en valeur sur la page d\'accueil')
+                            ->maxLength(300),
+                        FileUpload::make('photo')
+                            ->label('Photo du stagiaire')
+                            ->image()
+                            ->directory('retours/photos')
+                            ->visibility('public')
+                            ->imageEditor()
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth('300')
+                            ->imageResizeTargetHeight('300'),
+                        Grid::make(3)
+                            ->schema([
+                                Select::make('note_experience')
+                                    ->label('Note de l\'expérience')
+                                    ->options([
+                                        1 => '★ (1/5)',
+                                        2 => '★★ (2/5)',
+                                        3 => '★★★ (3/5)',
+                                        4 => '★★★★ (4/5)',
+                                        5 => '★★★★★ (5/5)',
+                                    ])
+                                    ->default(5)
+                                    ->native(false),
+                                TagsInput::make('competences_tags')
+                                    ->label('Compétences acquises')
+                                    ->placeholder('Ajoutez les compétences')
+                                    ->suggestions([
+                                        'Gestion de projet',
+                                        'Travail en équipe',
+                                        'Leadership',
+                                        'Communication',
+                                        'Analyse des données',
+                                        'Gestion qualité',
+                                        'Process industriels',
+                                        'Marketing digital',
+                                        'Comptabilité',
+                                        'Ressources humaines',
+                                    ]),
+                                TextInput::make('ordre_affichage')
+                                    ->label('Ordre d\'affichage')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->helperText('Plus petit = affiché en premier'),
+                            ]),
+                    ])
+                    ->collapsible(),
             ]);
     }
 
@@ -217,6 +287,11 @@ class EvaluationResource extends Resource
                         'warning' => 'peut_etre',
                         'danger' => 'non',
                     ]),
+                BooleanColumn::make('afficher_en_accueil')
+                    ->label('Page d\'accueil')
+                    ->trueIcon('heroicon-o-star')
+                    ->falseIcon('heroicon-o-minus')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Date d\'évaluation')
                     ->dateTime('d/m/Y H:i')
@@ -254,12 +329,29 @@ class EvaluationResource extends Resource
                                 fn (Builder $query, $note): Builder => $query->where('note_moyenne', '>=', $note),
                             );
                     }),
+                TernaryFilter::make('afficher_en_accueil')
+                    ->label('Page d\'accueil')
+                    ->trueLabel('Affichés en accueil')
+                    ->falseLabel('Non affichés')
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->label('Voir'),
                 Tables\Actions\EditAction::make()
                     ->label('Modifier'),
+                Tables\Actions\Action::make('toggle_accueil')
+                    ->label(fn ($record) => $record->afficher_en_accueil ? 'Retirer de l\'accueil' : 'Mettre en avant')
+                    ->icon('heroicon-o-star')
+                    ->color(fn ($record) => $record->afficher_en_accueil ? 'warning' : 'success')
+                    ->action(function ($record) {
+                        $record->update(['afficher_en_accueil' => !$record->afficher_en_accueil]);
+
+                        Notification::make()
+                            ->title($record->afficher_en_accueil ? 'Affiché en page d\'accueil' : 'Retiré de la page d\'accueil')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

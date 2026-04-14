@@ -290,6 +290,8 @@
             line-height: 1.5;
             min-height: 44px;
             max-height: 120px;
+            color: #1f2937;
+            background-color: #fff;
         }
         .msg-input-wrap textarea:focus {
             border-color: #f97316;

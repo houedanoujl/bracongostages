@@ -222,21 +222,21 @@
                     </div>
                 </div>
 
-                <!-- Témoignage -->
+                <!-- Retour d'expérience -->
                 <div class="bg-white rounded-lg shadow">
                     <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-medium text-gray-900">Mon témoignage</h2>
+                        <h2 class="text-lg font-medium text-gray-900">Mon retour d'expérience</h2>
                     </div>
                     <div class="p-6">
                         <p class="text-sm text-gray-600 mb-4">
                             Partagez votre expérience de stage chez BRACONGO pour aider les futurs stagiaires.
                         </p>
-                        <a href="{{ route('candidat.temoignage') }}" 
+                        <a href="{{ route('candidat.retour-experience') }}"
                             class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                             </svg>
-                            Rédiger un témoignage
+                            Rédiger un retour d'expérience
                         </a>
                     </div>
                 </div>

@@ -275,7 +275,7 @@ Route::prefix('candidat')->name('candidat.')->group(function () {
         Route::get('/documents/{document}/download', [App\Http\Controllers\CandidatController::class, 'downloadDocument'])->name('document.download');
         Route::get('/messages', \App\Livewire\Messagerie::class)->name('messages');
         Route::get('/messages/{candidatureId}', \App\Livewire\Messagerie::class)->name('messages.candidature');
-        Route::get('/temoignage', \App\Livewire\TemoignageForm::class)->name('temoignage');
+        Route::get('/retour-experience', \App\Livewire\TemoignageForm::class)->name('retour-experience');
     });
 });
 

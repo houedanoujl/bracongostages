@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Evaluation extends Model
 {
@@ -25,11 +26,21 @@ class Evaluation extends Model
         'contact_futur',
         'commentaire_libre',
         'note_moyenne',
+        'temoignage_texte',
+        'citation_accueil',
+        'photo',
+        'note_experience',
+        'competences_tags',
+        'afficher_en_accueil',
+        'ordre_affichage',
     ];
 
     protected $casts = [
         'satisfaction_generale' => 'integer',
         'note_moyenne' => 'decimal:1',
+        'afficher_en_accueil' => 'boolean',
+        'note_experience' => 'integer',
+        'competences_tags' => 'array',
     ];
 
     /**
@@ -173,4 +184,47 @@ class Evaluation extends Model
         return $query->where('satisfaction_generale', $niveau);
     }
 
+    /**
+     * Scope pour les retours affichés en page d'accueil
+     */
+    public function scopeAfficherEnAccueil($query)
+    {
+        return $query->where('afficher_en_accueil', true);
+    }
+
+    /**
+     * Scope pour l'ordre d'affichage
+     */
+    public function scopeOrdonne($query)
+    {
+        return $query->orderBy('ordre_affichage')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Accessor pour l'URL de la photo
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo) {
+            return null;
+        }
+
+        if (filter_var($this->photo, FILTER_VALIDATE_URL)) {
+            return $this->photo;
+        }
+
+        return Storage::url($this->photo);
+    }
+
+    /**
+     * Obtenir les retours d'expérience pour la homepage
+     */
+    public static function pourHomepage(int $limite = 6)
+    {
+        return static::afficherEnAccueil()
+            ->ordonne()
+            ->with('candidature')
+            ->limit($limite)
+            ->get();
+    }
 } 

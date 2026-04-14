@@ -4,7 +4,7 @@
         {{-- En-tête --}}
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Partagez votre expérience</h1>
-            <p class="mt-2 text-gray-600">Votre témoignage aide les futurs stagiaires à découvrir BRACONGO</p>
+            <p class="mt-2 text-gray-600">Votre retour d'expérience aide les futurs stagiaires à découvrir BRACONGO</p>
         </div>
 
         {{-- Message de succès --}}
@@ -15,9 +15,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-green-800 mb-2">Merci pour votre témoignage !</h2>
+                <h2 class="text-2xl font-bold text-green-800 mb-2">Merci pour votre retour d'expérience !</h2>
                 <p class="text-green-700 mb-4">
-                    Votre témoignage a été soumis avec succès. Il sera examiné par notre équipe avant d'être publié sur le site.
+                    Votre retour d'expérience a été soumis avec succès. Il sera examiné par notre équipe avant d'être publié sur le site.
                 </p>
                 <div class="flex justify-center space-x-4">
                     <a href="{{ route('candidat.dashboard') }}" 
@@ -37,9 +37,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
                 </div>
-                <h2 class="text-xl font-bold text-amber-800 mb-2">Vous avez déjà soumis un témoignage</h2>
+                <h2 class="text-xl font-bold text-amber-800 mb-2">Vous avez déjà soumis un retour d'expérience</h2>
                 <p class="text-amber-700 mb-4">
-                    Un seul témoignage par stagiaire est autorisé. Votre témoignage est en cours de traitement par notre équipe.
+                    Un seul retour d'expérience par stagiaire est autorisé. Votre retour est en cours de traitement par notre équipe.
                 </p>
                 <a href="{{ route('candidat.dashboard') }}" 
                    class="inline-flex items-center px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">
@@ -55,7 +55,7 @@
                 </div>
                 <h2 class="text-xl font-bold text-blue-800 mb-2">Votre stage n’est pas encore terminé</h2>
                 <p class="text-blue-700 mb-4">
-                    Vous pourrez soumettre votre témoignage une fois que votre stage sera officiellement terminé et que votre évaluation aura été complétée.
+                    Vous pourrez soumettre votre retour d'expérience une fois que votre stage sera officiellement terminé et que votre évaluation aura été complétée.
                 </p>
                 <p class="text-blue-600 text-sm mb-6">
                     Votre candidature doit avoir atteint au minimum l'étape « Évaluation terminée ».
@@ -233,7 +233,7 @@
                         <div>
                             <p class="text-sm text-blue-800 font-medium">Modération</p>
                             <p class="text-sm text-blue-700 mt-1">
-                                Votre témoignage sera examiné par l'équipe BRACONGO avant publication. 
+                                Votre retour d'expérience sera examiné par l'équipe BRACONGO avant publication.
                                 L'administrateur pourra choisir de le mettre en avant sur la page d'accueil.
                             </p>
                         </div>
@@ -260,7 +260,7 @@
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
                         </span>
-                        <span wire:loading.remove>Soumettre mon témoignage</span>
+                        <span wire:loading.remove>Soumettre mon retour d'expérience</span>
                         <span wire:loading>Envoi en cours...</span>
                     </button>
                 </div>

@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\Temoignage;
+use App\Models\Evaluation;
 use App\Models\Candidature;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -31,6 +31,8 @@ class TemoignageForm extends Component
     public bool $hasExistingTemoignage = false;
     public bool $stageNonTermine = false;
 
+    private ?Candidature $derniereCandidature = null;
+
     /**
      * Statuts de candidature qui correspondent à un stage terminé
      */
@@ -51,27 +53,27 @@ class TemoignageForm extends Component
             $this->etablissement_origine = $candidat->etablissement ?? '';
 
             // Vérifier si le candidat a une candidature avec un stage terminé
-            $derniereCandidature = Candidature::where('email', $candidat->email)
+            $this->derniereCandidature = Candidature::where('email', $candidat->email)
                 ->whereIn('statut', self::STATUTS_STAGE_TERMINE)
                 ->latest()
                 ->first();
 
-            if (!$derniereCandidature) {
+            if (!$this->derniereCandidature) {
                 // Aucun stage terminé : bloquer l'accès au formulaire
                 $this->stageNonTermine = true;
                 return;
             }
 
             // Pré-remplir depuis la candidature terminée
-            $this->poste_occupe = $derniereCandidature->poste_souhaite ?? '';
-            if (is_array($derniereCandidature->directions_souhaitees) && count($derniereCandidature->directions_souhaitees) > 0) {
-                $this->direction_stage = $derniereCandidature->directions_souhaitees[0];
+            $this->poste_occupe = $this->derniereCandidature->poste_souhaite ?? '';
+            if (is_array($this->derniereCandidature->directions_souhaitees) && count($this->derniereCandidature->directions_souhaitees) > 0) {
+                $this->direction_stage = $this->derniereCandidature->directions_souhaitees[0];
             }
 
-            // Vérifier si le candidat a déjà soumis un témoignage
-            $existing = Temoignage::where('nom', $candidat->nom)
-                ->where('prenom', $candidat->prenom)
-                ->first();
+            // Vérifier si un retour d'expérience avec témoignage existe déjà pour cette candidature
+            $existing = Evaluation::where('candidature_id', $this->derniereCandidature->id)
+                ->whereNotNull('temoignage_texte')
+                ->exists();
 
             if ($existing) {
                 $this->hasExistingTemoignage = true;
@@ -100,7 +102,7 @@ class TemoignageForm extends Component
     {
         // Double vérification côté serveur
         if ($this->stageNonTermine) {
-            session()->flash('error', 'Vous ne pouvez soumettre un témoignage que lorsque votre stage est terminé.');
+            session()->flash('error', 'Vous ne pouvez soumettre un retour d\'expérience que lorsque votre stage est terminé.');
             return;
         }
 
@@ -117,40 +119,50 @@ class TemoignageForm extends Component
         ]);
 
         try {
+            $candidat = Auth::guard('candidat')->user();
+            $candidature = Candidature::where('email', $candidat->email)
+                ->whereIn('statut', self::STATUTS_STAGE_TERMINE)
+                ->latest()
+                ->first();
+
+            if (!$candidature) {
+                session()->flash('error', 'Aucune candidature avec stage terminé trouvée.');
+                return;
+            }
+
             // Upload photo si fournie
             $photoPath = null;
             if ($this->photo) {
                 $ext = $this->photo->getClientOriginalExtension();
                 $photoPath = $this->photo->storeAs(
-                    'temoignages',
+                    'retours',
                     Str::uuid() . '.' . $ext,
                     'public'
                 );
             }
 
-            // Créer le témoignage avec actif=false et mis_en_avant=false
-            Temoignage::create([
-                'nom' => $this->nom,
-                'prenom' => $this->prenom,
-                'poste_occupe' => $this->poste_occupe,
-                'entreprise' => 'BRACONGO',
-                'etablissement_origine' => $this->etablissement_origine ?: null,
-                'direction_stage' => $this->direction_stage ?: null,
-                'photo' => $photoPath,
-                'temoignage' => $this->temoignage,
-                'citation_courte' => $this->citation_courte ?: null,
-                'note_experience' => $this->note_experience,
-                'competences_acquises' => !empty($this->competences_acquises) ? $this->competences_acquises : null,
-                'actif' => false,        // ⚠️ Désactivé par défaut - l'admin doit approuver
-                'mis_en_avant' => false,  // ⚠️ Pas sur la homepage par défaut
-            ]);
+            // Trouver ou créer une évaluation liée à la candidature
+            $evaluation = Evaluation::firstOrNew(['candidature_id' => $candidature->id]);
+
+            // Mettre à jour les champs témoignage
+            $evaluation->temoignage_texte = $this->temoignage;
+            $evaluation->citation_accueil = $this->citation_courte ?: null;
+            $evaluation->note_experience = $this->note_experience;
+            $evaluation->competences_tags = !empty($this->competences_acquises) ? $this->competences_acquises : null;
+            $evaluation->afficher_en_accueil = false; // L'admin décide
+
+            if ($photoPath) {
+                $evaluation->photo = $photoPath;
+            }
+
+            $evaluation->save();
 
             $this->showSuccess = true;
 
-            Log::info('Témoignage soumis par: ' . $this->prenom . ' ' . $this->nom);
+            Log::info('Retour d\'expérience soumis par: ' . $this->prenom . ' ' . $this->nom);
 
         } catch (\Exception $e) {
-            Log::error('Erreur soumission témoignage: ' . $e->getMessage());
+            Log::error('Erreur soumission retour d\'expérience: ' . $e->getMessage());
             session()->flash('error', 'Une erreur est survenue. Veuillez réessayer.');
         }
     }
@@ -158,6 +170,6 @@ class TemoignageForm extends Component
     public function render()
     {
         return view('livewire.temoignage-form')
-            ->layout('layouts.modern', ['title' => 'Soumettre un témoignage - BRACONGO Stages']);
+            ->layout('layouts.modern', ['title' => 'Retour d\'expérience - BRACONGO Stages']);
     }
 }

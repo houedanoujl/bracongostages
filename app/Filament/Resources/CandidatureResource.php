@@ -530,18 +530,13 @@ class CandidatureResource extends Resource
                                     ->visible(fn ($record) => $record && $record->date_test),
 
                                 Forms\Components\Grid::make(2)->schema([
-                                    TextInput::make('note_test')
+                                    Select::make('note_test')
                                         ->label('Note obtenue')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.01)
-                                        ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20'])
-                                        ->validationMessages([
-                                            'max' => 'La note ne peut pas dépasser 20/20.',
-                                        ])
-                                        ->live(onBlur: true),
+                                        ->options(collect(range(0, 20))->mapWithKeys(fn ($n) => [$n => "$n / 20"]))
+                                        ->placeholder('Sélectionner une note')
+                                        ->searchable()
+                                        ->live()
+                                        ->suffix('/20'),
                                 ]),
                                 RichEditor::make('commentaire_test')
                                     ->label('Commentaires sur le test')
@@ -786,18 +781,13 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                                 Forms\Components\Grid::make(2)->schema([
                                     DatePicker::make('date_evaluation')
                                         ->label('Date de l\'évaluation'),
-                                    TextInput::make('note_evaluation')
+                                    Select::make('note_evaluation')
                                         ->label('Note finale')
-                                        ->numeric()
-                                        ->minValue(0)
-                                        ->maxValue(20)
-                                        ->step(0.01)
-                                        ->suffix('/20')
-                                        ->rules(['nullable', 'numeric', 'min:0', 'max:20'])
-                                        ->validationMessages([
-                                            'max' => 'La note ne peut pas dépasser 20/20.',
-                                        ])
-                                        ->live(onBlur: true),
+                                        ->options(collect(range(0, 20))->mapWithKeys(fn ($n) => [$n => "$n / 20"]))
+                                        ->placeholder('Sélectionner une note')
+                                        ->searchable()
+                                        ->live()
+                                        ->suffix('/20'),
                                     Select::make('appreciation_tuteur')
                                         ->label('Appréciation du tuteur')
                                         ->options([
@@ -1501,6 +1491,7 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             'reponse_lettre_recommandation' => 'chemin_reponse_lettre',
                             'envoi_evaluation' => 'chemin_evaluation',
                             'envoi_attestation' => 'chemin_attestation',
+                            'stage_termine' => 'chemin_justificatif_remboursement',
                         ];
                         if (isset($attachmentMap[$slug]) && $record->{$attachmentMap[$slug]}) {
                             $attachPath = $record->{$attachmentMap[$slug]};
@@ -1905,8 +1896,32 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                     ->modalSubmitActionLabel('Envoyer')
                     ->action(function (array $data, $record, $livewire) {
                         try {
+                            $formData = $livewire->data;
+                            // Sauvegarder le fichier avant envoi
+                            $stepFields = self::getFieldsForStep('Induction');
+                            $dataToSave = [];
+                            foreach ($stepFields as $field) {
+                                if (array_key_exists($field, $formData)) $dataToSave[$field] = $formData[$field];
+                            }
+                            $dataToSave = self::normalizeFileUploadFields($dataToSave);
+                            $record->fill($dataToSave)->save();
+
+                            $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
+
+                            // Attacher la réponse à la lettre de recommandation si disponible
+                            $chemin = $formData['chemin_reponse_lettre'] ?? $record->chemin_reponse_lettre;
+                            if (is_array($chemin)) {
+                                $chemin = reset($chemin) ?: null;
+                            }
+                            if ($chemin) {
+                                $filePath = storage_path('app/public/' . $chemin);
+                                if (file_exists($filePath)) {
+                                    $notification->attachFile($filePath);
+                                }
+                            }
+
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                ->notify($notification);
                             $record->marquerEmailEnvoye('induction_reponse');
                             Notification::make()->title('Réponse lettre envoyée à ' . $record->email)->success()->send();
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=8&promptAdvance=1', navigate: true);
@@ -2245,8 +2260,22 @@ $items[] = "<span class='text-xs text-gray-400'>{$semaines} semaines de stage</s
                             $dataToSave = self::normalizeFileUploadFields($dataToSave);
                             $record->fill($dataToSave)->save();
 
+                            $notification = new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']);
+
+                            // Attacher le justificatif de remboursement si disponible
+                            $chemin = $formData['chemin_justificatif_remboursement'] ?? $record->chemin_justificatif_remboursement;
+                            if (is_array($chemin)) {
+                                $chemin = reset($chemin) ?: null;
+                            }
+                            if ($chemin) {
+                                $filePath = storage_path('app/public/' . $chemin);
+                                if (file_exists($filePath)) {
+                                    $notification->attachFile($filePath);
+                                }
+                            }
+
                             NotificationFacade::route('mail', $record->email)
-                                ->notify(new EmailGeneriqueNotification($data['sujet_email'], $data['contenu_email']));
+                                ->notify($notification);
                             $record->marquerEmailEnvoye('remboursement');
                             Notification::make()->title('Email « stage terminé » envoyé à ' . $record->email)->success()->send();
                             $livewire->redirect(self::getUrl('edit', ['record' => $record->id]) . '?step=11&promptAdvance=1', navigate: true);
