@@ -37,6 +37,8 @@ class TemoignageForm extends Component
      * Statuts de candidature qui correspondent à un stage terminé
      */
     private const STATUTS_STAGE_TERMINE = [
+        'stage_en_cours',
+        'en_evaluation',
         'evaluation_terminee',
         'attestation_generee',
         'remboursement_en_cours',

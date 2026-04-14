@@ -1,8 +1,4 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
-
-// Configuration Alpine.js
-window.Alpine = Alpine;
 
 // Utilitaires d'animations modernes
 class BracongoAnimations {
@@ -88,9 +84,10 @@ class BracongoAnimations {
     }
 }
 
-// Composants Alpine.js modernes pour BRACONGO
-
 // Composants Alpine.js pour BRACONGO
+// Utilise l'instance Alpine fournie par Livewire 3 (pas d'import séparé)
+document.addEventListener('alpine:init', () => {
+
 Alpine.data('fileUpload', () => ({
     files: [],
     isDragging: false,
@@ -314,10 +311,9 @@ Alpine.data('hoverCard', () => ({
     }
 }));
 
+}); // fin de alpine:init
+
 // Initialiser les animations au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
     BracongoAnimations.init();
-});
-
-// Démarrer Alpine
-Alpine.start(); 
+}); 
